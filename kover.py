@@ -4,9 +4,6 @@ import argparse
 import logging
 import sys
 
-from kover.dataset.convert.tsv import convert as convert_tsv
-from kover.dataset.split import split
-
 class KoverDatasetTool(object):
     def __init__(self):
         self.available_commands = ['convert', 'split']
@@ -28,6 +25,7 @@ class KoverDatasetTool(object):
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
         if args.type == "tsv":
+            from kover.dataset.convert.tsv import convert as convert_tsv
             convert_tsv(kmer_matrix=args.samples,
                         metadata=args.metadata,
                         output=args.output,
@@ -54,6 +52,7 @@ class KoverDatasetTool(object):
             from random import randint
             args.randomseed = randint(0, 4294967295)
 
+        from kover.dataset.split import split
         split(input=args.dataset,
               output=args.output,
               train_prop=args.trainsize,
