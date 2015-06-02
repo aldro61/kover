@@ -7,7 +7,7 @@ import numpy as np
 from numpy import uint8
 
 
-def get_row_2(packed_data, inner_row_idx):
+def get_row(packed_data, inner_row_idx):
     if packed_data.dtype == np.uint8:
         pack_size = 8
         pack_type = np.uint8
@@ -124,7 +124,7 @@ def split_into_folds(fold_prefix, n_folds, destination, attribute_classification
             logging.debug("Sample %d/%d - Destination: Fold #%d - Fold buffer status: %d/%d" %
                           (example_count + 1, n_examples, fold + 1, fold_ac_buffer_packed_rows[fold], pack_size))
 
-            unpacked_row = get_row_2(packed_block, packed_idx)
+            unpacked_row = get_row(packed_block, packed_idx)
 
             fold_ac_buffers[fold] = set_row(fold_ac_buffers[fold].reshape(1, -1),
                                             unpacked_row,
@@ -249,7 +249,7 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
                           (example_count + 1, n_samples, "training" if sample_destination[example_count] else "testing",
                            train_ac_buffer_packed_rows, pack_size, test_ac_buffer_packed_rows, pack_size))
 
-            unpacked_row = get_row_2(packed_block, packed_idx)
+            unpacked_row = get_row(packed_block, packed_idx)
 
             if sample_destination[example_count]:  # Add the example to the training set
                 train_ac_buffer = set_row(train_ac_buffer.reshape(1, -1),
