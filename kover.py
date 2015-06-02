@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 
-from kover.dataset.convert.tsv import convert
+from kover.dataset.convert.tsv import convert as convert_tsv
 from kover.dataset.split import split
 
 class KoverDatasetTool(object):
@@ -28,12 +28,12 @@ class KoverDatasetTool(object):
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
         if args.type == "tsv":
-            convert(kmer_matrix=args.samples,
-                    metadata=args.metadata,
-                    output=args.output,
-                    kmer_len=args.kmerlen,
-                    kmer_count=args.kmercount,
-                    gzip=args.gzip)
+            convert_tsv(kmer_matrix=args.samples,
+                        metadata=args.metadata,
+                        output=args.output,
+                        kmer_len=args.kmerlen,
+                        kmer_count=args.kmercount,
+                        gzip=args.gzip)
 
     def split(self):
         parser = argparse.ArgumentParser(description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds.')
