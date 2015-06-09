@@ -23,6 +23,9 @@ def get_row(packed_data, inner_row_idx):
     else:
         raise ValueError("Supported data types are 8-bit, 16-bit, 32-bit and 64-bit integers.")
 
+    if inner_row_idx < 0 or inner_row_idx >= pack_size:
+        raise IndexError("Index must be between 0 and %d" % (pack_size - 1))
+
     return np.asarray(np.bitwise_and(np.right_shift(packed_data, pack_type(pack_size - inner_row_idx - 1)), 1),
                       dtype=np.uint8)
 
@@ -282,7 +285,7 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
                 if test_ac_buffer_packed_rows == pack_size:
                     logging.debug("Flushing the testing set ac buffer")
                     # Flush buffer
-                    test_attribute_classifications[test_ac_output_current_row] = train_ac_buffer
+                    test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
                     # Reset buffer
                     test_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
                     test_ac_buffer_packed_rows = 0
