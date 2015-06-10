@@ -98,6 +98,8 @@ def convert(kmer_matrix, metadata, output, kmer_len=None, kmer_count=None, gzip=
     compression = "gzip" if gzip > 0 else None #TODO: The choice of compression method could be user specified
     compression_opts = gzip if gzip > 0 else None
     tsv_block_size = min(kmer_count, 100000)  #TODO: This needs to be smaller or equal to the line length
+    #TODO: the tsv block size is currently the same as the chunk size. Is this an optimal choice?
+    # TODO: the block size should be a parameter to control memory usage. The default should be fairly small.
 
     # Create the HDF5 File
     h5py_file = h5py.File(output, "w")
