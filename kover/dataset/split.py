@@ -5,6 +5,8 @@ from math import ceil, floor
 import h5py as h
 import numpy as np
 from numpy import uint8
+from pyscm.binary_attributes.classifications.hdf5 import HDF5PackedAttributeClassifications
+
 
 
 def get_row(packed_data, inner_row_idx):
@@ -162,6 +164,25 @@ def split_into_folds(fold_prefix, n_folds, destination, attribute_classification
         # Flush the example identifier buffers
         fold_example_identifier_datasets[fold][...] = fold_example_identifier_buffers[fold]
 
+    # Compute the attribute risks for the training set of each fold
+    for fold in xrange(n_folds):
+        logging.debug("Computing the attribute risks for the training set of fold %d" % fold)
+        # Find the other folds
+        other_folds = [other for other in xrange(n_folds) if other != fold]
+
+        # Get the attribute_classifications of all the training examples for this fold
+        attribute_classifications = HDF5PackedAttributeClassifications(*zip(*[(fold_groups[other]["attribute_classifications"], fold_groups[other]["labels"].shape[0]) for other in other_folds]))
+
+        # Get all the training set labels for this fold
+        labels = [fold_groups[other]["labels"][...] for other in other_folds]
+        labels = np.asarray([item for sublist in labels for item in sublist], dtype=np.uint8)
+
+        # Compute the attribute risks for the training set
+        n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
+        n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
+        risks = 1.0 * (n_pos_errors + n_neg_errors) / len(labels)
+        fold_groups[fold].create_dataset("attribute_risks", data=risks)
+
 
 def split_train_test(input_file, output_file, train_prop, random_generator, gzip):
     # Note: the examples are already sorted in label order to optimize training speed.
@@ -304,6 +325,15 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
         test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
         test_labels[...] = test_label_buffer
         test_example_identifiers[...] = test_example_identifiers_buffer
+
+    # Compute the attribute risks for the training set
+    logging.debug("Computing the attribute risks for the training set.")
+    labels = np.asarray(train_label_buffer, dtype=np.uint8)
+    attribute_classifications = HDF5PackedAttributeClassifications([train_attribute_classifications], [len(labels)])
+    n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
+    n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
+    risks = 1.0 * (n_pos_errors + n_neg_errors) / len(labels)
+    train_group.create_dataset("attribute_risks", data=risks)
 
 
 def split(input, output, train_prop=0.5, random_seed=42, n_folds=5, gzip=4):

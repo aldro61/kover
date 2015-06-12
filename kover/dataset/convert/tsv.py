@@ -48,6 +48,7 @@ def get_mic_dataset(dataset_file, strains_to_load):
 
         # If a strain is not in the list of strains to load, skip it.
         if not strain in strains_to_load:
+            logging.debug("Sample %s is in the metadata but not in the k-mer matrix." % strain)
             continue
 
         strains.append(l[0])
@@ -121,6 +122,7 @@ def convert(kmer_matrix, metadata, output, kmer_len=None, kmer_count=None, gzip=
     # Read list of strains
     reader = pd.read_table(kmer_matrix, sep='\t', index_col=0, iterator=True)
     sample_ids = reader.get_chunk(1).columns.values
+    logging.debug("The k-mer matrix contains %d samples." % len(sample_ids))
 
     # Load the strain metadata
     sample_ids, sample_labels = get_mic_dataset(dataset_file=metadata, strains_to_load=sample_ids)
