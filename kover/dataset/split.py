@@ -178,8 +178,8 @@ def split_into_folds(fold_prefix, n_folds, destination, attribute_classification
         # Compute the attribute risks for the training set
         n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
         n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
-        # Note: At least one of the error arrays needs to be casted to uint to avoid overflowing in the addition.
-        risks = 1.0 * (n_pos_errors.astype(np.uint) + n_neg_errors) / len(labels)
+        # Note: At least one of the error arrays needs to be casted to float to avoid casting issues in the add and div
+        risks = (n_pos_errors.astype(np.float) + n_neg_errors) / len(labels)
         fold_groups[fold].create_dataset("attribute_risks", data=risks)
 
 def split_train_test(input_file, output_file, train_prop, random_generator, gzip):
@@ -330,7 +330,8 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
     attribute_classifications = HDF5PackedAttributeClassifications([train_attribute_classifications], [len(labels)])
     n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
     n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
-    risks = 1.0 * (n_pos_errors + n_neg_errors) / len(labels)
+    # Note: At least one of the error arrays needs to be casted to float to avoid casting issues in the add and div
+    risks = (n_pos_errors.astype(np.float) + n_neg_errors) / len(labels)
     train_group.create_dataset("attribute_risks", data=risks)
 
 def split(input, output, train_prop=0.5, random_seed=42, n_folds=5, gzip=4):
