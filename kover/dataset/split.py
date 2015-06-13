@@ -8,7 +8,6 @@ from numpy import uint8
 from pyscm.binary_attributes.classifications.hdf5 import HDF5PackedAttributeClassifications
 
 
-
 def get_row(packed_data, inner_row_idx):
     if packed_data.dtype == np.uint8:
         pack_size = 8
@@ -64,7 +63,6 @@ def set_row(packed_data, unpacked_row, unpacked_row_idx, clear_before_set=True):
 
     np.bitwise_or(packed_data[packed_data_row], tmp, out=packed_data[packed_data_row])
     return packed_data
-
 
 def split_into_folds(fold_prefix, n_folds, destination, attribute_classifications, labels, example_identifiers,
                      random_generator, gzip, chunk_size):
@@ -180,9 +178,9 @@ def split_into_folds(fold_prefix, n_folds, destination, attribute_classification
         # Compute the attribute risks for the training set
         n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
         n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
-        risks = 1.0 * (n_pos_errors + n_neg_errors) / len(labels)
+        # Note: At least one of the error arrays needs to be casted to uint to avoid overflowing in the addition.
+        risks = 1.0 * (n_pos_errors.astype(np.uint) + n_neg_errors) / len(labels)
         fold_groups[fold].create_dataset("attribute_risks", data=risks)
-
 
 def split_train_test(input_file, output_file, train_prop, random_generator, gzip):
     # Note: the examples are already sorted in label order to optimize training speed.
@@ -334,7 +332,6 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
     n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
     risks = 1.0 * (n_pos_errors + n_neg_errors) / len(labels)
     train_group.create_dataset("attribute_risks", data=risks)
-
 
 def split(input, output, train_prop=0.5, random_seed=42, n_folds=5, gzip=4):
     logging.debug("Initializing a random number generator with seed %d" % random_seed)
