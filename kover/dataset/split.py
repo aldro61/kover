@@ -328,7 +328,7 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
     # All the examples go to the training set
     else:
         train_group = output_file.create_group("train")
-        train_group.copy(input_file["attribute_classifications"])
+        train_group.copy(input_file["attribute_classifications"], "attribute_classifications")
         train_attribute_classifications = train_group["attribute_classifications"]
         train_group.copy(input_file["labels"])
         train_group.create_dataset("example_identifiers", data=np.arange(n_train_samples).astype(np.uint))
