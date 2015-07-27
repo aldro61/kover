@@ -203,130 +203,139 @@ def split_train_test(input_file, output_file, train_prop, random_generator, gzip
     n_train_samples = int(n_samples * train_prop)
     n_test_samples = n_samples - n_train_samples
 
-    # Create train group
-    logging.debug("Creating the training datasets")
-    train_group = output_file.create_group("train")
-    train_attribute_classifications = train_group.create_dataset("attribute_classifications",
-                                                                 dtype=input_file["attribute_classifications"].dtype,
-                                                                 shape=(int(ceil(1.0 * n_train_samples / pack_size)),
-                                                                        n_attributes),
-                                                                 chunks=input_file["attribute_classifications"].chunks,
-                                                                 compression="gzip" if gzip > 0 else None,
-                                                                 compression_opts=gzip if gzip > 0 else None)
-    train_labels = train_group.create_dataset("labels",
-                                              dtype=input_file["labels"].dtype,
-                                              shape=(n_train_samples,))
-    train_example_identifiers = train_group.create_dataset("example_identifiers",
-                                                           dtype=np.uint32,
-                                                           shape=(n_train_samples,))
+    if n_test_samples > 0:
+        # Create train group
+        logging.debug("Creating the training datasets")
+        train_group = output_file.create_group("train")
+        train_attribute_classifications = train_group.create_dataset("attribute_classifications",
+                                                                     dtype=input_file["attribute_classifications"].dtype,
+                                                                     shape=(int(ceil(1.0 * n_train_samples / pack_size)),
+                                                                            n_attributes),
+                                                                     chunks=input_file["attribute_classifications"].chunks,
+                                                                     compression="gzip" if gzip > 0 else None,
+                                                                     compression_opts=gzip if gzip > 0 else None)
+        train_labels = train_group.create_dataset("labels",
+                                                  dtype=input_file["labels"].dtype,
+                                                  shape=(n_train_samples,))
+        train_example_identifiers = train_group.create_dataset("example_identifiers",
+                                                               dtype=np.uint32,
+                                                               shape=(n_train_samples,))
 
-    # Create test group
-    logging.debug("Creating the testing datasets")
-    test_group = output_file.create_group("test")
-    test_attribute_classifications = test_group.create_dataset("attribute_classifications",
-                                                               dtype=input_file["attribute_classifications"].dtype,
-                                                               shape=(int(ceil(1.0 * n_test_samples / pack_size)),
-                                                                      n_attributes),
-                                                               chunks=input_file["attribute_classifications"].chunks,
-                                                               compression="gzip" if gzip > 0 else None,
-                                                               compression_opts=gzip if gzip > 0 else None)
-    test_labels = test_group.create_dataset("labels",
-                                            dtype=input_file["labels"].dtype,
-                                            shape=(n_test_samples,))
-    test_example_identifiers = test_group.create_dataset("example_identifiers",
-                                                         dtype=np.uint32,
-                                                         shape=(n_test_samples,))
+        # Create test group
+        logging.debug("Creating the testing datasets")
+        test_group = output_file.create_group("test")
+        test_attribute_classifications = test_group.create_dataset("attribute_classifications",
+                                                                   dtype=input_file["attribute_classifications"].dtype,
+                                                                   shape=(int(ceil(1.0 * n_test_samples / pack_size)),
+                                                                          n_attributes),
+                                                                   chunks=input_file["attribute_classifications"].chunks,
+                                                                   compression="gzip" if gzip > 0 else None,
+                                                                   compression_opts=gzip if gzip > 0 else None)
+        test_labels = test_group.create_dataset("labels",
+                                                dtype=input_file["labels"].dtype,
+                                                shape=(n_test_samples,))
+        test_example_identifiers = test_group.create_dataset("example_identifiers",
+                                                             dtype=np.uint32,
+                                                             shape=(n_test_samples,))
 
-    # Randomly assign a set (train or test) to each sample
-    logging.debug("Randomly assigning a set (train/test) to the samples")
-    sample_destination = np.zeros(n_samples, dtype=np.bool)
-    idx = np.arange(len(labels))
-    random_generator.shuffle(idx)
-    sample_destination[idx[: n_train_samples]] = True  # True is for training and False for testing
+        # Randomly assign a set (train or test) to each sample
+        logging.debug("Randomly assigning a set (train/test) to the samples")
+        sample_destination = np.zeros(n_samples, dtype=np.bool)
+        idx = np.arange(len(labels))
+        random_generator.shuffle(idx)
+        sample_destination[idx[: n_train_samples]] = True  # True is for training and False for testing
 
-    # Write the examples to the correct datasets
-    # TODO: We could use column blocks to reduce memory usage
-    logging.debug("Initializing training set buffers")
-    train_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
-    train_ac_buffer_packed_rows = 0
-    train_ac_output_current_row = 0
-    train_label_buffer = []
-    train_example_identifiers_buffer = []
+        # Write the examples to the correct datasets
+        # TODO: We could use column blocks to reduce memory usage
+        logging.debug("Initializing training set buffers")
+        train_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
+        train_ac_buffer_packed_rows = 0
+        train_ac_output_current_row = 0
+        train_label_buffer = []
+        train_example_identifiers_buffer = []
 
-    logging.debug("Initializing testing set buffers")
-    test_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
-    test_ac_buffer_packed_rows = 0
-    test_ac_output_current_row = 0
-    test_label_buffer = []
-    test_example_identifiers_buffer = []
+        logging.debug("Initializing testing set buffers")
+        test_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
+        test_ac_buffer_packed_rows = 0
+        test_ac_output_current_row = 0
+        test_label_buffer = []
+        test_example_identifiers_buffer = []
 
-    example_count = 0
-    for packed_block in attribute_classifications:
-        for packed_idx in xrange(pack_size):
-            if example_count == n_samples:
-                logging.debug("Stopping since all examples have been packed.")
-                break  # If all examples have been packed, stop
+        example_count = 0
+        for packed_block in attribute_classifications:
+            for packed_idx in xrange(pack_size):
+                if example_count == n_samples:
+                    logging.debug("Stopping since all examples have been packed.")
+                    break  # If all examples have been packed, stop
 
-            logging.debug("Sample %d/%d - Destination: %s set - Buffer status: train=(%d/%d), test=(%d/%d)" %
-                          (example_count + 1, n_samples, "training" if sample_destination[example_count] else "testing",
-                           train_ac_buffer_packed_rows, pack_size, test_ac_buffer_packed_rows, pack_size))
+                logging.debug("Sample %d/%d - Destination: %s set - Buffer status: train=(%d/%d), test=(%d/%d)" %
+                              (example_count + 1, n_samples, "training" if sample_destination[example_count] else "testing",
+                               train_ac_buffer_packed_rows, pack_size, test_ac_buffer_packed_rows, pack_size))
 
-            unpacked_row = get_row(packed_block, packed_idx)
+                unpacked_row = get_row(packed_block, packed_idx)
 
-            if sample_destination[example_count]:  # Add the example to the training set
-                train_ac_buffer = set_row(train_ac_buffer.reshape(1, -1),
-                                          unpacked_row,
-                                          train_ac_buffer_packed_rows,
-                                          False)
-                train_ac_buffer_packed_rows += 1
-                train_label_buffer.append(labels[example_count])
-                train_example_identifiers_buffer.append(example_identifiers[example_count])
+                if sample_destination[example_count]:  # Add the example to the training set
+                    train_ac_buffer = set_row(train_ac_buffer.reshape(1, -1),
+                                              unpacked_row,
+                                              train_ac_buffer_packed_rows,
+                                              False)
+                    train_ac_buffer_packed_rows += 1
+                    train_label_buffer.append(labels[example_count])
+                    train_example_identifiers_buffer.append(example_identifiers[example_count])
 
-                if train_ac_buffer_packed_rows == pack_size:
-                    logging.debug("Flushing the training set ac buffer")
-                    # Flush buffer
-                    train_attribute_classifications[train_ac_output_current_row] = train_ac_buffer
-                    # Reset buffer
-                    train_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
-                    train_ac_buffer_packed_rows = 0
-                    # Increment output index
-                    train_ac_output_current_row += 1
+                    if train_ac_buffer_packed_rows == pack_size:
+                        logging.debug("Flushing the training set ac buffer")
+                        # Flush buffer
+                        train_attribute_classifications[train_ac_output_current_row] = train_ac_buffer
+                        # Reset buffer
+                        train_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
+                        train_ac_buffer_packed_rows = 0
+                        # Increment output index
+                        train_ac_output_current_row += 1
 
-            else:  # Add the example to the testing set
-                test_ac_buffer = set_row(test_ac_buffer.reshape(1, -1),
-                                         unpacked_row,
-                                         test_ac_buffer_packed_rows,
-                                         False)
-                test_ac_buffer_packed_rows += 1
-                test_label_buffer.append(labels[example_count])
-                test_example_identifiers_buffer.append(example_identifiers[example_count])
+                else:  # Add the example to the testing set
+                    test_ac_buffer = set_row(test_ac_buffer.reshape(1, -1),
+                                             unpacked_row,
+                                             test_ac_buffer_packed_rows,
+                                             False)
+                    test_ac_buffer_packed_rows += 1
+                    test_label_buffer.append(labels[example_count])
+                    test_example_identifiers_buffer.append(example_identifiers[example_count])
 
-                if test_ac_buffer_packed_rows == pack_size:
-                    logging.debug("Flushing the testing set ac buffer")
-                    # Flush buffer
-                    test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
-                    # Reset buffer
-                    test_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
-                    test_ac_buffer_packed_rows = 0
-                    # Increment output index
-                    test_ac_output_current_row += 1
+                    if test_ac_buffer_packed_rows == pack_size:
+                        logging.debug("Flushing the testing set ac buffer")
+                        # Flush buffer
+                        test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
+                        # Reset buffer
+                        test_ac_buffer = np.zeros((1, n_attributes), dtype=pack_dtype)
+                        test_ac_buffer_packed_rows = 0
+                        # Increment output index
+                        test_ac_output_current_row += 1
 
-            example_count += 1
+                example_count += 1
 
-    # Flush all buffers if needed
-    logging.debug("Flushing all buffers.")
-    if train_ac_buffer_packed_rows > 0:
-        train_attribute_classifications[train_ac_output_current_row] = train_ac_buffer
-        train_labels[...] = train_label_buffer
-        train_example_identifiers[...] = train_example_identifiers_buffer
-    if test_ac_buffer_packed_rows > 0:
-        test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
-        test_labels[...] = test_label_buffer
-        test_example_identifiers[...] = test_example_identifiers_buffer
+        # Flush all buffers if needed
+        logging.debug("Flushing all buffers.")
+        if train_ac_buffer_packed_rows > 0:
+            train_attribute_classifications[train_ac_output_current_row] = train_ac_buffer
+            train_labels[...] = train_label_buffer
+            train_example_identifiers[...] = train_example_identifiers_buffer
+        if test_ac_buffer_packed_rows > 0:
+            test_attribute_classifications[test_ac_output_current_row] = test_ac_buffer
+            test_labels[...] = test_label_buffer
+            test_example_identifiers[...] = test_example_identifiers_buffer
+
+    # All the examples go to the training set
+    else:
+        train_group = output_file.create_group("train")
+        train_group.copy(input_file["attribute_classifications"])
+        train_attribute_classifications = train_group["attribute_classifications"]
+        train_group.copy(input_file["labels"])
+        train_group.create_dataset("example_identifiers", data=np.arange(n_train_samples).astype(np.uint))
 
     # Compute the attribute risks for the training set
     logging.debug("Computing the attribute risks for the training set.")
-    labels = np.asarray(train_label_buffer, dtype=np.uint8)
+    labels = np.asarray(train_group["labels"][...], dtype=np.uint8)
     attribute_classifications = HDF5PackedAttributeClassifications([train_attribute_classifications], [len(labels)])
     n_pos_errors = labels.sum() - attribute_classifications.sum_rows(np.where(labels == 1)[0])
     n_neg_errors = attribute_classifications.sum_rows(np.where(labels == 0)[0])
@@ -365,6 +374,7 @@ def split(input, output, train_prop=0.5, random_seed=42, n_folds=5, gzip=4):
                      train_prop=train_prop,
                      random_generator=random_generator,
                      gzip=gzip)
+
 
     if n_folds > 1:
         # Split the training set into random folds using the training attribute classifications
