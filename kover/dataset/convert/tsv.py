@@ -59,7 +59,7 @@ def get_mic_dataset(dataset_file, strains_to_load):
     return np.array(strains), np.array(sir_labels, dtype=np.uint8)
 
 def get_kmer_count_and_len(file):
-    f = open(file)
+    f = open(file, "r")
 
     # Skip the file header
     f.next()
