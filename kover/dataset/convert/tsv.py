@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import h5py
@@ -225,6 +223,9 @@ def convert(kmer_matrix, metadata, output, kmer_len=None, kmer_count=None, gzip=
         type_by_attribute[start_block_attribute:stop_block_attribute] = \
             np.hstack((np.zeros(read_block_size, dtype=type_by_attribute_dtype),
                        np.ones(read_block_size, dtype=type_by_attribute_dtype)))
+
+        logging.debug("Garbage collection.")
+        gc.collect()  # Clear the memory objects created during the iteration, or else the memory will keep growing.
 
     h5py_file.close()
     logging.debug("Completed.")
