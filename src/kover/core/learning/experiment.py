@@ -248,7 +248,7 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
                   tiebreaker= partial(_tiebreaker,
                                       rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                             split.unique_risk_by_anti_kmer[...])),
-                                      model_type=model_type))
+                                      model_type=best_hp["model_type"]))
 
     train_predictions, test_predictions = _predictions(predictor.model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)
