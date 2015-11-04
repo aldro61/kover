@@ -147,10 +147,16 @@ class KoverDatasetTool(object):
             args.randomseed = randint(0, 4294967295)
 
         if args.progress:
-            pbar = ProgressBar(widgets=['Splitting: ', Percentage(), Bar(), Timer()], maxval=1.0)
-            pbar.start()
-            def progress(p):
-                pbar.update(p)
+            progress_vars = {"current_task": None, "pbar": None}
+            def progress(task_name, p):
+                if task_name != progress_vars["current_task"]:
+                    if progress_vars["pbar"] is not None:
+                        progress_vars["pbar"].finish()
+                    progress_vars["current_task"] = task_name
+                    progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()], maxval=1.0)
+                    progress_vars["pbar"].start()
+                else:
+                    progress_vars["pbar"].update(p)
         else:
             progress = None
 
@@ -162,7 +168,7 @@ class KoverDatasetTool(object):
               progress_callback=progress)
 
         if args.progress:
-            pbar.finish()
+            progress_vars["pbar"].finish()
 
 
 class CommandLineInterface(object):
@@ -212,6 +218,7 @@ The most commonly used commands are:
         parser.add_argument('-p', '--p', type=float, nargs='+', help='Hyperparameter: The value of the trade-off used to score the rules. Single value or multiple space separated values.', required=True)
         parser.add_argument('-m', '--max-rules', type=int, help='The maximum number of rules to include in a model.', required=True)
         parser.add_argument('-c', '--hp-choice', choices=['bound', 'cv', 'none'], help='The strategy used to select the hyperparameter values.', default='cv', required=False)
+        parser.add_argument('-P', '--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. Use 1 unless you are using a parallel file system (see documentation).', default=1, required=False)
         parser.add_argument('-o', '--output-dir', help='The directory in which to store Kover\'s output. Will be created if it does not exist.', default='.', required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true', required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true', required=False)
@@ -224,28 +231,41 @@ The most commonly used commands are:
         from kover.core.learning.experiment import learn
         from os import mkdir
         from os.path import abspath, exists, join
+        from progressbar import Bar, Percentage, ProgressBar, Timer
         from time import time
 
         # Input validation
         dataset = KoverDataset(args.dataset)
-
         # - Check that the split exists
         try:
             dataset.get_split(args.split)
         except:
             print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
             exit()
-
         # - Must have at least 2 folds to perform cross-validation
         if args.hp_choice == "cv" and len(dataset.get_split(args.split).folds) < 2:
             print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
                   "Use 'kover dataset split' to create folds."
             exit()
-
+        del dataset
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
-                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s [%(process)d]: %(message)s")
+
+        if args.progress:
+            progress_vars = {"current_task": None, "pbar": None}
+            def progress(task_name, p):
+                if task_name != progress_vars["current_task"]:
+                    if progress_vars["pbar"] is not None:
+                        progress_vars["pbar"].finish()
+                    progress_vars["current_task"] = task_name
+                    progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()], maxval=1.0)
+                    progress_vars["pbar"].start()
+                else:
+                    progress_vars["pbar"].update(p)
+        else:
+            progress = None
 
         start_time = time()
         best_hp, best_hp_score, \
@@ -254,8 +274,13 @@ The most commonly used commands are:
                                                    model_type=args.model_type,
                                                    p=args.p,
                                                    max_rules=args.max_rules,
-                                                   parameter_selection=args.hp_choice)
+                                                   parameter_selection=args.hp_choice,
+                                                   n_cpu=args.n_cpu,
+                                                   progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
+
+        if args.progress:
+            progress_vars["pbar"].finish()
 
         # Write a report (user friendly)
         metric_aliases = [("risk", "Error Rate"), ("sensitivity", "Sensitivity"), ("specificity", "Specificity"),
