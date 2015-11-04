@@ -1,0 +1,208 @@
+__author__ = 'Alexandre'
+import gc
+import h5py as h
+import logging
+import numpy as np
+import pandas as pd
+
+from math import ceil
+from os.path import getsize
+from time import time
+from uuid import uuid1
+
+
+
+
+KMER_MATRIX_PACKING_SIZE = 64
+KMER_MATRIX_DTYPE = np.uint64
+PHENOTYPE_LABEL_DTYPE = np.uint8
+
+from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
+
+def _create_hdf5_file_no_chunk_caching(path):
+    # Create the HDF5 File
+    h5py_file = h.File(path, "w")
+
+    # Get the default cache properties
+    access_property_list = h5py_file.fid.get_access_plist()
+    cache_properties = list(access_property_list.get_cache())
+
+    h5py_file.close()
+
+    # Disable chunk caching
+    cache_properties[2] = 0  # No chunk caching
+    access_property_list.set_cache(*cache_properties)
+    file_id = h.h5f.open(path, h.h5f.ACC_RDWR, fapl=access_property_list)
+
+    # Reopen the file without a chunk cache
+    h5py_file = h.File(file_id)
+
+    return h5py_file
+
+def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_callback):
+    """
+    Parses metadata (genome_id{tab}label)
+    """
+    logging.debug("Parsing metadata.")
+    md_genome_ids, md_genome_labels = zip(* (l.split() for l in open(metadata_path, "r")))
+    md_genome_labels = [int(l) for l in md_genome_labels]
+
+    if not np.all(np.unique(md_genome_labels) == [0, 1]):
+        error_callback(Exception("The metadata associated to a genome must be a single binary value (0 or 1)."))
+
+    if len(md_genome_ids) > len(set(md_genome_ids)):
+        error_callback(Exception("The metadata contains multiple values for the same genome."))
+
+    genomes_only_in_matrix = set(matrix_genome_ids) - set(md_genome_ids)
+    if len(genomes_only_in_matrix) > 0:
+        warning_callback("Missing metadata for %d genomes (%s). These genomes will be discarded." % (len(genomes_only_in_matrix), ", ".join(genomes_only_in_matrix)))
+    del genomes_only_in_matrix
+
+    genomes_only_in_metadata = set(md_genome_ids) - set(matrix_genome_ids)
+    if len(genomes_only_in_metadata) > 0:
+        warning_callback("The metadata contains values for %d genomes that are not in the genomic data (%s)." % (len(genomes_only_in_metadata), ", ".join(genomes_only_in_metadata)))
+    del genomes_only_in_metadata
+
+    keep_genome_ids, keep_genome_labels = zip(* ((md_genome_ids[i], md_genome_labels[i]) for i in xrange(len(md_genome_ids)) if md_genome_ids[i] in matrix_genome_ids))
+
+    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8)
+
+def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzip, warning_callback=None,
+             error_callback=None, progress_callback=None):
+    def get_kmer_length(tsv_path):
+        with open(tsv_path, "r") as f:
+            f.next()
+            kmer_len = len(f.next().split("\t")[0])
+        return kmer_len
+
+    def get_kmer_count(tsv):
+        # XXX: This is can break if the file format changes!
+        #      Assumes that each line has the format kmer_seq\tV\tV\t...V\n with one binary V per genome
+        total_size = getsize(tsv)
+        with open(tsv, "r") as f:
+            header_size = len(f.next())
+            line_size = len(f.next())
+        content_size = float(total_size) - header_size
+        if content_size % line_size != 0:
+            raise Exception()
+        return int(content_size / line_size)
+
+    # Execution callback functions
+    if warning_callback is None:
+        warning_callback = lambda w: logging.warning(w)
+    if error_callback is None:
+        def normal_raise(exception):
+            raise exception
+        error_callback = normal_raise
+    if progress_callback is None:
+        progress_callback = lambda t, p: None
+
+    if (phenotype_name is None and phenotype_metadata_path is not None) or (phenotype_name is not None and phenotype_metadata_path is None):
+        raise ValueError("If a phenotype is specified, it must have a name and a metadata file.")
+
+    kmer_len = get_kmer_length(tsv_path)
+    kmer_count = get_kmer_count(tsv_path)
+
+    kmer_dtype = 'S' + str(kmer_len)
+    kmer_by_matrix_column_dtype = _minimum_uint_size(kmer_count)
+    compression = "gzip" if gzip > 0 else None
+    compression_opts = gzip if gzip > 0 else None
+    tsv_block_size = min(kmer_count, 100000)
+
+    h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
+    h5py_file.attrs["created"] = time()
+    h5py_file.attrs["uuid"] = str(uuid1())
+    h5py_file.attrs["genome_source_type"] = "tsv"
+    h5py_file.attrs["genome_source"] = tsv_path
+    h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
+    h5py_file.attrs["phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
+
+    # Read list of genome identifiers
+    reader = pd.read_table(tsv_path, sep='\t', index_col=0, iterator=True)
+    genome_ids = reader.get_chunk(1).columns.values.astype("S%d" % kmer_len)
+    del reader
+    logging.debug("The k-mer matrix contains %d genomes." % len(genome_ids))
+    if len(set(genome_ids)) < len(genome_ids):
+        error_callback(Exception("The genomic data contains genomes with the same identifier."))
+
+    # Extract/write the metadata
+    if phenotype_name is not None:
+        genome_ids, labels = _parse_metadata(phenotype_metadata_path, genome_ids, warning_callback, error_callback)
+        # Sort the genomes by label for optimal better performance
+        logging.debug("Sorting genomes by metadata label for optimal performance.")
+        sorter = np.argsort(labels)
+        genome_ids = genome_ids[sorter]
+        labels = labels[sorter]
+        logging.debug("Creating the phenotype metadata dataset.")
+        phenotype = h5py_file.create_dataset("phenotype", data=labels, dtype=PHENOTYPE_LABEL_DTYPE)
+        phenotype.attrs["name"] = phenotype_name
+        del phenotype, labels
+
+    # Write genome ids
+    logging.debug("Creating the genome identifier dataset.")
+    h5py_file.create_dataset("genome_identifiers",
+                             data=genome_ids,
+                             compression=compression,
+                             compression_opts=compression_opts)
+
+    # Initialize kmers (kmer_list) dataset
+    logging.debug("Creating the kmer sequence dataset.")
+    kmers = h5py_file.create_dataset("kmer_sequences",
+                                     shape=(kmer_count, ),
+                                     dtype=kmer_dtype,
+                                     compression=compression,
+                                     compression_opts=compression_opts)
+
+    # Initialize kmer_matrix dataset
+    logging.debug("Creating the kmer matrix dataset.")
+    kmer_matrix = h5py_file.create_dataset("kmer_matrix",
+                                           shape=(int(ceil(1.0 * len(genome_ids) / KMER_MATRIX_PACKING_SIZE)), kmer_count),
+                                           dtype=KMER_MATRIX_DTYPE,
+                                           compression=compression,
+                                           compression_opts=compression_opts,
+                                           chunks=(1, tsv_block_size))
+
+    # Initialize kmer_by_matrix_column dataset
+    logging.debug("Creating the kmer sequence/matrix column mapping dataset.")
+    kmer_by_matrix_column = h5py_file.create_dataset("kmer_by_matrix_column",
+                                                     shape=(kmer_count, ),
+                                                     dtype=kmer_by_matrix_column_dtype,
+                                                     compression=compression,
+                                                     compression_opts=compression_opts)
+
+    logging.debug("Transferring the data from TSV to HDF5.")
+    tsv_reader = pd.read_table(tsv_path, index_col='kmers', sep='\t', chunksize=tsv_block_size)
+    n_blocks = int(ceil(1.0 * kmer_count / tsv_block_size))
+    n_copied_blocks = 0.
+    for i, chunk in enumerate(tsv_reader):
+        logging.debug("Block %d/%d."% (i+1, n_blocks))
+        progress_callback("Creating", n_copied_blocks / n_blocks)
+        logging.debug("Reading data from TSV file.")
+        kmers_data = chunk.index.values.astype(kmer_dtype)
+        read_block_size = kmers_data.shape[0]
+        block_start = i * tsv_block_size
+        block_stop = block_start + read_block_size
+        n_copied_blocks += 0.5
+        progress_callback("Creating", n_copied_blocks / n_blocks)
+
+        if block_start > kmer_count:
+            break
+
+        logging.debug("Writing data to HDF5.")
+        kmers[block_start:block_stop] = kmers_data
+        attribute_classification_sorted_by_strains = chunk[genome_ids]
+        attribute_classification_data = attribute_classification_sorted_by_strains.T.values.astype(np.uint8)
+        logging.debug("Packing the data.")
+        kmer_matrix[:, block_start:block_stop] = _pack_binary_bytes_to_ints(attribute_classification_data, pack_size=KMER_MATRIX_PACKING_SIZE)
+        n_copied_blocks += 0.5
+        progress_callback("Creating", n_copied_blocks / n_blocks)
+
+        # Write kmer_by_matrix_column
+        kmer_by_matrix_column[block_start:block_stop] = np.arange(block_start, block_stop, dtype=kmer_by_matrix_column)
+        logging.debug("Garbage collection.")
+        gc.collect()  # Clear the memory objects created during the iteration, or else the memory will keep growing.
+
+    h5py_file.close()
+
+    logging.debug("Dataset creation completed.")
