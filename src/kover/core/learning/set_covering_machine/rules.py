@@ -81,6 +81,7 @@ class KmerRuleClassifications(BaseRuleClassifications):
     """
     Methods involving columns account for presence and absence rules
     """
+    # TODO: Clean up. Get rid of the code to handle deleted rows. We don't need this.
     def __init__(self, dataset, n_rows, block_size=None):
         self.dataset = dataset
         self.dataset_initial_n_rows = n_rows
@@ -116,6 +117,8 @@ class KmerRuleClassifications(BaseRuleClassifications):
         """
         Columns can be an integer (or any object that implements __index__) or a sorted list/ndarray.
         """
+        #TODO: Support slicing, make this more efficient than getting the columns individually.
+        #TODO: Remove the constraint that forces columns to be sorted
         columns_is_int = False
         if hasattr(columns, "__index__"):  # All int types implement the __index__ method (PEP 357)
             columns = [columns.__index__()]
@@ -128,16 +131,20 @@ class KmerRuleClassifications(BaseRuleClassifications):
             columns = list(columns)
 
         # Detect where an inversion is needed (columns corresponding to absence rules)
-        # TODO: Columns must be in increasing order... Got to fix this.
         columns, invert_result = zip(* (((column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
                                          (True if column > self.dataset.shape[1] else False)) for column in columns))
         columns = list(columns)
         invert_result = np.array(invert_result)
 
+        # Don't return rows that have been deleted
         row_mask = np.ones(self.dataset.shape[0] * self.dataset_pack_size, dtype=np.bool)
         row_mask[self.dataset_initial_n_rows:] = False
         row_mask[self.dataset_removed_rows] = False
-        result = _unpack_binary_bytes_from_ints(self.dataset[:, columns])[row_mask]
+
+        # h5py requires that the column indices are sorted
+        unique, inverse = np.unique(columns, return_inverse=True)
+        result = _unpack_binary_bytes_from_ints(self.dataset[:, unique.tolist()])[row_mask]
+        result = result[:, inverse]
         result[:, invert_result] = 1 - result[:, invert_result]
 
         if columns_is_int:
