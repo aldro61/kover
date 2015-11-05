@@ -118,7 +118,6 @@ class KmerRuleClassifications(BaseRuleClassifications):
         Columns can be an integer (or any object that implements __index__) or a sorted list/ndarray.
         """
         #TODO: Support slicing, make this more efficient than getting the columns individually.
-        #TODO: Remove the constraint that forces columns to be sorted
         columns_is_int = False
         if hasattr(columns, "__index__"):  # All int types implement the __index__ method (PEP 357)
             columns = [columns.__index__()]
