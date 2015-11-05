@@ -1,5 +1,5 @@
 # project definitions
-project: doc_writers
+project: kover_0.1
 audience: writers
 product: all
 platform: all
@@ -10,7 +10,7 @@ homepage_title: Kover Documentation
 site_title: Kover Documentation
 disqus_shortname:
 google_analytics:
-github_editme_path: aldro61/kover/gh-pages
+github_editme_path: #aldro61/kover/blob/gh-pages
 # don't use a slash before or after the above path. here's how this url gets written out in page.html: https://github.com/{{site.github_editme_path}}{{page.url | replace: '.html', '.md'}}
 
 # variables
@@ -22,7 +22,6 @@ project_file_name: doc
 
 port: 4003
 exclude:
-  - doc_designers*
   - configs/
   - _site
   - _drafts
