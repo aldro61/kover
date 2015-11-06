@@ -10,7 +10,7 @@ In this example, we show how Kover can be applied to genomic data in order to ob
 
 ## Example data
 
-You will need to download the [example data](todo) (~180 Mb). The data contains the genomes of 141 *Mycobacterium 
+You will need to download the [example data](http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip) (~180 Mb). The data contains the genomes of 141 *Mycobacterium 
 tuberculosis* isolates, along with their susceptibility to Rifampicin, an antibiotic.
 
 The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) genome assembler and subsequently split into
