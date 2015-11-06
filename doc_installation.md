@@ -30,7 +30,7 @@ or alternatively
 git clone https://github.com/aldro61/kover.git
 ```
 
-Then, in the kover directory, run the installer:
+Then, in the *kover* directory, run the installer:
 
 ```
 sh ./install.sh
