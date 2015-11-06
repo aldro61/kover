@@ -79,7 +79,7 @@ def split(input, identifier, train_prop, random_seed, n_folds, warning_callback=
     split.create_dataset("unique_risk_by_kmer", data=unique_risk_by_kmer_and_antikmer[:dataset["kmer_matrix"].shape[1]], dtype=_minimum_uint_size(len(unique_risks)))
     split.create_dataset("unique_risk_by_anti_kmer", data=unique_risk_by_kmer_and_antikmer[dataset["kmer_matrix"].shape[1]:], dtype=_minimum_uint_size(len(unique_risks)))
     n_splits_done += 0.5
-    progress_callback("Split:", 1.0 * n_splits_done / n_splits_to_perform)
+    progress_callback("Split", 1.0 * n_splits_done / n_splits_to_perform)
 
     if n_folds > 0:
         logging.debug("Splitting the training set into %d cross-validation folds." % n_folds)
