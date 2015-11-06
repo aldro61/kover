@@ -10,8 +10,8 @@ In this example, we show how Kover can be applied to genomic data in order to ob
 
 ## Data
 
-You will need to download the [example data](blob) (~180 Mb). The data contains the genomes of **NUMBER** *Mycobacterium tuberculosis*
-isolates, along with their susceptibility to Rifampicin, an antibiotic.
+You will need to download the [example data](blob) (~180 Mb). The data contains the genomes of 141 *Mycobacterium 
+tuberculosis* isolates, along with their susceptibility to Rifampicin, an antibiotic.
 
 The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) genome assembler and subsequently split into
 k-mers of length 31 using [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial). The tsv-format matrix was produced
