@@ -29,7 +29,7 @@ exclude:
 
 # same for all
 host: 127.0.0.1
-feedback_email: alexandre.drouin.8@ulaval.ca
+feedback_email: aldro61@gmail.com
 sidebar_accordion: true
 markdown: redcarpet
 print: false
