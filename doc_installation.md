@@ -16,6 +16,7 @@ What will not be installed automatically:
 * [GNU C++ compiler (g++)]()
 * [GNU Fortran (gfortran)]()
 * [The HDF5 library](https://www.hdfgroup.org/HDF5/release/obtain5.html)
+* [Python 2.7.x](https://www.python.org/download/releases/2.7/)
 * [Python header files](https://docs.python.org/2/c-api/intro.html)
 
 What should be installed automatically:
@@ -25,8 +26,6 @@ What should be installed automatically:
 * [Numpy](http://docs.scipy.org/doc/numpy/user/install.html)
 * [Pandas](http://pandas.pydata.org/pandas-docs/stable/install.html#installing-pandas)
 * [Progressbar](https://pypi.python.org/pypi/progressbar)
-* [Python 2.7.x](https://www.python.org/download/releases/2.7/)
-
 
 ## Linux and Mac
 
