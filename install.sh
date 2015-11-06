@@ -1,5 +1,6 @@
 # Install the Kover python package
 cd ./src
+python bootstrap_setuptools.py
 python setup.py install
 rm -r build
 rm -r dist
