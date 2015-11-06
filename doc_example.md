@@ -1,5 +1,5 @@
 ---
-title: Getting started with Kover
+title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
 keywords: start, introduction, example, kover
 last_updated: August 12, 2015
@@ -17,8 +17,24 @@ The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) gen
 k-mers of length 31 using [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial). The tsv-format matrix was produced
 by Ray Surveyor.
 
-This genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
+The genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
 
 ## Creating a dataset
+
+Before learning a Rifampicin resistance model from the example data, we must package the genomic and phenotypic data into a [Kover Dataset](). 
+To convert the example data into such a dataset, use the following command:
+
+```
+kover dataset create --genome-type tsv --genome-source KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
+```
+
+This produces a Kover dataset called "example.kover". From now on, you no longer need the original example data files.
+
+You can now use the [kover dataset info]() command to print information about the dataset. For example, to list the identifiers
+of the genomes contained in the dataset, use:
+
+```
+kover dataset info --dataset example.kover --genome-ids
+```
 
 ## Learning a model

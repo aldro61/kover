@@ -52,8 +52,8 @@ entries:
           product: all
           version: all
 
-        - title: Getting started with Kover
-          url: /doc_getting_started.html
+        - title: Example
+          url: /doc_example.html
           audience: writers, designers
           platform: all
           product: all
