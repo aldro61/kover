@@ -13,8 +13,8 @@ running the installer. You can also install these dependencies manually or use y
 
 What will not be installed automatically:
 
-* [GNU C++ compiler (g++)]()
-* [GNU Fortran (gfortran)]()
+* [GNU C++ compiler (g++)](https://gcc.gnu.org/)
+* [GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)
 * [The HDF5 library](https://www.hdfgroup.org/HDF5/release/obtain5.html)
 * [Python 2.7.x](https://www.python.org/download/releases/2.7/)
 * [Python header files](https://docs.python.org/2/c-api/intro.html)
