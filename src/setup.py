@@ -1,15 +1,21 @@
-try:
-    from numpy import get_include as get_numpy_include
-except:
-    print "Numpy 1.6.2 or greater is required to install this package. Please install Numpy and try again."
-    exit()
+from setuptools import Extension, find_packages, setup
+from setuptools.command.build_ext import build_ext as _build_ext
 
-from setuptools import setup, find_packages, Extension
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
+
 setup(
     name = "kover",
     version = "0.1",
     packages = find_packages(),
 
+    cmdclass={'build_ext':build_ext},
+    setup_requires = ['numpy'],
     install_requires = ['h5py', 'numpy', 'pandas', 'progressbar'],
 
     author = "Alexandre Drouin",
@@ -20,5 +26,5 @@ setup(
     url = "http://github.com/aldro61/kover",
 
     # Cython Extension
-    ext_modules = [Extension("kover/core/learning/set_covering_machine/popcount", ["kover/core/learning/set_covering_machine/popcount.c"], include_dirs=[get_numpy_include()], extra_compile_args=["-march=native"])]
+    ext_modules = [Extension("kover/core/learning/set_covering_machine/popcount", ["kover/core/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])]
 )
