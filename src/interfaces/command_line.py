@@ -122,8 +122,8 @@ class KoverDatasetTool(object):
         parser = argparse.ArgumentParser(prog="kover dataset split", description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds.')
         parser.add_argument('-d', '--dataset', help='The Kover dataset to split.', required=True)
         parser.add_argument('-i', '--id', help='The identifier of the split.', required=True)
-        parser.add_argument('-t', '--trainsize', type=float, help='The proportion of the data used for training (default is 0.5).', default=0.5, required=False)
-        parser.add_argument('-r', '--randomseed', type=int, help='The random seed used for the split (If not provided a random value between 0 and 4294967295 will be used).', required=False)
+        parser.add_argument('-t', '--train-size', type=float, help='The proportion of the data used for training (default is 0.5).', default=0.5, required=False)
+        parser.add_argument('-r', '--random-seed', type=int, help='The random seed used for the split (If not provided a random value between 0 and 4294967295 will be used).', required=False)
         parser.add_argument('-f', '--folds', type=int, help='The number of cross-validation folds (default is 0 for none, the minimum value is 2).', default=0, required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true', required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true', required=False)
@@ -174,7 +174,7 @@ class KoverDatasetTool(object):
 class CommandLineInterface(object):
 
     def __init__(self):
-        self.available_commands = ['dataset', 'learn', 'predict', 'results']
+        self.available_commands = ['dataset', 'learn']
 
         parser = argparse.ArgumentParser(
             #description='Kover -- Learn from kmers',
