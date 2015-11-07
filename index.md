@@ -17,7 +17,7 @@ TODO
 
 ## Getting started
 
-To get started, see these three topics:
+To get started, see these two topics:
 
 1. {{site.data.urls.doc_installation.link}}
 2. {{site.data.urls.doc_example.link}}
