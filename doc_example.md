@@ -41,7 +41,7 @@ kover dataset info --dataset example.kover --genome-ids
 
 In order to measure the accuracy of the model obtained using Kover, we must split the dataset into a training set and a 
 testing set. The training set will be used to learn a model and the testing set will be used to estimate its accuracy.
-A Kover dataset can contain multiple splits of the data. The command for splitting a dataset is [kover split](todo).
+A Kover dataset can contain multiple splits of the data. The command for splitting a dataset is [kover dataset split](todo).
 
 Moreover, Kover being a machine learning algorithm, it has [hyperparameters](todo), i.e. user specified parameters, that must
 be adjusted based on the data. Kover can use [multiple strategies](todo) for choosing the hyperparameter values. In this example, we
