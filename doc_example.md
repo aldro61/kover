@@ -67,7 +67,7 @@ Moreover, it distributes the cross-validation on 2 CPUs.
 kover learn --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 5 --hp-choice cv --n-cpu 2 --progress
 ```
 
-Kover then uses the obtain model to predict the phenotype of the genomes in the testing set and computes various metrics.
+Kover then uses the obtained model to predict the phenotype of the genomes in the testing set and computes various metrics.
 For this example, the obtained model is:
 
 ```
