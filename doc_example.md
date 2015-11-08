@@ -77,6 +77,7 @@ Absence(GCGCCGACAGTCGGCGCTTGTGGGTCAACCC) OR Absence(ACCAGAACAACCCGCTGTCGGGGTTGAC
 meaning that if any of these sequences is not present in the genome, the isolate can be considered resistant to Rifampicin.
 Notice the simplicity and interpretability of the obtained model. The testing set metrics for this model are:
 
+** These are not the good metric values. Will be updated shortly. **
 ```
 Error Rate: 0.51064
 Sensitivity: 1.0
