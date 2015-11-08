@@ -95,3 +95,8 @@ False Negatives: 0.0
 ## Subsequent analysis of the model
 
 Something about blast here.
+
+## Predicting with the obtained model
+
+You could use any k-mer counting tool, such as [Jellyfish](https://github.com/gmarcais/Jellyfish), to extract the k-mers present in a FASTA file and then, easily apply the model.
+This feature is currently not included in Kover, but will be added in future releases.
