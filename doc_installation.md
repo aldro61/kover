@@ -58,7 +58,7 @@ Now change directories and test the installation:
 
 ```
 cd
-kover -v
+kover -v (Must be implemented! For the moment use: kover learn -h and check that you get a help text with options.)
 ```
 
 This should print the version of you Kover installation.
