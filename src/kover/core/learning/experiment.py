@@ -78,14 +78,6 @@ def _readdress_model(model, kmer_idx):
         r.kmer_index = kmer_idx[r.kmer_sequence]
     return new_model
 
-def print_hp(mt, p, max_rules):
-    print "HP:", mt, p, max_rules
-    from time import sleep
-    np.random.seed()
-    t = np.random.randint(0, 10)
-    sleep(t)
-    return (mt, p), 1, t
-
 def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     model_type = hp_values[0]
     p = hp_values[1]
@@ -96,14 +88,14 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     rule_classifications = KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count)
 
     def _iteration_callback(iteration_infos, tmp_model, test_predictions_by_model_length, test_example_idx):
-        selected_rule = rules[iteration_infos["selected_attribute_idx"]]
+        selected_rule = rules[iteration_infos["selected_rule_idx"]]
         tmp_model.add(selected_rule)
         _, test_predictions = _predictions(tmp_model, dataset.kmer_matrix, [], test_example_idx)
         test_predictions_by_model_length.append(test_predictions)
 
-    def _tiebreaker(best_utility_idx, attribute_classifications, positive_error_counts, negative_cover_counts,
+    def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
                positive_example_idx, negative_example_idx, rule_risks, model_type):
-        logging.debug("There are %d candidate attributes." % len(best_utility_idx))
+        logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.min()]
@@ -218,10 +210,11 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
     full_train_progress = {"n_rules": 0.0}
     def _iteration_callback(iteration_infos):
         full_train_progress["n_rules"] += 1
+        progress_callback("Training", full_train_progress["n_rules"] / best_hp["max_rules"])
 
-    def _tiebreaker(best_utility_idx, attribute_classifications, positive_error_counts, negative_cover_counts,
+    def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
            positive_example_idx, negative_example_idx, rule_risks, model_type):
-        logging.debug("There are %d candidate attributes." % len(best_utility_idx))
+        logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.min()]
@@ -230,9 +223,9 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
         return result
 
-    split = dataset.get_split(split_name)
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
     rule_classifications = KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count)
+    split = dataset.get_split(split_name)
 
     train_example_idx = split.train_genome_idx
     test_example_idx = split.test_genome_idx
@@ -248,11 +241,12 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
                   tiebreaker= partial(_tiebreaker,
                                       rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                             split.unique_risk_by_anti_kmer[...])),
-                                      model_type=best_hp["model_type"]))
+                                      model_type=best_hp["model_type"]),
+                  iteration_callback=_iteration_callback)
 
     train_predictions, test_predictions = _predictions(predictor.model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)
     train_metrics = _get_metrics(train_predictions, dataset.phenotype.metadata[train_example_idx])
     test_metrics = _get_metrics(test_predictions, dataset.phenotype.metadata[test_example_idx])
 
-    return best_hp, best_hp_score, train_metrics, test_metrics, predictor.model
+    return best_hp, best_hp_score, train_metrics, test_metrics, predictor.model, predictor.rule_importances

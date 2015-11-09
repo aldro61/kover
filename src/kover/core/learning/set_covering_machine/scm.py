@@ -9,15 +9,15 @@ from ...utils import _class_to_string
 class BaseSetCoveringMachine(object):
     def __init__(self, model_type, max_rules):
         if model_type == conjunction:
-            self._add_attribute_to_model = self._append_conjunction_model
+            self._add_rule_to_model = self._append_conjunction_model
             self.model_type = conjunction
         elif model_type == disjunction:
-            self._add_attribute_to_model = self._append_disjunction_model
+            self._add_rule_to_model = self._append_disjunction_model
             self.model_type = disjunction
         else:
             raise ValueError("Unsupported model type.")
 
-        self.max_attributes = max_rules
+        self.max_rules = max_rules
         self._flags = {}
         super(BaseSetCoveringMachine, self).__init__()
 
@@ -38,53 +38,53 @@ class BaseSetCoveringMachine(object):
             positive_example_idx = negative_example_idx
             negative_example_idx = tmp
 
-        logging.debug("Got " + str(len(rules)) + " binary attributes.")
+        logging.debug("Got " + str(len(rules)) + " binary rules.")
         if rule_classifications.shape[1] != len(rules):
             raise ValueError("The number of rules must match between rule_classifications and rules.")
 
-        # Validate the attribute blacklist
+        # Validate the rule blacklist
         if rule_blacklist is not None:
             rule_blacklist = np.unique(rule_blacklist)
             if len(rule_blacklist) == rule_classifications.shape[1]:
                 raise ValueError("The blacklist cannot include all the rules.")
             logging.debug("The following rules are blacklisted and will not be considered:" + str(rule_blacklist))
 
-        model_attributes_idx = []  # Contains the index of the attributes in the model
-        while len(negative_example_idx) > 0 and len(self.model) < self.max_attributes:
+        model_rules_idx = []  # Contains the index of the rules in the model
+        while len(negative_example_idx) > 0 and len(self.model) < self.max_rules:
             iteration_info = {}
 
             utilities, \
             positive_error_count, \
-            negative_cover_count = self._get_binary_attribute_utilities(
+            negative_cover_count = self._get_binary_rule_utilities(
                 rule_classifications=rule_classifications,
                 positive_example_idx=positive_example_idx,
                 negative_example_idx=negative_example_idx,
                 **utility_function_additional_args)
 
-            # Exclude the attributes in the blacklist
+            # Exclude the rules in the blacklist
             if rule_blacklist is not None:
                 utilities[rule_blacklist] = -np.infty
 
-            # Find all the indexes of all attributes with the best utility
+            # Find all the indexes of all rules with the best utility
             iteration_info["utility_max"] = np.max(utilities)
             iteration_info["utility_argmax"] = np.where(utilities == iteration_info["utility_max"])[0]
             iteration_info["utility_argmax_positive_error_counts"] = positive_error_count[iteration_info["utility_argmax"]]
             iteration_info["utility_argmax_negative_cover_counts"] = negative_cover_count[iteration_info["utility_argmax"]]
 
-            # Do not select attributes that cover no negative examples and make errors on no positive examples
+            # Do not select rules that cover no negative examples and make errors on no positive examples
             best_utility_idx = iteration_info["utility_argmax"][np.logical_or(negative_cover_count[iteration_info["utility_argmax"]] != 0, positive_error_count[iteration_info["utility_argmax"]] != 0)]
             if len(best_utility_idx) == 0:
-                logging.debug("The attribute of maximal utility does not cover negative examples or make errors" +
+                logging.debug("The rule of maximal utility does not cover negative examples or make errors" +
                                     " on positive examples. It will not be added to the model. Stopping here.")
                 break
 
             elif len(best_utility_idx) == 1:
-                best_attribute_idx = best_utility_idx[0]
-                iteration_info["tiebreaker_optimal_idx"] = best_attribute_idx
+                best_rule_idx = best_utility_idx[0]
+                iteration_info["tiebreaker_optimal_idx"] = best_rule_idx
 
             elif len(best_utility_idx) > 1:
                 if tiebreaker is not None:
-                    best_attribute_idx = tiebreaker(best_utility_idx,
+                    best_rule_idx = tiebreaker(best_utility_idx,
                                                     rule_classifications,
                                                     positive_error_count[best_utility_idx],
                                                     negative_cover_count[best_utility_idx],
@@ -93,31 +93,31 @@ class BaseSetCoveringMachine(object):
                 else:
                     # Default tie breaker
                     training_risk_decrease = 1.0 * negative_cover_count[best_utility_idx] - positive_error_count[best_utility_idx]
-                    best_attribute_idx = best_utility_idx[training_risk_decrease == training_risk_decrease.max()]
+                    best_rule_idx = best_utility_idx[training_risk_decrease == training_risk_decrease.max()]
                     del training_risk_decrease
 
-                iteration_info["tiebreaker_optimal_idx"] = best_attribute_idx
-                best_attribute_idx = best_attribute_idx[0]  # If many are equivalent, just take the first one.
+                iteration_info["tiebreaker_optimal_idx"] = best_rule_idx
+                best_rule_idx = best_rule_idx[0]  # If many are equivalent, just take the first one.
             del best_utility_idx
 
-            iteration_info["selected_attribute_idx"] = best_attribute_idx
+            iteration_info["selected_rule_idx"] = best_rule_idx
 
-            logging.debug("Greatest utility is " + str(utilities[best_attribute_idx]))
+            logging.debug("Greatest utility is " + str(utilities[best_rule_idx]))
             # Save the computation if verbose is off
-            logging.debug("There are " + str(len(iteration_info["utility_argmax"]) - 1) + " attributes with the same utility.")
+            logging.debug("There are " + str(len(iteration_info["utility_argmax"]) - 1) + " rules with the same utility.")
             del utilities
 
-            iteration_info["selected_attribute"] = self._add_attribute_to_model(rules[best_attribute_idx])
-            model_attributes_idx.append(best_attribute_idx)
+            iteration_info["selected_rule"] = self._add_rule_to_model(rules[best_rule_idx])
+            model_rules_idx.append(best_rule_idx)
 
-            # Get the best attribute's classification for each example
-            best_attribute_classifications = rule_classifications.get_columns(best_attribute_idx)
+            # Get the best rule's classification for each example
+            best_rule_classifications = rule_classifications.get_columns(best_rule_idx)
 
             logging.debug("Discarding covered negative examples")
-            negative_example_idx = negative_example_idx[best_attribute_classifications[negative_example_idx] != 0]
+            negative_example_idx = negative_example_idx[best_rule_classifications[negative_example_idx] != 0]
 
             logging.debug("Discarding misclassified positive examples")
-            positive_example_idx = positive_example_idx[best_attribute_classifications[positive_example_idx] != 0]
+            positive_example_idx = positive_example_idx[best_rule_classifications[positive_example_idx] != 0]
 
             logging.debug("Remaining negative examples:" + str(len(negative_example_idx)))
             logging.debug("Remaining positive examples:" + str(len(positive_example_idx)))
@@ -128,15 +128,15 @@ class BaseSetCoveringMachine(object):
             if iteration_callback is not None:
                 iteration_callback(iteration_info)
 
-        #Compute the attribute importances
+        #Compute the rule importances
         #TODO: implement this without making multiple calls to get_columns. Use rule_predictions instead.
         # Could implement transparent sorting and desorting of the indexes in get_columns.
-        self.attribute_importances = np.zeros(len(model_attributes_idx), dtype=np.float)
-        rule_predictions = rule_classifications.get_columns(sorted(model_attributes_idx)) # Watch out (sorted for hdf5 slicing...)
+        self.rule_importances = np.zeros(len(model_rules_idx), dtype=np.float)
+        rule_predictions = rule_classifications.get_columns(sorted(model_rules_idx)) # Watch out (sorted for hdf5 slicing...)
         model_predictions = np.prod(rule_predictions, axis=1)
-        for i, idx in enumerate(model_attributes_idx):
+        for i, idx in enumerate(model_rules_idx):
             model_neg_prediction_idx = np.where(model_predictions == 0)[0]
-            self.attribute_importances[i] = float(len(model_neg_prediction_idx) -
+            self.rule_importances[i] = float(len(model_neg_prediction_idx) -
                                                   rule_classifications.get_columns(idx)[model_neg_prediction_idx].sum()) / len(model_neg_prediction_idx)
 
     def predict(self, X):
@@ -153,16 +153,16 @@ class BaseSetCoveringMachine(object):
         """
         return self._predict(X)
 
-    def _append_conjunction_model(self, new_attribute):
-        self.model.add(new_attribute)
-        logging.debug("Attribute added to the model: " + str(new_attribute))
-        return new_attribute
+    def _append_conjunction_model(self, new_rule):
+        self.model.add(new_rule)
+        logging.debug("Rule added to the model: " + str(new_rule))
+        return new_rule
 
-    def _append_disjunction_model(self, new_attribute):
-        new_attribute = new_attribute.inverse()
-        self.model.add(new_attribute)
-        logging.debug("Attribute added to the model: " + str(new_attribute))
-        return new_attribute
+    def _append_disjunction_model(self, new_rule):
+        new_rule = new_rule.inverse()
+        self.model.add(new_rule)
+        logging.debug("Rule added to the model: " + str(new_rule))
+        return new_rule
 
     def _is_fitted(self):
         return len(self.model) > 0
@@ -197,8 +197,8 @@ class SetCoveringMachine(BaseSetCoveringMachine):
         The type of model to be built.
     p: float, default=1.0
         A parameter to control the importance of making prediction errors on positive examples in the utility function.
-    max_attributes: int, default=10
-        The maximum number of binary attributes to include in the model.
+    max_rules: int, default=10
+        The maximum number of binary rules to include in the model.
     verbose: bool, default=False
         Sets verbose mode on/off.
     """
@@ -215,7 +215,7 @@ class SetCoveringMachine(BaseSetCoveringMachine):
 
         self.p = p
 
-    def _get_binary_attribute_utilities(self, rule_classifications, positive_example_idx, negative_example_idx):
+    def _get_binary_rule_utilities(self, rule_classifications, positive_example_idx, negative_example_idx):
         logging.debug("Counting covered negative examples")
         negative_cover_counts = negative_example_idx.shape[0] - rule_classifications.sum_rows(negative_example_idx)
 
