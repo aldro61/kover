@@ -71,30 +71,32 @@ Kover then uses the obtained model to predict the phenotype of the genomes in th
 For this example, the obtained model is:
 
 ```
-Absence(GCGCCGACAGTCGGCGCTTGTGGGTCAACCC) OR Absence(ACCAGAACAACCCGCTGTCGGGGTTGACCCA)
+Absence(GCGCCGACAGTCGGCGCTTGTGGGTCAACCC) [Importance: 1.00]
 ```
 
-meaning that if any of these sequences is not present in the genome, the isolate can be considered resistant to Rifampicin.
+meaning that if this sequence is not present in the genome, then the isolate can be considered resistant to Rifampicin.
 Notice the simplicity and interpretability of the obtained model. The testing set metrics for this model are:
 
-** These are not the good metric values. Will be updated shortly. **
-
 ```
-Error Rate: 0.51064
-Sensitivity: 1.0
-Specificity: 0.0
-Precision: 0.48936
-Recall: 1.0
-F1 Score: 0.65714
-True Positives: 23.0
-True Negatives: 0.0
-False Positives: 24.0
-False Negatives: 0.0
+Error Rate: 0.01429
+Sensitivity: 0.9697
+Specificity: 1.0
+Precision: 1.0
+Recall: 0.9697
+F1 Score: 0.98462
+True Positives: 32.0
+True Negatives: 37.0
+False Positives: 0.0
+False Negatives: 1.0
 ```
 
 ## Subsequent analysis of the model
 
-Something about blast here.
+You could use [Nucleotide Blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch) to identify the genomic regions corresponding the sequences targeted by the obtained model. 
+In this case, the sequence GCGCCGACAGTCGGCGCTTGTGGGTCAACCC corresponds to the *rpoB* gene, which encodes the RNA polymerase
+beta subunit. This k-mer falls exactly in the Rifampicin resistance determining region of the gene. Moreover, the fact
+that the selected rule is an absence rule suggests that there are many variant sequences at this position that confer
+resistance to Rifampicin. An absence rule can concisely regroup many presence rules.
 
 ## Predicting with the obtained model
 
