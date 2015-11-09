@@ -2,7 +2,7 @@
 title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
 keywords: start, introduction, example, kover
-last_updated: August 12, 2015
+last_updated: November 9, 2015
 summary: "This page will walk you through an example application of Kover."
 ---
 
