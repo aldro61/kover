@@ -11,7 +11,7 @@ summary: "This page will walk you through the installation of Kover."
 Kover is written in Python and Cython. Most of its dependencies should be installed automatically when 
 running the installer. You can also install these dependencies manually or use your operating system's package manager.
 
-What **you need to install yourself**:
+What you need to install <span style="color:red">youself</span>:
 
 * [GNU C++ compiler (g++)](https://gcc.gnu.org/)
 * [GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)
