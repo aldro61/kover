@@ -8,18 +8,21 @@ summary: "This page will walk you through the installation of Kover."
 
 ## Prerequisites
  
-Kover is written in Python and Cython. Most of its dependencies should be installed automatically when 
-running the installer. You can also install these dependencies manually or use your operating system's package manager.
+Kover is written in Python and Cython. We provide an installer that should install most of the required Python packages 
+automatically. However, some dependencies must be installed manually or using **your operating system's 
+package manager** (e.g.: [apt-get](http://linux.die.net/man/8/apt-get) on Linux and [Homebrew](http://brew.sh/) on Mac).
+For each dependency, a link to further installation instructions is provided.
 
-What you need to install **<span style="color:red">yourself</span>**:
+### Need to install yourself
 
 * [GNU C++ compiler (g++)](https://gcc.gnu.org/)
 * [GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)
 * [The HDF5 library](https://www.hdfgroup.org/HDF5/release/obtain5.html)
+* [Numpy](http://docs.scipy.org/doc/numpy/user/install.html) (recommended)
 * [Python 2.7.x](https://www.python.org/download/releases/2.7/)
-* [Python header files](https://docs.python.org/2/c-api/intro.html)
+* [Python development headers](https://docs.python.org/2/c-api/intro.html)
 
-What should be installed automatically:
+### Will be installed automatically
 
 * [Cython](http://docs.cython.org/src/quickstart/install.html)
 * [H5py](http://docs.h5py.org/en/latest/build.html)
@@ -29,22 +32,22 @@ What should be installed automatically:
 
 ## Linux and Mac
 
-Download the latest version of Kover from the GitHub repository:
+Download the latest version of Kover from the GitHub repository by clicking [here](https://github.com/aldro61/kover/archive/master.zip), or alternatively:
 
 ```
  wget https://github.com/aldro61/kover/archive/master.zip
 ```
 
-or alternatively
+or
 
 ```
 git clone https://github.com/aldro61/kover.git
 ```
 
-Then, in the *kover* directory, run the installer:
+Then, in the *kover* directory, run the installer (you might have to run it as super user):
 
 ```
-sh ./install.sh
+./install.sh
 ```
 
 This will build and install Kover and its dependencies. A *bin* directory containing the Kover executable will be created.
