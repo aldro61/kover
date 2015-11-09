@@ -24,7 +24,7 @@ class KmerRule(object):
         self.type = type
 
     def classify(self, X):
-        if type == "absence":
+        if self.type == "absence":
             return (X[:, self.kmer_index] == 0).astype(np.uint8)
         else:
             return (X[:, self.kmer_index] == 1).astype(np.uint8)
