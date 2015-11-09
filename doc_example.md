@@ -37,6 +37,14 @@ of the genomes contained in the dataset, use:
 kover dataset info --dataset example.kover --genome-ids
 ```
 
+and to print the number of k-mers in the dataset, use:
+
+```
+kover dataset info --dataset example.kover --kmer-count
+```
+
+which prints 9701935!
+
 ## Splitting the dataset
 
 In order to measure the accuracy of the model obtained using Kover, we must split the dataset into a training set and a 
