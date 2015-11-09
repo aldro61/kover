@@ -43,7 +43,7 @@ and to print the number of k-mers in the dataset, use:
 kover dataset info --dataset example.kover --kmer-count
 ```
 
-which prints 9701935!
+Your dataset contains 9 701 935 k-mers!
 
 ## Splitting the dataset
 
