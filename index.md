@@ -3,6 +3,7 @@ title: Introduction
 tags: 
   - "getting-started"
 type: first_page
+toc: false
 homepage: true
 published: true
 ---
