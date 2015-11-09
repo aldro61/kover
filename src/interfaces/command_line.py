@@ -143,8 +143,8 @@ class KoverDatasetTool(object):
             logging.basicConfig(level=logging.DEBUG,
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
-        if args.randomseed is None:
-            args.randomseed = randint(0, 4294967295)
+        if args.random_seed is None:
+            args.random_seed = randint(0, 4294967295)
 
         if args.progress:
             progress_vars = {"current_task": None, "pbar": None}
@@ -162,8 +162,8 @@ class KoverDatasetTool(object):
 
         split(input=args.dataset,
               identifier=args.id,
-              train_prop=args.trainsize,
-              random_seed=args.randomseed,
+              train_prop=args.train_size,
+              random_seed=args.random_seed,
               n_folds=args.folds,
               progress_callback=progress)
 
@@ -218,7 +218,7 @@ The most commonly used commands are:
         parser.add_argument('-p', '--p', type=float, nargs='+', help='Hyperparameter: The value of the trade-off used to score the rules. Single value or multiple space separated values.', required=True)
         parser.add_argument('-m', '--max-rules', type=int, help='The maximum number of rules to include in a model.', required=True)
         parser.add_argument('-c', '--hp-choice', choices=['bound', 'cv', 'none'], help='The strategy used to select the hyperparameter values.', default='cv', required=False)
-        parser.add_argument('-P', '--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. Use 1 unless you are using a parallel file system (see documentation).', default=1, required=False)
+        parser.add_argument('-P', '--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. Make sure your computer has enough RAM and that your storage device is not a bottleneck (see documentation).', default=1, required=False)
         parser.add_argument('-o', '--output-dir', help='The directory in which to store Kover\'s output. Will be created if it does not exist.', default='.', required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true', required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true', required=False)
@@ -269,14 +269,15 @@ The most commonly used commands are:
 
         start_time = time()
         best_hp, best_hp_score, \
-        train_metrics, test_metrics, model = learn(dataset_file=args.dataset,
-                                                   split_name=args.split,
-                                                   model_type=args.model_type,
-                                                   p=args.p,
-                                                   max_rules=args.max_rules,
-                                                   parameter_selection=args.hp_choice,
-                                                   n_cpu=args.n_cpu,
-                                                   progress_callback=progress)
+        train_metrics, test_metrics, \
+        model, rule_importances = learn(dataset_file=args.dataset,
+                                        split_name=args.split,
+                                        model_type=args.model_type,
+                                        p=args.p,
+                                        max_rules=args.max_rules,
+                                        parameter_selection=args.hp_choice,
+                                        n_cpu=args.n_cpu,
+                                        progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
         if args.progress:
@@ -302,8 +303,8 @@ The most commonly used commands are:
         report += "Dataset UUID: %s\n" % dataset.uuid
         report += "Phenotype: %s\n" % dataset.phenotype.name.title()
         report += "Split: %s\n" % args.split
-        report += "Number of genomes used for training: %d (Positive: %d, Negative: %d)\n" % (len(dataset.get_split(args.split).train_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 0).sum())
-        report += "Number of genomes used for testing: %d (Positive: %d, Negative: %d)\n" % (len(dataset.get_split(args.split).test_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum())
+        report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).train_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 0).sum())
+        report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).test_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum())
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
@@ -321,7 +322,7 @@ The most commonly used commands are:
             report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
         report += "\n"
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-"*(18 + len(model.type) + len(str(len(model)))) + "\n"
-        report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join([str(rule) for rule in model])
+        report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join(["%s [Importance: %.2f]" % (str(rule), importance) for rule, importance in zip(model, rule_importances)])
         report += "\n"
 
         print report
@@ -349,8 +350,8 @@ The most commonly used commands are:
 
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
-            for i, rule in enumerate(model):
-                f.write(">rule-%d %s\n%s\n\n" % (i + 1, rule.type, rule.kmer_sequence))
+            for i, (rule, importance) in enumerate(zip(model, rule_importances)):
+                f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
         #TODO: save equivalent rules
 
 if __name__ == '__main__':
