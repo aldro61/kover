@@ -93,7 +93,7 @@ False Negatives: 1.0
 ## Subsequent analysis of the model
 
 You could use [Nucleotide Blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch) to identify the genomic regions corresponding the sequences targeted by the obtained model. 
-In this case, the sequence GCGCCGACAGTCGGCGCTTGTGGGTCAACCC corresponds to the *rpoB* gene, which encodes the RNA polymerase
+In this case, the sequence [GCGCCGACAGTCGGCGCTTGTGGGTCAACCC](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106) corresponds to the *rpoB* gene, which encodes the RNA polymerase
 beta subunit. This k-mer falls exactly in the Rifampicin resistance determining region of the gene. Moreover, the fact
 that the selected rule is an absence rule suggests that there are many variant sequences at this position that confer
 resistance to Rifampicin. An absence rule can concisely regroup many presence rules.
