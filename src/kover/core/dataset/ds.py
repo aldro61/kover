@@ -68,20 +68,20 @@ class KoverDataset(object):
     @property
     def splits(self):
         dataset = self.dataset_open()
-        return [KoverDatasetSplit(split.attrs["name"],
+        return [KoverDatasetSplit(split_name,
                                   split.attrs["train_proportion"],
                                   split["train_genome_idx"],
                                   split["test_genome_idx"],
                                   split["unique_risks"],
                                   split["unique_risk_by_kmer"],
                                   split["unique_risk_by_anti_kmer"],
-                                  [KoverDatasetFold(fold.name,
+                                  [KoverDatasetFold(fold_name,
                                                     fold["train_genome_idx"],
                                                     fold["test_genome_idx"],
                                                     fold["unique_risks"],
                                                     fold["unique_risk_by_kmer"],
-                                                    fold["unique_risk_by_anti_kmer"]) for fold in split["folds"].itervalues()],
-                                  split.attrs["random_seed"]) for split in dataset["splits"].itervalues()]
+                                                    fold["unique_risk_by_anti_kmer"]) for fold_name, fold in split["folds"].iteritems()],
+                                  split.attrs["random_seed"]) for split_name, split in dataset["splits"].iteritems()]
 
     @property
     def uuid(self):
@@ -91,7 +91,7 @@ class KoverDataset(object):
     def get_split(self, name):
         dataset = self.dataset_open()
         split = dataset["splits"][name]
-        return KoverDatasetSplit(split.name,
+        return KoverDatasetSplit(name,
                                  split.attrs["train_proportion"],
                                  split["train_genome_idx"],
                                  split["test_genome_idx"],
@@ -99,12 +99,12 @@ class KoverDataset(object):
                                  split["unique_risk_by_kmer"],
                                  split["unique_risk_by_anti_kmer"],
                                  [] if not "folds" in split
-                                 else [KoverDatasetFold(fold.name,
+                                 else [KoverDatasetFold(fold_name,
                                                         fold["train_genome_idx"],
                                                         fold["test_genome_idx"],
                                                         fold["unique_risks"],
                                                         fold["unique_risk_by_kmer"],
-                                                        fold["unique_risk_by_anti_kmer"]) for fold in split["folds"].itervalues()],
+                                                        fold["unique_risk_by_anti_kmer"]) for fold_name, fold in split["folds"].iteritems()],
                                  split.attrs["random_seed"])
 
 class KoverDatasetPhenotype(object):
