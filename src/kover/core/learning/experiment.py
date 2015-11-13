@@ -59,7 +59,7 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
     kmer_sequence_by_rule = kmer_sequence_by_rule[sort_by_idx]
 
     readdressed_kmer_idx_by_rule = dict((s, i) for i, s in enumerate(kmer_sequence_by_rule))
-    readdressed_model = _readdress_model(model=model, kmer_idx=readdressed_kmer_idx_by_rule)
+    readdressed_model = _readdress_model(model=model, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule)
 
     X = _unpack_binary_bytes_from_ints(kmer_matrix[:, kmer_idx_by_rule.tolist()])
     train_predictions = readdressed_model.predict(X[train_example_idx])
@@ -69,13 +69,13 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
 
     return train_predictions, test_predictions
 
-def _readdress_model(model, kmer_idx):
+def _readdress_model(model, rule_new_idx_by_kmer_seq):
     """
     Produces a new model that looks for the k-mers at different locations in the input
     """
     new_model = deepcopy(model)
     for r in new_model:
-        r.kmer_index = kmer_idx[r.kmer_sequence]
+        r.kmer_index = rule_new_idx_by_kmer_seq[r.kmer_sequence]
     return new_model
 
 def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
@@ -136,7 +136,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     best_score_idx = np.argmin(score_by_model_length)
     best_hp_score = score_by_model_length[best_score_idx]
     best_model_length = best_score_idx + 1
-    logging.debug("Returning")
+
     return (model_type, p, best_model_length), best_hp_score
 
 def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules, n_cpu, progress_callback,
