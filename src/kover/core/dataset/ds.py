@@ -68,7 +68,7 @@ class KoverDataset(object):
     @property
     def splits(self):
         dataset = self.dataset_open()
-        return [KoverDatasetSplit(split.attrs["name"],
+        return [KoverDatasetSplit(split.name,
                                   split.attrs["train_proportion"],
                                   split["train_genome_idx"],
                                   split["test_genome_idx"],
