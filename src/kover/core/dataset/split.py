@@ -20,7 +20,7 @@ def split(input, identifier, train_prop, random_seed, n_folds, warning_callback=
             raise exception
         error_callback = normal_raise
     if progress_callback is None:
-        progress_callback = lambda p: None
+        progress_callback = lambda p, m: None
 
     random_generator = np.random.RandomState(random_seed)
 
