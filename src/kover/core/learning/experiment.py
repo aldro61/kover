@@ -88,8 +88,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     rule_classifications = KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count)
 
     def _iteration_callback(iteration_infos, tmp_model, test_predictions_by_model_length, test_example_idx):
-        selected_rule = rules[iteration_infos["selected_rule_idx"]]
-        tmp_model.add(selected_rule)
+        tmp_model.add(iteration_infos["selected_rule"])
         _, test_predictions = _predictions(tmp_model, dataset.kmer_matrix, [], test_example_idx)
         test_predictions_by_model_length.append(test_predictions)
 
@@ -160,7 +159,7 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
         progress_callback("Cross-validation", n_completed / n_hp_combinations)
         if (score < best_hp_score) or \
            (score == best_hp_score and hp[2] < best_hp["max_rules"]) or \
-           (score == best_hp_score and abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
+           (score == best_hp_score and hp[2] == best_hp["max_rules"] and abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
             best_hp["model_type"] = hp[0]
             best_hp["p"] = hp[1]
             best_hp["max_rules"] = hp[2]
