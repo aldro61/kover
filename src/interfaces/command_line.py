@@ -304,7 +304,7 @@ The most commonly used commands are:
         report += "Phenotype: %s\n" % dataset.phenotype.name.title()
         report += "Split: %s\n" % args.split
         report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).train_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 0).sum())
-        report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).test_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum())
+        report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).test_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0, (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0)
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
@@ -317,10 +317,18 @@ The most commonly used commands are:
         report += "p: %f\n" % best_hp["p"]
         report += "Maximum number of rules: %d\n" % best_hp["max_rules"]
         report += "\n"
-        report += "Metrics\n" + "-"*7 + "\n"
+        # Print the training set metrics
+        report += "Metrics (training data)\n" + "-"*23 + "\n"
         for key, alias in metric_aliases:
-            report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
+            report += "%s: %s\n" % (str(alias), str(round(train_metrics[key][0], 5)))
         report += "\n"
+        # Print the testing set metrics
+        if test_metrics is not None:
+            report += "Metrics (testing data)\n" + "-"*22 + "\n"
+            for key, alias in metric_aliases:
+                report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
+            report += "\n"
+
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-"*(18 + len(model.type) + len(str(len(model)))) + "\n"
         report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join(["%s [Importance: %.2f]" % (str(rule), importance) for rule, importance in zip(model, rule_importances)])
         report += "\n"

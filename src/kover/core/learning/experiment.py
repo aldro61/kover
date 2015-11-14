@@ -247,6 +247,10 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
     train_predictions, test_predictions = _predictions(predictor.model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)
     train_metrics = _get_metrics(train_predictions, dataset.phenotype.metadata[train_example_idx])
-    test_metrics = _get_metrics(test_predictions, dataset.phenotype.metadata[test_example_idx])
+
+    if len(test_example_idx) > 0:
+        test_metrics = _get_metrics(test_predictions, dataset.phenotype.metadata[test_example_idx])
+    else:
+        test_metrics = None
 
     return best_hp, best_hp_score, train_metrics, test_metrics, predictor.model, predictor.rule_importances
