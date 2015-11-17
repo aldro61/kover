@@ -345,12 +345,18 @@ The most commonly used commands are:
         # Write metrics (not user friendly) [json]
         results = {"data": {"uuid": dataset.uuid,
                             "split": args.split},
-                   "cv": {"best_hp": best_hp,
-                          "best_hp_score": best_hp_score,
+                   "cv": {"best_hp": {"values": best_hp,
+                                      "score": best_hp_score},
+                          "candidate_hp": {"model_type": args.model_type,
+                                           "p": args.p,
+                                           "max_rules": args.max_rules},
                           "strategy": args.hp_choice},
-                   "metrics": {
-                       "train": train_metrics,
-                       "test": test_metrics},
+                   "metrics": {"train": train_metrics,
+                               "test": test_metrics},
+                   "model": {"n_rules": len(model),
+                             "rules": [str(r) for r in model],
+                             "rule_importances": rule_importances.tolist(),
+                             "type": best_hp["model_type"]},
                    "running_time": running_time.seconds}
 
         with open(join(args.output_dir, 'results.json'), 'w') as f:
