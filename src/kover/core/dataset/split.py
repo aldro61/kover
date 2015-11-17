@@ -67,8 +67,8 @@ def split(input, identifier, train_prop, random_seed, n_folds, warning_callback=
     train_pos_idx = train_idx[labels[train_idx] == 1]
     train_neg_idx = train_idx[labels[train_idx] == 0]
     kmer_matrix = KmerRuleClassifications(dataset["kmer_matrix"], len(labels))
-    kmer_risks = (labels[train_pos_idx].sum() - kmer_matrix.sum_rows(train_pos_idx)).astype(np.float) # n positive errors
-    kmer_risks += kmer_matrix.sum_rows(train_neg_idx) # n negative errors
+    kmer_risks = (len(train_pos_idx) - kmer_matrix.sum_rows(train_pos_idx)[: dataset["kmer_matrix"].shape[1]]).astype(np.float) # n positive errors
+    kmer_risks += kmer_matrix.sum_rows(train_neg_idx)[: dataset["kmer_matrix"].shape[1]] # n negative errors
     kmer_risks /= len(train_idx) # n examples
     np.round(kmer_risks, 5, out=kmer_risks)
     anti_kmer_risks = 1.0 - kmer_risks
@@ -106,8 +106,8 @@ def split(input, identifier, train_prop, random_seed, n_folds, warning_callback=
             labels = dataset["phenotype"][...]
             fold_train_pos_idx = fold_train_idx[labels[fold_train_idx] == 1]
             fold_train_neg_idx = fold_train_idx[labels[fold_train_idx] == 0]
-            kmer_risks = (labels[fold_train_pos_idx].sum() - kmer_matrix.sum_rows(fold_train_pos_idx)).astype(np.float) # n positive errors
-            kmer_risks += kmer_matrix.sum_rows(fold_train_neg_idx) # n negative errors
+            kmer_risks = (len(fold_train_pos_idx) - kmer_matrix.sum_rows(fold_train_pos_idx)[: dataset["kmer_matrix"].shape[1]]).astype(np.float) # n positive errors
+            kmer_risks += kmer_matrix.sum_rows(fold_train_neg_idx)[: dataset["kmer_matrix"].shape[1]] # n negative errors
             kmer_risks /= len(fold_train_idx) # n examples
             np.round(kmer_risks, 5, out=kmer_risks)
             anti_kmer_risks = 1.0 - kmer_risks
