@@ -60,7 +60,7 @@ The following command creates a split of the data called "example_split", which 
 1/3 for testing. It also creates 5 cross-validation folds. The data splitting is done randomly with 42 as the random seed.
 
 ```
-kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 42 --progress
+kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 62 --progress
 ```
 
 ## Learning a model
@@ -79,22 +79,25 @@ Kover then uses the obtained model to predict the phenotype of the genomes in th
 For this example, the obtained model is:
 
 ```
-Absence(GCGCCGACAGTCGGCGCTTGTGGGTCAACCC) [Importance: 1.00]
+Absence(CCCAGCGCCGACAGTCGGCGCTTGTGGGTCA) [Importance: 0.97]
+OR
+Absence(CGCAACAAGTCAGCGTCCCTGAGGGGGGGCA) [Importance: 0.36]
 ```
 
-meaning that if this sequence is not present in the genome, then the isolate can be considered resistant to Rifampicin.
-Notice the simplicity and interpretability of the obtained model. The testing set metrics for this model are:
+meaning that if any of these sequences is not present in the genome, then the isolate can be considered resistant to Rifampicin.
+Notice the simplicity and interpretability of the obtained model. 
+The testing set metrics for this model are:
 
 ```
-Error Rate: 0.01429
-Sensitivity: 0.9697
-Specificity: 1.0
-Precision: 1.0
-Recall: 0.9697
-F1 Score: 0.98462
-True Positives: 32.0
-True Negatives: 37.0
-False Positives: 0.0
+Error Rate: 0.04255
+Sensitivity: 0.95652
+Specificity: 0.95833
+Precision: 0.95652
+Recall: 0.95652
+F1 Score: 0.95652
+True Positives: 22.0
+True Negatives: 23.0
+False Positives: 1.0
 False Negatives: 1.0
 ```
 
