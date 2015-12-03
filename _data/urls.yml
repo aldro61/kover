@@ -27,7 +27,7 @@ doc_installation:
 doc_example:
   title: "Example"
   url: "doc_example.html"
-  link: "<a href='doc_example.html'>Example: Predicting antibiotic resistance whole bacterial genomes</a>"
+  link: "<a href='doc_example.html'>Example: Predicting antibiotic resistance</a>"
 
 
 
