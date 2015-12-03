@@ -1,7 +1,7 @@
 ---
 title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
-keywords: start, introduction, example, kover
+keywords: start, introduction, example, kover, genomics, k-mer, machine learning
 last_updated: November 9, 2015
 summary: "This page will walk you through an example application of Kover."
 ---
@@ -21,7 +21,7 @@ The genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolu
 
 ## Creating a dataset
 
-Before learning a Rifampicin resistance model from the example data, we must package the genomic and phenotypic data into a [Kover Dataset](). 
+Before learning a model from the example data, we must package the genomic and phenotypic data into a [Kover Dataset](). 
 To convert the example data into such a dataset, use the following command:
 
 ```
@@ -65,8 +65,9 @@ kover dataset split --dataset example.kover --id example_split --train-size 0.66
 
 ## Learning a model
 
-Now that we have created and splitted the dataset, we are ready to learn a Rifampicin resistance model. The [kover learn]()
-command is used for learning. The following command tells Kover to learn a model containing at most 5 rules, to try both
+Now that we have created and splitted the dataset, we are ready to learn a model, i.e., a predictive model of Rifampicin resistance in *Mycobacterium tuberculosis*. 
+The [kover learn]() command is used to learn models. 
+The following command tells Kover to learn a model containing at most 5 rules, to try both
 conjunction and disjunction models (see [model types](todo)) and the values 0.1, 1.0 and 10.0 for the *p* 
 hyperparameter (see [hyperparameters](todo)), while using cross-validation as the hyperparameter selection strategy. 
 Moreover, it distributes the cross-validation on 2 CPUs.
@@ -104,7 +105,7 @@ False Negatives: 1.0
 ## Subsequent analysis of the model
 
 You could use [Nucleotide Blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch) to identify the genomic regions corresponding the sequences targeted by the obtained model. 
-In this case, the sequence [GCGCCGACAGTCGGCGCTTGTGGGTCAACCC](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106) corresponds to the *rpoB* gene, which encodes the RNA polymerase
+In this case, the sequence [CCCAGCGCCGACAGTCGGCGCTTGTGGGTCA](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=80&to=110) corresponds to the *rpoB* gene, which encodes the RNA polymerase
 beta subunit. This k-mer falls exactly in the Rifampicin resistance determining region of the gene. Moreover, the fact
 that the selected rule is an absence rule suggests that there are many variant sequences at this position that confer
 resistance to Rifampicin. An absence rule can concisely regroup many presence rules.
