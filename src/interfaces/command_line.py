@@ -245,9 +245,9 @@ class CommandLineInterface(object):
         self.available_commands = ['dataset', 'learn']
 
         parser = argparse.ArgumentParser(description=KOVER_DESCRIPTION)
-        parser.add_argument('--cite', required=False, action='store_true')
-        parser.add_argument('--license', required=False, action='store_true')
-        parser.add_argument('--version', required=False, action='store_true')
+        parser.add_argument('--cite', required=False, action='store_true', help='Show the references to cite if you use Kover in your work')
+        parser.add_argument('--license', required=False, action='store_true', help='Show the license for your release of Kover')
+        parser.add_argument('--version', required=False, action='store_true', help='Show the version of your release of Kover')
         parser.add_argument('command', help='Available commands', choices=self.available_commands)
 
         # If no argument has been specified, default to help
@@ -282,6 +282,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             elif args.cite:
                 print \
 """
+If you used Kover in your work, please cite our paper:
+
 Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
 """
         else:
