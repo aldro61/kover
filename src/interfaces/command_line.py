@@ -24,6 +24,7 @@ import logging
 
 from sys import argv
 
+KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
 VERSION = "0.1"
 
 class KoverDatasetTool(object):
@@ -32,7 +33,7 @@ class KoverDatasetTool(object):
 
     def create(self):
         parser = argparse.ArgumentParser(prog="kover dataset create",
-                                         description='Creates a Kover dataset from genomic data and optionally phenotypic metadata.')
+                                         description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
         parser.add_argument('-t', '--genome-type', choices=['tsv'], help='The type of source for the genomic data.',
                             required=True)
         parser.add_argument('-g', '--genome-source', help='The source of the genomic data.', required=True)
@@ -46,6 +47,11 @@ class KoverDatasetTool(object):
                             required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true',
                             required=False)
+
+        # If no argument has been specified, default to help
+        if len(argv) == 3:
+            argv.append("--help")
+
         args = parser.parse_args(argv[3:])
 
         # Input validation logic
@@ -92,7 +98,7 @@ class KoverDatasetTool(object):
 
     def info(self):
         # TODO: list the available splits
-        parser = argparse.ArgumentParser(prog="kover dataset info", description='Prints information about a dataset.')
+        parser = argparse.ArgumentParser(prog="kover dataset info", description='Prints information about the content of a dataset')
         parser.add_argument('-d', '--dataset', help='A Kover dataset.', required=True)
         parser.add_argument('-a', '--all', help='Print all the available information.', action='store_true',
                             required=False)
@@ -117,6 +123,11 @@ class KoverDatasetTool(object):
         parser.add_argument('-u', '--uuid', help='Print the unique identifier of the Kover dataset (data independent).')
         parser.add_argument('-z', '--compression', help='Print the compression options.', action='store_true',
                             required=False)
+
+        # If no argument has been specified, default to help
+        if len(argv) == 3:
+            argv.append("--help")
+
         args = parser.parse_args(argv[3:])
 
         # Package imports
@@ -162,7 +173,7 @@ class KoverDatasetTool(object):
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
-                                         description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds.')
+                                         description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds')
         parser.add_argument('-d', '--dataset', help='The Kover dataset to split.', required=True)
         parser.add_argument('-i', '--id', help='The identifier of the split.', required=True)
         parser.add_argument('-t', '--train-size', type=float,
@@ -178,6 +189,11 @@ class KoverDatasetTool(object):
                             required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true',
                             required=False)
+
+        # If no argument has been specified, default to help
+        if len(argv) == 3:
+            argv.append("--help")
+
         args = parser.parse_args(argv[3:])
 
         # Input validation
@@ -228,11 +244,11 @@ class CommandLineInterface(object):
     def __init__(self):
         self.available_commands = ['dataset', 'learn']
 
-        parser = argparse.ArgumentParser(description="Kover: Learn interpretable computational phenotyping models from k-merized genomic data")
+        parser = argparse.ArgumentParser(description=KOVER_DESCRIPTION)
         parser.add_argument('--cite', required=False, action='store_true')
         parser.add_argument('--license', required=False, action='store_true')
         parser.add_argument('--version', required=False, action='store_true')
-        parser.add_argument('command', help='Command to run', choices=self.available_commands)
+        parser.add_argument('command', help='Available commands', choices=self.available_commands)
 
         # If no argument has been specified, default to help
         if len(argv) == 1:
@@ -280,15 +296,20 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
     def dataset(self):
         dataset_tool = KoverDatasetTool()
 
-        parser = argparse.ArgumentParser(description='Dataset manipulation utilities',
-                                         usage='''%(prog)s dataset <command> [<args>]
+        parser = argparse.ArgumentParser(usage= \
+'''%(prog)s dataset <command> [<args>]
 The most commonly used commands are:
-    create     Creates a Kover datasets from genomic data.
-    split      Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds.
-    info       Prints information about a dataset''')
+    create     Create Kover datasets from genomic data
+    split      Split a Kover dataset file into a training set, a testing set and optionally cross-validation folds
+    info       Get information about the content of a Kover dataset''')
 
         parser.add_argument('command', help='The dataset manipulation to perform',
                             choices=dataset_tool.available_commands)
+
+        # If no argument has been specified, default to help
+        if len(argv) == 2:
+            argv.append("--help")
+
         args = parser.parse_args(argv[2:3])
         getattr(dataset_tool, args.command)()
 
@@ -317,6 +338,11 @@ The most commonly used commands are:
                             required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true',
                             required=False)
+
+        # If no argument has been specified, default to help
+        if len(argv) == 2:
+            argv.append("--help")
+
         args = parser.parse_args(argv[2:])
 
         # Package imports
