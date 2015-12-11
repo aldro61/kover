@@ -34,13 +34,13 @@ class KoverDatasetTool(object):
     def create(self):
         parser = argparse.ArgumentParser(prog="kover dataset create",
                                          description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
-        parser.add_argument('-t', '--genome-type', choices=['tsv'], help='The type of source for the genomic data.',
+        parser.add_argument('--genome-type', choices=['tsv'], help='The type of source for the genomic data.',
                             required=True)
-        parser.add_argument('-g', '--genome-source', help='The source of the genomic data.', required=True)
-        parser.add_argument('-o', '--output', help='The output Kover dataset.', required=True)
-        parser.add_argument('-p', '--phenotype-name', help='The name of the phenotype.', required=False)
-        parser.add_argument('-m', '--phenotype-metadata', help='A file containing the metadata.', required=False)
-        parser.add_argument('-z', '--compression', type=int,
+        parser.add_argument('--genome-source', help='The source of the genomic data.', required=True)
+        parser.add_argument('--output', help='The output Kover dataset.', required=True)
+        parser.add_argument('--phenotype-name', help='The name of the phenotype.', required=False)
+        parser.add_argument('--phenotype-metadata', help='A file containing the metadata.', required=False)
+        parser.add_argument('--compression', type=int,
                             help='The gzip compression level (0 - 9). 0 means no compression. The default value is 4.',
                             default=4, required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true',
@@ -99,29 +99,29 @@ class KoverDatasetTool(object):
     def info(self):
         # TODO: list the available splits
         parser = argparse.ArgumentParser(prog="kover dataset info", description='Prints information about the content of a dataset')
-        parser.add_argument('-d', '--dataset', help='A Kover dataset.', required=True)
-        parser.add_argument('-a', '--all', help='Print all the available information.', action='store_true',
+        parser.add_argument('--dataset', help='A Kover dataset.', required=True)
+        parser.add_argument('--all', help='Print all the available information.', action='store_true',
                             required=False)
-        parser.add_argument('-t', '--genome-type',
+        parser.add_argument('--genome-type',
                             help='Print the type of source from which Kover obtained the genomic data',
                             action='store_true', required=False)
-        parser.add_argument('-g', '--genome-source',
+        parser.add_argument('--genome-source',
                             help='Print the source from which Kover obtained the genomic data.', action='store_true',
                             required=False)
-        parser.add_argument('-i', '--genome-ids', help='Print the genome identifers.', action='store_true',
+        parser.add_argument('--genome-ids', help='Print the genome identifers.', action='store_true',
                             required=False)
-        parser.add_argument('-n', '--genome-count', help='Print the number of genomes.', action='store_true',
+        parser.add_argument('--genome-count', help='Print the number of genomes.', action='store_true',
                             required=False)
-        parser.add_argument('-k', '--kmers', help='Print the k-mer sequences in fasta format.', action='store_true',
+        parser.add_argument('--kmers', help='Print the k-mer sequences in fasta format.', action='store_true',
                             required=False)
-        parser.add_argument('-l', '--kmer-len', help='Print the k-mer length.', action='store_true', required=False)
-        parser.add_argument('-c', '--kmer-count', help='Print the k-mer count.', action='store_true', required=False)
-        parser.add_argument('-p', '--phenotype-name', help='Print the phenotype\'s name.', action='store_true',
+        parser.add_argument('--kmer-len', help='Print the k-mer length.', action='store_true', required=False)
+        parser.add_argument('--kmer-count', help='Print the k-mer count.', action='store_true', required=False)
+        parser.add_argument('--phenotype-name', help='Print the phenotype\'s name.', action='store_true',
                             required=False)
-        parser.add_argument('-m', '--phenotype-metadata', help='Print the file from which the metadata was extracted.',
+        parser.add_argument('--phenotype-metadata', help='Print the file from which the metadata was extracted.',
                             action='store_true', required=False)
-        parser.add_argument('-u', '--uuid', help='Print the unique identifier of the Kover dataset (data independent).')
-        parser.add_argument('-z', '--compression', help='Print the compression options.', action='store_true',
+        parser.add_argument('--uuid', help='Print the unique identifier of the Kover dataset (data independent).')
+        parser.add_argument('--compression', help='Print the compression options.', action='store_true',
                             required=False)
 
         # If no argument has been specified, default to help
@@ -174,15 +174,15 @@ class KoverDatasetTool(object):
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
                                          description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds')
-        parser.add_argument('-d', '--dataset', help='The Kover dataset to split.', required=True)
-        parser.add_argument('-i', '--id', help='The identifier of the split.', required=True)
-        parser.add_argument('-t', '--train-size', type=float,
+        parser.add_argument('--dataset', help='The Kover dataset to split.', required=True)
+        parser.add_argument('--id', help='The identifier of the split.', required=True)
+        parser.add_argument('--train-size', type=float,
                             help='The proportion of the data used for training (default is 0.5).', default=0.5,
                             required=False)
-        parser.add_argument('-r', '--random-seed', type=int,
+        parser.add_argument('--random-seed', type=int,
                             help='The random seed used for the split (If not provided a random value between 0 and 4294967295 will be used).',
                             required=False)
-        parser.add_argument('-f', '--folds', type=int,
+        parser.add_argument('--folds', type=int,
                             help='The number of cross-validation folds (default is 0 for none, the minimum value is 2).',
                             default=0, required=False)
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true',
@@ -317,23 +317,23 @@ The most commonly used commands are:
 
     def learn(self):
         parser = argparse.ArgumentParser(prog='kover learn', description='Learn a model from data')
-        parser.add_argument('-d', '--dataset', help='The Kover dataset to learn from.', required=True)
-        parser.add_argument('-s', '--split',
+        parser.add_argument('--dataset', help='The Kover dataset to learn from.', required=True)
+        parser.add_argument('--split',
                             help='The identifier of the split of the dataset that must be learnt from.', required=True)
-        parser.add_argument('-t', '--model-type', choices=['conjunction', 'disjunction'], nargs='+',
+        parser.add_argument('--model-type', choices=['conjunction', 'disjunction'], nargs='+',
                             help='Hyperparameter: The type of model (conjunction or disjunction) to learn. Single value or multiple space separated values.',
                             required=True)
-        parser.add_argument('-p', '--p', type=float, nargs='+',
+        parser.add_argument('--p', type=float, nargs='+',
                             help='Hyperparameter: The value of the trade-off used to score the rules. Single value or multiple space separated values.',
                             required=True)
-        parser.add_argument('-m', '--max-rules', type=int, help='The maximum number of rules to include in a model.',
+        parser.add_argument('--max-rules', type=int, help='The maximum number of rules to include in a model.',
                             required=True)
-        parser.add_argument('-c', '--hp-choice', choices=['bound', 'cv', 'none'],
+        parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
                             help='The strategy used to select the hyperparameter values.', default='cv', required=False)
-        parser.add_argument('-P', '--n-cpu', type=int,
+        parser.add_argument('--n-cpu', type=int,
                             help='The number of CPUs used to select the hyperparameter values. Make sure your computer has enough RAM and that your storage device is not a bottleneck (see documentation).',
                             default=1, required=False)
-        parser.add_argument('-o', '--output-dir',
+        parser.add_argument('--output-dir',
                             help='The directory in which to store Kover\'s output. Will be created if it does not exist.',
                             default='.', required=False)
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true',
