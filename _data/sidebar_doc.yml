@@ -59,7 +59,7 @@ entries:
           product: all
           version: all
 
-    - title: Datasets
+    - title: Command-line interface
       audience: writers, designers
       platform: all
       product: all
@@ -67,31 +67,16 @@ entries:
       print: true
 
       items:
-        - title: Overview
+        - title: Dataset tools
           url: /doc_dataset.html
           audience: writers, designers
           platform: all
           product: all
           version: all
 
-        - title: Creating
-
-          url: /doc_dataset_create.html
+        - title: Learning engine
+          url: /doc_learning.html
           audience: writers, designers
           platform: all
           product: all
           version: all
-
-        - title: Splitting a Kover Dataset
-          url: /doc_dataset_split.html
-          audience: writers, designers
-          platform: all
-          product: all
-          version: all
-
-    - title: Learning
-      audience: writers, designers
-      platform: all
-      product: all
-      version: all
-      print: true

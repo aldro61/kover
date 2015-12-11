@@ -20,7 +20,7 @@ Kover can be used to obtain interpretable models of phenotypes.
 We provide a command line interface for Kover. Kover's features are regrouped in two tools:
 
 * [Kover dataset tools](doc_dataset.html): Manipulate and prepare genomic data for Kover
-* [Kover learning engine](doc_learn.html): Apply the machine learning algorithm to learn models
+* [Kover learning engine](doc_learning.html): Apply the machine learning algorithm to learn models
 
 The back-end of Kover is bundled as a Python package. All the actions available in the command line interface can be
 performed using this package. This is not officially supported, but basic documentation is provided in the 
