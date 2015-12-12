@@ -15,6 +15,10 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
 > Kover, an efficient implementation of our method, can readily scale to large genomic datasets.
 > It is open-source and can be obtained from http://github.com/aldro61/kover.
 
+Until the journal paper (more detailed) is published, please refer to this introductory paper:
+
+Drouin, A., Giguère, S., Déraspe, M., Laviolette, F., Marchand, M., & Corbeil, J. (2015). Greedy Biomarker Discovery in the Genome with Applications to Antimicrobial Resistance. arXiv preprint arXiv:1505.06249. http://arxiv.org/pdf/1505.06249v1.pdf
+
 # Installation
 
 For installation instructions, see: http://aldro61.github.io/kover/doc_installation.html
