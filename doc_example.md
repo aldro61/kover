@@ -60,7 +60,7 @@ The following command creates a split of the data called "example_split", which 
 1/3 for testing. It also creates 5 cross-validation folds. The data splitting is done randomly with 42 as the random seed.
 
 ```
-kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 62 --progress
+kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 72 --progress
 ```
 
 ## Learning a model
