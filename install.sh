@@ -1,5 +1,8 @@
 #! /bin/bash
 
+# Remove any prior installation
+rm -rf ./bin
+
 # Install the Kover python package and its dependencies
 cd ./src
 (echo "Installing setuptools."; python bootstrap_setuptools.py; rm setuptools-*.zip)
