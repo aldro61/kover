@@ -27,6 +27,7 @@ from sys import argv
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
 VERSION = "0.1"
 
+
 class KoverDatasetTool(object):
     def __init__(self):
         self.available_commands = ['create', 'info', 'split']
@@ -98,7 +99,8 @@ class KoverDatasetTool(object):
 
     def info(self):
         # TODO: list the available splits
-        parser = argparse.ArgumentParser(prog="kover dataset info", description='Prints information about the content of a dataset')
+        parser = argparse.ArgumentParser(prog="kover dataset info",
+                                         description='Prints information about the content of a dataset')
         parser.add_argument('--dataset', help='A Kover dataset.', required=True)
         parser.add_argument('--all', help='Print all the available information.', action='store_true',
                             required=False)
@@ -245,9 +247,12 @@ class CommandLineInterface(object):
         self.available_commands = ['dataset', 'learn']
 
         parser = argparse.ArgumentParser(description=KOVER_DESCRIPTION)
-        parser.add_argument('--cite', required=False, action='store_true', help='Show the references to cite if you use Kover in your work')
-        parser.add_argument('--license', required=False, action='store_true', help='Show the license for your release of Kover')
-        parser.add_argument('--version', required=False, action='store_true', help='Show the version of your release of Kover')
+        parser.add_argument('--cite', required=False, action='store_true',
+                            help='Show the references to cite if you use Kover in your work')
+        parser.add_argument('--license', required=False, action='store_true',
+                            help='Show the license for your release of Kover')
+        parser.add_argument('--version', required=False, action='store_true',
+                            help='Show the version of your release of Kover')
         parser.add_argument('command', help='Available commands', choices=self.available_commands)
 
         # If no argument has been specified, default to help
@@ -260,32 +265,32 @@ class CommandLineInterface(object):
 
             if args.license:
                 print \
-"""
-Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-Copyright (C) 2015  Alexandre Drouin
+                    """
+                    Kover: Learn interpretable computational phenotyping models from k-merized genomic data
+                    Copyright (C) 2015  Alexandre Drouin
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+                    This program is free software: you can redistribute it and/or modify
+                    it under the terms of the GNU General Public License as published by
+                    the Free Software Foundation, either version 3 of the License, or
+                    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+                    This program is distributed in the hope that it will be useful,
+                    but WITHOUT ANY WARRANTY; without even the implied warranty of
+                    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+                    You should have received a copy of the GNU General Public License
+                    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+                    """
             elif args.version:
                 print "kover version %s" % VERSION
             elif args.cite:
                 print \
-"""
-If you used Kover in your work, please cite our paper:
+                    """
+                    If you used Kover in your work, please cite our paper:
 
-Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
-"""
+                    Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
+                    """
         else:
             args = parser.parse_args(argv[1:2])
             if not hasattr(self, args.command):
@@ -299,11 +304,11 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
         dataset_tool = KoverDatasetTool()
 
         parser = argparse.ArgumentParser(usage= \
-'''%(prog)s dataset <command> [<args>]
-The most commonly used commands are:
-    create     Create Kover datasets from genomic data
-    split      Split a Kover dataset file into a training set, a testing set and optionally cross-validation folds
-    info       Get information about the content of a Kover dataset''')
+                                             '''%(prog)s dataset <command> [<args>]
+                                             The most commonly used commands are:
+                                                 create     Create Kover datasets from genomic data
+                                                 split      Split a Kover dataset file into a training set, a testing set and optionally cross-validation folds
+                                                 info       Get information about the content of a Kover dataset''')
 
         parser.add_argument('command', help='The dataset manipulation to perform',
                             choices=dataset_tool.available_commands)
@@ -395,7 +400,7 @@ The most commonly used commands are:
         start_time = time()
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
-        model, rule_importances,\
+        model, rule_importances, \
         equivalent_rules = learn(dataset_file=args.dataset,
                                  split_name=args.split,
                                  model_type=args.model_type,
@@ -467,7 +472,8 @@ The most commonly used commands are:
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"
         report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join(
-            ["%s [Importance: %.2f, %d equivalent rules]" % (str(rule), importance, len(equivalent_rules[i])) for i, (rule, importance) in enumerate(zip(model, rule_importances))])
+            ["%s [Importance: %.2f, %d equivalent rules]" % (str(rule), importance, len(equivalent_rules[i])) for
+             i, (rule, importance) in enumerate(zip(model, rule_importances))])
         report += "\n"
 
         print report
@@ -499,12 +505,13 @@ The most commonly used commands are:
         with open(join(args.output_dir, 'results.json'), 'w') as f:
             json_dump(results, f)
 
-        # Save model (also equivalent rules) [json]
+        # Save model (also equivalent rules) [Fasta]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, (rule, importance) in enumerate(zip(model, rule_importances)):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
-                f_equiv = open("rule_%i_equiv.fasta" % (i+1), "w")
-                f_equiv.write("\n".join([">%d,%s\n%s" % (j+1, rule.type, rule.kmer_sequence) for j, rule in enumerate(equivalent_rules[i])]))
+                f_equiv = open("model_rule_%i_equiv.fasta" % (i + 1), "w")
+                f_equiv.write("\n\n".join([">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence) for j, rule in
+                                         enumerate(equivalent_rules[i])]))
 
 
 if __name__ == '__main__':
