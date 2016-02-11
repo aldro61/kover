@@ -395,14 +395,15 @@ The most commonly used commands are:
         start_time = time()
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
-        model, rule_importances = learn(dataset_file=args.dataset,
-                                        split_name=args.split,
-                                        model_type=args.model_type,
-                                        p=args.p,
-                                        max_rules=args.max_rules,
-                                        parameter_selection=args.hp_choice,
-                                        n_cpu=args.n_cpu,
-                                        progress_callback=progress)
+        model, rule_importances,\
+        equivalent_rules = learn(dataset_file=args.dataset,
+                                 split_name=args.split,
+                                 model_type=args.model_type,
+                                 p=args.p,
+                                 max_rules=args.max_rules,
+                                 parameter_selection=args.hp_choice,
+                                 n_cpu=args.n_cpu,
+                                 progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
         if args.progress:
@@ -466,7 +467,7 @@ The most commonly used commands are:
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"
         report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join(
-            ["%s [Importance: %.2f]" % (str(rule), importance) for rule, importance in zip(model, rule_importances)])
+            ["%s [Importance: %.2f, %d equivalent rules]" % (str(rule), importance, len(equivalent_rules[i])) for i, (rule, importance) in enumerate(zip(model, rule_importances))])
         report += "\n"
 
         print report
@@ -502,7 +503,8 @@ The most commonly used commands are:
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, (rule, importance) in enumerate(zip(model, rule_importances)):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
-                # TODO: save equivalent rules
+                f_equiv = open("rule_%i_equiv.fasta" % (i+1), "w")
+                f_equiv.write("\n".join([">%d,%s\n%s" % (j+1, rule.type, rule.kmer_sequence) for j, rule in enumerate(equivalent_rules[i])]))
 
 
 if __name__ == '__main__':

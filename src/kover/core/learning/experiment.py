@@ -229,7 +229,7 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
         progress_callback("Training", full_train_progress["n_rules"] / best_hp["max_rules"])
 
     def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
-           positive_example_idx, negative_example_idx, rule_risks, model_type):
+           positive_example_idx, negative_example_idx, rule_risks, model_type, equivalent_rules):
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
@@ -237,6 +237,14 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
+
+        # Save equivalent rules
+        if model_type == "disjunction":
+            n_kmers = rule_classifications.shape[1] / 2
+            equivalent_rules.append((result + n_kmers) % (2 * n_kmers))
+        else:
+            equivalent_rules.append(result)
+
         return result
 
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
@@ -248,6 +256,7 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
     positive_example_idx = train_example_idx[dataset.phenotype.metadata[train_example_idx] == 1].reshape(-1)
     negative_example_idx = train_example_idx[dataset.phenotype.metadata[train_example_idx] == 0].reshape(-1)
 
+    model_equivalent_rules = []
     predictor = SetCoveringMachine(model_type=best_hp["model_type"], p=best_hp["p"], max_rules=best_hp["max_rules"])
     progress_callback("Training", full_train_progress["n_rules"] / best_hp["max_rules"])
     predictor.fit(rules=rules,
@@ -257,7 +266,8 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
                   tiebreaker= partial(_tiebreaker,
                                       rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                             split.unique_risk_by_anti_kmer[...])),
-                                      model_type=best_hp["model_type"]),
+                                      model_type=best_hp["model_type"],
+                                      equivalent_rules=model_equivalent_rules),
                   iteration_callback=_iteration_callback)
 
     train_predictions, test_predictions = _predictions(predictor.model, dataset.kmer_matrix, train_example_idx,
@@ -269,4 +279,8 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
     else:
         test_metrics = None
 
-    return best_hp, best_hp_score, train_metrics, test_metrics, predictor.model, predictor.rule_importances
+    # Convert the equivalent rule indexes to rule objects
+    model_equivalent_rules = [[rules[i] for i in equiv_idx] for equiv_idx in model_equivalent_rules]
+
+    return best_hp, best_hp_score, train_metrics, test_metrics, predictor.model, predictor.rule_importances, \
+           model_equivalent_rules
