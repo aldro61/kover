@@ -122,9 +122,9 @@ class KoverDatasetTool(object):
                             required=False)
         parser.add_argument('--phenotype-metadata', help='Print the file from which the metadata was extracted.',
                             action='store_true', required=False)
-        parser.add_argument('--uuid', help='Print the unique identifier of the Kover dataset (data independent).')
-        parser.add_argument('--compression', help='Print the compression options.', action='store_true',
-                            required=False)
+        parser.add_argument('--splits', help='Print the splits of the dataset that are available for learning.', action='store_true', required=False)
+        parser.add_argument('--uuid', help='Print the unique identifier of the Kover dataset (data independent).', action='store_true', required=False)
+        parser.add_argument('--compression', help='Print the compression options.', action='store_true', required=False)
 
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -172,6 +172,10 @@ class KoverDatasetTool(object):
         if args.compression or args.all:
             print "Compression:", dataset.compression
             print
+        if args.splits or args.all:
+            print "The following splits are available for learning:"
+            for split in dataset.splits:
+                print split
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",

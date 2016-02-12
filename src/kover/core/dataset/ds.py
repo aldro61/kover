@@ -145,6 +145,16 @@ class KoverDatasetSplit(object):
         self.folds = folds
         self.random_seed = random_seed
 
+    def __str__(self):
+        return "%s   Train genomes: %d (%.3f)   Test genomes: %d (%.3f)   Folds: %d   Random Seed: %d" % \
+               (self.name,
+                len(self.train_genome_idx),
+                self.train_proportion,
+                len(self.test_genome_idx),
+                1.0 - self.train_proportion,
+                len(self.folds),
+                self.random_seed)
+
 class KoverDatasetFold(object):
     def __init__(self, name, train_genome_idx, test_genome_idx, unique_risks, unique_risk_by_kmer,
                  unique_risk_by_anti_kmer):
