@@ -113,8 +113,10 @@ class KoverDatasetTool(object):
         parser.add_argument('--kmer-count', help='Print the k-mer count.', action='store_true')
         parser.add_argument('--phenotype-name', help='Print the phenotype\'s name.', action='store_true')
         parser.add_argument('--phenotype-metadata', help='Print the file from which the metadata was extracted.')
-        parser.add_argument('--splits', help='Print the splits of the dataset that are available for learning.', action='store_true')
-        parser.add_argument('--uuid', help='Print the unique identifier of the Kover dataset (data independent).', action='store_true')
+        parser.add_argument('--splits', help='Print the splits of the dataset that are available for learning.',
+                            action='store_true')
+        parser.add_argument('--uuid', help='Print the unique identifier of the Kover dataset (data independent).',
+                            action='store_true')
         parser.add_argument('--compression', help='Print the compression options.', action='store_true')
 
         # If no argument has been specified, default to help
@@ -170,13 +172,15 @@ class KoverDatasetTool(object):
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
-                                         description='Splits a kover dataset file into a training set, a testing set and optionally cross-validation folds')
+                                         description='Splits a kover dataset file into a training set, a testing set '
+                                                     'and optionally cross-validation folds')
         parser.add_argument('--dataset', help='The Kover dataset to split.', required=True)
         parser.add_argument('--id', help='The identifier of the split.', required=True)
         parser.add_argument('--train-size', type=float,
                             help='The proportion of the data used for training (default is 0.5).', default=0.5)
         parser.add_argument('--random-seed', type=int,
-                            help='The random seed used for the split (If not provided a random value between 0 and 4294967295 will be used).')
+                            help='The random seed used for the split (If not provided a random value between 0 and '
+                                 '4294967295 will be used).')
         parser.add_argument('--folds', type=int,
                             help='The number of cross-validation folds (default is 0 for none, the minimum value is 2).',
                             default=0)
@@ -317,17 +321,20 @@ class CommandLineInterface(object):
         parser.add_argument('--split',
                             help='The identifier of the split of the dataset that must be learnt from.', required=True)
         parser.add_argument('--model-type', choices=['conjunction', 'disjunction'], nargs='+',
-                            help='Hyperparameter: The type of model (conjunction or disjunction) to learn. Single value or multiple space separated values.',
+                            help='Hyperparameter: The type of model (conjunction or disjunction) to learn. Single value'
+                                 ' or multiple space separated values.',
                             required=True)
         parser.add_argument('--p', type=float, nargs='+',
-                            help='Hyperparameter: The value of the trade-off used to score the rules. Single value or multiple space separated values.',
+                            help='Hyperparameter: The value of the trade-off used to score the rules. Single value or '
+                                 'multiple space separated values.',
                             required=True)
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules to include in a model.',
                             required=True)
         parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
                             help='The strategy used to select the hyperparameter values.', default='cv')
         parser.add_argument('--n-cpu', type=int,
-                            help='The number of CPUs used to select the hyperparameter values. Make sure your computer has enough RAM and that your storage device is not a bottleneck (see documentation).',
+                            help='The number of CPUs used to select the hyperparameter values. Make sure your computer '
+                                 'has enough RAM and that your storage device is not a bottleneck (see documentation).',
                             default=1)
         parser.add_argument('--output-dir',
                             help='The directory in which to store Kover\'s output. Will be created if it does not exist.',
@@ -460,7 +467,7 @@ class CommandLineInterface(object):
 
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"
-        report += (("\n%s\n" % ("AND" if model.type == "conjunction" else "OR"))).join(
+        report += ("\n%s\n" % ("AND" if model.type == "conjunction" else "OR")).join(
             ["%s [Importance: %.2f, %d equivalent rules]" % (str(rule), importance, len(equivalent_rules[i])) for
              i, (rule, importance) in enumerate(zip(model, rule_importances))])
         report += "\n"
@@ -499,8 +506,9 @@ class CommandLineInterface(object):
             for i, (rule, importance) in enumerate(zip(model, rule_importances)):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
                 f_equiv = open("model_rule_%i_equiv.fasta" % (i + 1), "w")
-                f_equiv.write("\n\n".join([">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence) for j, rule in
-                                         enumerate(equivalent_rules[i])]))
+                f_equiv.write("\n\n".join(
+                    [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence) for j, rule in
+                     enumerate(equivalent_rules[i])]))
 
 
 if __name__ == '__main__':
