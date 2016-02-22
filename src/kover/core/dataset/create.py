@@ -137,8 +137,8 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Read list of genome identifiers
-    reader = pd.read_table(tsv_path, sep='\t', index_col=0, iterator=True)
-    genome_ids = reader.get_chunk(1).columns.values.astype("S%d" % kmer_len)
+    reader = pd.read_table(tsv_path, sep='\t', index_col=0, iterator=True, engine="c")
+    genome_ids = reader.get_chunk(1).columns.values
     del reader
     logging.debug("The k-mer matrix contains %d genomes." % len(genome_ids))
     if len(set(genome_ids)) < len(genome_ids):
