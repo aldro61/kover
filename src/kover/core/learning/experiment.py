@@ -224,12 +224,20 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
     # Use the best hyperparameters to train/test on the split
     # ------------------------------------------------------------------------------------------------------------------
     full_train_progress = {"n_rules": 0.0}
-    def _iteration_callback(iteration_infos):
+
+    def _iteration_callback(iteration_infos, model_type, equivalent_rules):
         full_train_progress["n_rules"] += 1
         progress_callback("Training", full_train_progress["n_rules"] / best_hp["max_rules"])
 
+        # Save equivalent rules
+        if model_type == "disjunction":
+            n_kmers = rule_classifications.shape[1] / 2
+            equivalent_rules.append((iteration_infos["equivalent_rules_idx"] + n_kmers) % (2 * n_kmers))
+        else:
+            equivalent_rules.append(iteration_infos["equivalent_rules_idx"])
+
     def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
-           positive_example_idx, negative_example_idx, rule_risks, model_type, equivalent_rules):
+           positive_example_idx, negative_example_idx, rule_risks, model_type):
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
@@ -237,14 +245,6 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
-
-        # Save equivalent rules
-        if model_type == "disjunction":
-            n_kmers = rule_classifications.shape[1] / 2
-            equivalent_rules.append((result + n_kmers) % (2 * n_kmers))
-        else:
-            equivalent_rules.append(result)
-
         return result
 
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
@@ -263,12 +263,13 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
-                  tiebreaker= partial(_tiebreaker,
-                                      rule_risks=np.hstack((split.unique_risk_by_kmer[...],
-                                                            split.unique_risk_by_anti_kmer[...])),
-                                      model_type=best_hp["model_type"],
-                                      equivalent_rules=model_equivalent_rules),
-                  iteration_callback=_iteration_callback)
+                  tiebreaker=partial(_tiebreaker,
+                                     rule_risks=np.hstack((split.unique_risk_by_kmer[...],
+                                                           split.unique_risk_by_anti_kmer[...])),
+                                     model_type=best_hp["model_type"]),
+                  iteration_callback=partial(_iteration_callback,
+                                             model_type=best_hp["model_type"],
+                                             equivalent_rules=model_equivalent_rules))
 
     train_predictions, test_predictions = _predictions(predictor.model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)

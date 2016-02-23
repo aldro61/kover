@@ -97,12 +97,14 @@ class BaseSetCoveringMachine(object):
                                     " on positive examples. It will not be added to the model. Stopping here.")
                 break
 
-            elif len(best_utility_idx) == 1:
+            elif len(best_utility_idx) == 1:  # Don't need a tiebreaker
                 best_rule_idx = best_utility_idx[0]
-                iteration_info["tiebreaker_optimal_idx"] = best_rule_idx
+                iteration_info["equivalent_rules_idx"] = [best_rule_idx]
 
             elif len(best_utility_idx) > 1:
+                # Use a tiebreaker
                 if tiebreaker is not None:
+                    # User-specified tiebreaker
                     best_rule_idx = tiebreaker(best_utility_idx,
                                                     rule_classifications,
                                                     positive_error_count[best_utility_idx],
@@ -110,12 +112,12 @@ class BaseSetCoveringMachine(object):
                                                     positive_example_idx,
                                                     negative_example_idx)
                 else:
-                    # Default tie breaker
+                    # Default tiebreaker
                     training_risk_decrease = 1.0 * negative_cover_count[best_utility_idx] - positive_error_count[best_utility_idx]
                     best_rule_idx = best_utility_idx[training_risk_decrease == training_risk_decrease.max()]
                     del training_risk_decrease
 
-                iteration_info["tiebreaker_optimal_idx"] = best_rule_idx
+                iteration_info["equivalent_rules_idx"] = best_rule_idx
                 best_rule_idx = best_rule_idx[0]  # If many are equivalent, just take the first one.
             del best_utility_idx
 
