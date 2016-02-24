@@ -505,10 +505,10 @@ class CommandLineInterface(object):
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, (rule, importance) in enumerate(zip(model, rule_importances)):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
-                f_equiv = open("model_rule_%i_equiv.fasta" % (i + 1), "w")
-                f_equiv.write("\n\n".join(
-                    [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence) for j, rule in
-                     enumerate(equivalent_rules[i])]))
+                with open(join(args.output_dir, "model_rule_%i_equiv.fasta" % (i + 1)), "w") as f_equiv:
+                    f_equiv.write("\n\n".join(
+                        [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence)
+                         for j, rule in enumerate(equivalent_rules[i])]))
 
 
 if __name__ == '__main__':
