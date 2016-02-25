@@ -483,6 +483,7 @@ class CommandLineInterface(object):
 
         # Write metrics (not user friendly) [json]
         results = {"data": {"uuid": dataset.uuid,
+                            "path": dataset.path,
                             "split": args.split},
                    "cv": {"best_hp": {"values": best_hp,
                                       "score": best_hp_score},

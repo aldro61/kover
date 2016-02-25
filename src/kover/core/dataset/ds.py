@@ -25,6 +25,7 @@ from ..utils import _hdf5_open_no_chunk_cache
 
 class KoverDataset(object):
     def __init__(self, file):
+        self.path = file
         self.dataset_open = partial(_hdf5_open_no_chunk_cache, file)
 
     @property
