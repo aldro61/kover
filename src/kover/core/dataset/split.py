@@ -104,7 +104,7 @@ def split(input, identifier, train_prop, random_seed, n_folds, warning_callback=
 
         # Assign each genome to a fold randomly
         fold_by_training_set_genome = np.arange(len(train_idx)) % n_folds
-        np.random.shuffle(fold_by_training_set_genome)
+        random_generator.shuffle(fold_by_training_set_genome)
 
         for fold in xrange(n_folds):
             logging.debug("Fold %d" % (fold + 1))
