@@ -99,7 +99,7 @@ class BaseSetCoveringMachine(object):
 
             elif len(best_utility_idx) == 1:  # Don't need a tiebreaker
                 best_rule_idx = best_utility_idx[0]
-                iteration_info["equivalent_rules_idx"] = [best_rule_idx]
+                iteration_info["equivalent_rules_idx"] = np.array([best_rule_idx])
 
             elif len(best_utility_idx) > 1:
                 # Use a tiebreaker
