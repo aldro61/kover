@@ -232,10 +232,20 @@ def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, p
         full_train_progress["n_rules"] += 1
         progress_callback("Training", full_train_progress["n_rules"] / best_hp["max_rules"])
 
-        # Save equivalent rules
+        # Ensure that there are no more equivalent rules than the specified maximum
+        if len(iteration_infos["equivalent_rules_idx"]) > max_equiv_rules:
+            logging.debug("There are more equivalent rules than the allowed maximum. Subsampling %d rules." % max_equiv_rules)
+            random_idx = random_generator.choice(len(iteration_infos["equivalent_rules_idx"]), max_equiv_rules,
+                                                 replace=False)
+            random_idx.sort()
+            iteration_infos["equivalent_rules_idx"] = iteration_infos["equivalent_rules_idx"][random_idx]
+
+        # Adjust and store the equivalent rule indices
         if model_type == "disjunction":
             n_kmers = rule_classifications.shape[1] / 2
-            equivalent_rules.append((iteration_infos["equivalent_rules_idx"] + n_kmers) % (2 * n_kmers))
+            iteration_infos["equivalent_rules_idx"] += n_kmers
+            iteration_infos["equivalent_rules_idx"] %= (2 * n_kmers)
+            equivalent_rules.append(iteration_infos["equivalent_rules_idx"])
         else:
             equivalent_rules.append(iteration_infos["equivalent_rules_idx"])
 
@@ -248,12 +258,6 @@ def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, p
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
-
-        if len(result) > max_equiv_rules:
-            logging.debug("There are more equivalent rules than the allowed maximum. Subsampling %d rules." % max_equiv_rules)
-            random_idx = random_generator.choice(len(result), max_equiv_rules, replace=False)
-            random_idx.sort()
-            result = result[random_idx]
         return result
 
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
