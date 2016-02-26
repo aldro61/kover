@@ -183,8 +183,9 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
             best_hp_score = score
     return best_hp_score, best_hp
 
-def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selection, n_cpu, progress_callback=None,
-          warning_callback=None, error_callback=None):
+
+def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection, n_cpu,
+          random_seed, progress_callback=None, warning_callback=None, error_callback=None):
     """
     parameter_selection: bound, cv, none (use first value of each if multiple)
     """
@@ -200,6 +201,8 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
 
     if n_cpu is None:
         n_cpu = cpu_count()
+
+    random_generator = np.random.RandomState(random_seed)
 
     model_type = np.unique(model_type)
     p = np.unique(p)
@@ -245,6 +248,12 @@ def learn(dataset_file, split_name, model_type, p, max_rules, parameter_selectio
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
             result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
+
+        if len(result) > max_equiv_rules:
+            logging.debug("There are more equivalent rules than the allowed maximum. Subsampling %d rules." % max_equiv_rules)
+            random_idx = random_generator.choice(len(result), max_equiv_rules, replace=False)
+            random_idx.sort()
+            result = result[random_idx]
         return result
 
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)

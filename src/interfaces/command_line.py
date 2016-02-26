@@ -321,17 +321,23 @@ class CommandLineInterface(object):
         parser.add_argument('--split',
                             help='The identifier of the split of the dataset that must be learnt from.', required=True)
         parser.add_argument('--model-type', choices=['conjunction', 'disjunction'], nargs='+',
-                            help='Hyperparameter: The type of model (conjunction or disjunction) to learn. Single value'
-                                 ' or multiple space separated values.',
+                            help='The type of model (conjunction or disjunction) to learn. Single value or multiple '
+                                 'space separated values.',
                             required=True)
         parser.add_argument('--p', type=float, nargs='+',
-                            help='Hyperparameter: The value of the trade-off used to score the rules. Single value or '
-                                 'multiple space separated values.',
+                            help='The value of the trade-off used to score the rules. Single value or multiple space '
+                                 'separated values.',
                             required=True)
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules to include in a model.',
                             required=True)
+        parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '
+                            'each rule in the model. This only affects model interpretation. Use the default unless you'
+                            ' expect that the rules in the model will be equivalent to more than 10000 other rules.',
+                            default=10000)
         parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
                             help='The strategy used to select the hyperparameter values.', default='cv')
+        parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
+                            'Set this if only if you require that the same random choices are made between repeats.')
         parser.add_argument('--n-cpu', type=int,
                             help='The number of CPUs used to select the hyperparameter values. Make sure your computer '
                                  'has enough RAM and that your storage device is not a bottleneck (see documentation).',
@@ -402,8 +408,10 @@ class CommandLineInterface(object):
                                  model_type=args.model_type,
                                  p=args.p,
                                  max_rules=args.max_rules,
+                                 max_equiv_rules=args.max_equiv_rules,
                                  parameter_selection=args.hp_choice,
                                  n_cpu=args.n_cpu,
+                                 random_seed=args.random_seed,
                                  progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
