@@ -87,64 +87,43 @@ class BaseSetCoveringMachine(object):
             # Find all the indexes of all rules with the best utility
             iteration_info["utility_max"] = np.max(utilities)
             iteration_info["utility_argmax"] = np.where(utilities == iteration_info["utility_max"])[0]
-            iteration_info["utility_argmax_positive_error_counts"] = positive_error_count[iteration_info["utility_argmax"]]
-            iteration_info["utility_argmax_negative_cover_counts"] = negative_cover_count[iteration_info["utility_argmax"]]
+            logging.debug("Greatest utility is %.5f" % iteration_info["utility_max"])
+            logging.debug("There are %d rules with the same utility." % len(iteration_info["utility_argmax"]))
+            del utilities
 
             # Do not select rules that cover no negative examples and make errors on no positive examples
             best_utility_idx = iteration_info["utility_argmax"][np.logical_or(negative_cover_count[iteration_info["utility_argmax"]] != 0, positive_error_count[iteration_info["utility_argmax"]] != 0)]
+            del positive_error_count, negative_cover_count
             if len(best_utility_idx) == 0:
                 logging.debug("The rule of maximal utility does not cover negative examples or make errors" +
                                     " on positive examples. It will not be added to the model. Stopping here.")
                 break
 
-            elif len(best_utility_idx) == 1:  # Don't need a tiebreaker
+            # Apply a user-specified tiebreaker if necessary
+            if len(best_utility_idx) == 1:
                 best_rule_idx = best_utility_idx[0]
                 iteration_info["equivalent_rules_idx"] = np.array([best_rule_idx])
-
             elif len(best_utility_idx) > 1:
-                # Use a tiebreaker
-                if tiebreaker is not None:
-                    # User-specified tiebreaker
-                    best_rule_idx = tiebreaker(best_utility_idx,
-                                                    rule_classifications,
-                                                    positive_error_count[best_utility_idx],
-                                                    negative_cover_count[best_utility_idx],
-                                                    positive_example_idx,
-                                                    negative_example_idx)
-                else:
-                    # Default tiebreaker
-                    training_risk_decrease = 1.0 * negative_cover_count[best_utility_idx] - positive_error_count[best_utility_idx]
-                    best_rule_idx = best_utility_idx[training_risk_decrease == training_risk_decrease.max()]
-                    del training_risk_decrease
-
+                best_rule_idx = tiebreaker(best_utility_idx)
+                logging.debug("The tiebreaker returned %d equivalent rules." % len(best_rule_idx))
                 iteration_info["equivalent_rules_idx"] = best_rule_idx
                 best_rule_idx = best_rule_idx[0]  # If many are equivalent, just take the first one.
             del best_utility_idx
 
-            iteration_info["selected_rule_idx"] = best_rule_idx
-
-            logging.debug("Greatest utility is " + str(utilities[best_rule_idx]))
-            # Save the computation if verbose is off
-            logging.debug("There are " + str(len(iteration_info["utility_argmax"]) - 1) + " rules with the same utility.")
-            del utilities
-
+            # Add the best rule to the model
             iteration_info["selected_rule"] = self._add_rule_to_model(rules[best_rule_idx])
             model_rules_idx.append(best_rule_idx)
 
             # Get the best rule's classification for each example
             best_rule_classifications = rule_classifications.get_columns(best_rule_idx)
 
+            # Discard examples predicted as negative
             logging.debug("Discarding covered negative examples")
             negative_example_idx = negative_example_idx[best_rule_classifications[negative_example_idx] != 0]
-
             logging.debug("Discarding misclassified positive examples")
             positive_example_idx = positive_example_idx[best_rule_classifications[positive_example_idx] != 0]
-
             logging.debug("Remaining negative examples:" + str(len(negative_example_idx)))
             logging.debug("Remaining positive examples:" + str(len(positive_example_idx)))
-
-            iteration_info["remaining_positive_examples_idx"] = positive_example_idx
-            iteration_info["remaining_negative_examples_idx"] = negative_example_idx
 
             if iteration_callback is not None:
                 iteration_callback(iteration_info)

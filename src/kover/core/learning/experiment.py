@@ -109,8 +109,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
         _, test_predictions = _predictions(tmp_model, dataset.kmer_matrix, [], test_example_idx)
         test_predictions_by_model_length.append(test_predictions)
 
-    def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
-               positive_example_idx, negative_example_idx, rule_risks, model_type):
+    def _tiebreaker(best_utility_idx, rule_risks, model_type):
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
@@ -249,8 +248,7 @@ def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, p
         else:
             equivalent_rules.append(iteration_infos["equivalent_rules_idx"])
 
-    def _tiebreaker(best_utility_idx, rule_classifications, positive_error_counts, negative_cover_counts,
-           positive_example_idx, negative_example_idx, rule_risks, model_type):
+    def _tiebreaker(best_utility_idx, rule_risks, model_type):
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
