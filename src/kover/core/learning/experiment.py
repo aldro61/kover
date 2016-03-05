@@ -466,7 +466,7 @@ def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, p
     train_example_idx = split.train_genome_idx
     test_example_idx = split.test_genome_idx
 
-    train_predictions, test_predictions = _predictions(best_model, dataset.kmer_matrix, train_example_idx,
+    train_predictions, test_predictions = _predictions(model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)
     train_answers = dataset.phenotype.metadata[train_example_idx]
     train_metrics = _get_metrics(train_predictions, train_answers)
