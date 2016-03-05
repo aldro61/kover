@@ -68,9 +68,10 @@ class BaseSetCoveringMachine(object):
                 raise ValueError("The blacklist cannot include all the rules.")
             logging.debug("The following rules are blacklisted and will not be considered:" + str(rule_blacklist))
 
+        training_example_idx = np.hstack((positive_example_idx, negative_example_idx))  # Needed for rule importances
         model_rules_idx = []  # Contains the index of the rules in the model
         while len(negative_example_idx) > 0 and len(self.model) < self.max_rules:
-            iteration_info = {}
+            iteration_info = {"iteration_number": len(self.model) + 1}
 
             utilities, \
             positive_error_count, \
@@ -115,6 +116,7 @@ class BaseSetCoveringMachine(object):
             model_rules_idx.append(best_rule_idx)
 
             # Get the best rule's classification for each example
+            # XXX: This includes the testing examples, but we don't consider them. Otherwise the idx would be invalid.
             best_rule_classifications = rule_classifications.get_columns(best_rule_idx)
 
             # Discard examples predicted as negative
@@ -128,16 +130,12 @@ class BaseSetCoveringMachine(object):
             if iteration_callback is not None:
                 iteration_callback(iteration_info)
 
-        #Compute the rule importances
-        #TODO: implement this without making multiple calls to get_columns. Use rule_predictions instead.
-        # Could implement transparent sorting and desorting of the indexes in get_columns.
-        self.rule_importances = np.zeros(len(model_rules_idx), dtype=np.float)
-        rule_predictions = rule_classifications.get_columns(sorted(model_rules_idx)) # Watch out (sorted for hdf5 slicing...)
-        model_predictions = np.prod(rule_predictions, axis=1)
-        for i, idx in enumerate(model_rules_idx):
-            model_neg_prediction_idx = np.where(model_predictions == 0)[0]
-            self.rule_importances[i] = float(len(model_neg_prediction_idx) -
-                                                  rule_classifications.get_columns(idx)[model_neg_prediction_idx].sum()) / len(model_neg_prediction_idx)
+        # Compute the rule importances
+        model_rule_classifications = rule_classifications.get_columns(model_rules_idx)[training_example_idx]
+        model_neg_prediction_idx = np.where(np.prod(model_rule_classifications, axis=1) == 0)[0]
+        self.rule_importances = (float(len(model_neg_prediction_idx)) - \
+                                model_rule_classifications[model_neg_prediction_idx].sum(axis=0)) / \
+                                len(model_neg_prediction_idx)
 
     def predict(self, X):
         """
