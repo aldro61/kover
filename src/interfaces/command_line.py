@@ -342,6 +342,12 @@ class CommandLineInterface(object):
                             'k-fold cross-validation, where k is the number of folds defined in the split. Other '
                             'strategies, such as bound selection are available. Using none selects the first value '
                             'specified for each hyperparameter.', default='cv')
+        parser.add_argument('--bound-delta', type=float, help='The probabilistic bound on the error rate will be valid '
+                            'with probability 1-delta. The default value is 0.05.', default=0.05)
+        parser.add_argument('--bound-max-genome-size', type=int, help='The maximum size, in base pairs, of any'
+                            'genome in the dataset. If you are unsure about this value, you should use an over-estimate'
+                            '. This will only affect the tightness of the bound on the error rate. By default number of'
+                            ' k-mers in the dataset is used.')
         parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
                             'Set this if only if you require that the same random choices are made between repeats.')
         parser.add_argument('--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. '
@@ -371,6 +377,7 @@ class CommandLineInterface(object):
 
         # Input validation
         dataset = KoverDataset(args.dataset)
+        dataset_kmer_count = dataset.kmer_count
         # - Check that the split exists
         try:
             dataset.get_split(args.split)
@@ -414,6 +421,10 @@ class CommandLineInterface(object):
                                  p=args.p,
                                  max_rules=args.max_rules,
                                  max_equiv_rules=args.max_equiv_rules,
+                                 bound_delta = args.bound_delta,
+                                 bound_max_genome_size = args.bound_max_genome_size
+                                                           if args.bound_max_genome_size is not None
+                                                           else dataset_kmer_count,
                                  parameter_selection=args.hp_choice,
                                  n_cpu=args.n_cpu,
                                  random_seed=args.random_seed,
@@ -477,6 +488,11 @@ class CommandLineInterface(object):
             for key, alias in metric_aliases:
                 report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
+        # Print the bound
+        report += "Metrics (Probabilistic bound)\n" + "-" * 22 + "\n"
+        report += "With probability %.1f%%, the model will have a maximum error rate of %.1f%% on any unseen genome." % ((1.0 - args.bound_delta) * 100, train_metrics["bound"] * 100)
+        report += "\n"
+        report += "\n"
 
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"

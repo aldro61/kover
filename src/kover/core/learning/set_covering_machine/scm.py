@@ -25,6 +25,13 @@ from functools import partial
 from .models import conjunction, ConjunctionModel, disjunction, DisjunctionModel
 from ...utils import _class_to_string
 
+
+def _rule_importances(rule_classifications, model_rules_idx, training_example_idx):
+    model_rule_classifications = rule_classifications.get_columns(model_rules_idx)[training_example_idx]
+    model_neg_prediction_idx = np.where(np.prod(model_rule_classifications, axis=1) == 0)[0]
+    return (float(len(model_neg_prediction_idx)) - model_rule_classifications[model_neg_prediction_idx].sum(axis=0)) / \
+           len(model_neg_prediction_idx)
+
 class BaseSetCoveringMachine(object):
     def __init__(self, model_type, max_rules):
         if model_type == conjunction:
@@ -41,7 +48,7 @@ class BaseSetCoveringMachine(object):
         super(BaseSetCoveringMachine, self).__init__()
 
     def fit(self, rules, rule_classifications, positive_example_idx, negative_example_idx, rule_blacklist=None,
-            tiebreaker=None, iteration_callback=None, **kwargs):
+            tiebreaker=None, iteration_callback=None, iteration_rule_importances=False, **kwargs):
         """
         TODO
         """
@@ -127,15 +134,19 @@ class BaseSetCoveringMachine(object):
             logging.debug("Remaining negative examples:" + str(len(negative_example_idx)))
             logging.debug("Remaining positive examples:" + str(len(positive_example_idx)))
 
+            # If required, compute the current model's rule importances
+            if iteration_rule_importances:
+                iteration_info["rule_importances"] = _rule_importances(rule_classifications, model_rules_idx,
+                                                                       training_example_idx)
+
             if iteration_callback is not None:
                 iteration_callback(iteration_info)
 
-        # Compute the rule importances
-        model_rule_classifications = rule_classifications.get_columns(model_rules_idx)[training_example_idx]
-        model_neg_prediction_idx = np.where(np.prod(model_rule_classifications, axis=1) == 0)[0]
-        self.rule_importances = (float(len(model_neg_prediction_idx)) - \
-                                model_rule_classifications[model_neg_prediction_idx].sum(axis=0)) / \
-                                len(model_neg_prediction_idx)
+        # Get the complete model's rule importances
+        if iteration_rule_importances:
+            self.rule_importances = iteration_info["rule_importances"]
+        else:
+            self.rule_importances = _rule_importances(rule_classifications, model_rules_idx, training_example_idx)
 
     def predict(self, X):
         """
