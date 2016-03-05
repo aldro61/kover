@@ -24,8 +24,7 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import partial
 from itertools import product
-from math import exp, pi
-from math import log as ln
+from math import exp, log as ln, pi
 from multiprocessing import Pool, cpu_count
 from scipy.misc import comb
 
