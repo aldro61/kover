@@ -163,15 +163,22 @@ class KoverDatasetTool(object):
             print "Phenotype name:", dataset.phenotype.name
             print
         if args.phenotype_metadata or args.all:
-            print "Phenotype metadata source:", dataset.phenotype.metadata_source
+            if dataset.phenotype.name != "NA":
+                print "Phenotype metadata source:", dataset.phenotype.metadata_source
+            else:
+                print "No phenotype metadata."
             print
         if args.compression or args.all:
             print "Compression:", dataset.compression
             print
         if args.splits or args.all:
-            print "The following splits are available for learning:"
-            for split in dataset.splits:
-                print split
+            splits = dataset.splits
+            if len(splits) > 0:
+                print "The following splits are available for learning:"
+                for split in splits:
+                    print split
+            else:
+                print "There are no splits available for learning."
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
@@ -180,7 +187,14 @@ class KoverDatasetTool(object):
         parser.add_argument('--dataset', help='The Kover dataset to be split.', required=True)
         parser.add_argument('--id', help='A unique identifier that will be assigned to the split.', required=True)
         parser.add_argument('--train-size', type=float, help='The proportion of the data that will be reserved for '
-                            'training the learning algorithm (default is 0.5).', default=0.5)
+                            'training the learning algorithm (default is 0.5). Alternatively, you can specify which '
+                            'genomes to use for training and testing by using --train-ids and --test-ids.', default=0.5)
+        parser.add_argument('--train-ids', type=str, nargs='+', help='The identifiers of the genomes used to train the '
+                            'learning algorithm. If you provide a value for this argument, you must also provide a '
+                             'value for --test-ids.')
+        parser.add_argument('--test-ids', type=str, nargs='+', help='The identifiers of the genomes used to evaluate '
+                            'the accuracy of the model generated. If you provide a value for this argument, you must '
+                            'also provide a value for --train-ids.')
         parser.add_argument('--folds', type=int,
                             help='The number of k-fold cross-validation folds to create (default is 0 for none, '
                                  'the minimum value is 2). Folds are required for using k-fold cross-validation '
@@ -196,13 +210,19 @@ class KoverDatasetTool(object):
 
         args = parser.parse_args(argv[3:])
 
-        # Input validation
+        # Validate the number of cross-validation folds
         if args.folds == 1:
             print "Error: The number of cross-validation folds must be 0 or >= 2."
             exit()
 
+        # Validate that training and testing genome ids are both specified if one of them is specified
+        if (args.train_ids is not None and args.test_ids is None) or \
+           (args.test_ids is not None and args.train_ids is None):
+            print "Error: Training and testing genome identifiers must be specified simultaneously."
+            exit()
+
         # Package imports
-        from kover.core.dataset.split import split
+        from kover.core.dataset.split import split_with_ids, split_with_proportion
         from progressbar import Bar, Percentage, ProgressBar, Timer
         from random import randint
 
@@ -229,12 +249,21 @@ class KoverDatasetTool(object):
         else:
             progress = None
 
-        split(input=args.dataset,
-              identifier=args.id,
-              train_prop=args.train_size,
-              random_seed=args.random_seed,
-              n_folds=args.folds,
-              progress_callback=progress)
+        if args.train_ids is not None and args.test_ids is not None:
+            split_with_ids(input=args.dataset,
+                           split_name=args.id,
+                           train_ids=args.train_ids,
+                           test_ids=args.test_ids,
+                           random_seed=args.random_seed,
+                           n_folds=args.folds,
+                           progress_callback=progress)
+        else:
+            split_with_proportion(input=args.dataset,
+                                  split_name=args.id,
+                                  train_prop=args.train_size,
+                                  random_seed=args.random_seed,
+                                  n_folds=args.folds,
+                                  progress_callback=progress)
 
         if args.progress:
             progress_vars["pbar"].finish()
@@ -441,6 +470,7 @@ class CommandLineInterface(object):
                           ("tp", "True Positives"), ("tn", "True Negatives"),
                           ("fp", "False Positives"), ("fn", "False Negatives")]
         dataset = KoverDataset(args.dataset)
+        split = dataset.get_split(args.split)
         report = ""
         report += "Kover Learning Report\n" + "=" * 21 + "\n"
         report += "\n"
@@ -456,20 +486,18 @@ class CommandLineInterface(object):
         report += "Phenotype: %s\n" % dataset.phenotype.name.title()
         report += "Split: %s\n" % args.split
         report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (
-            len(dataset.get_split(args.split).train_genome_idx),
-            (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 1).sum(),
-            (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 0).sum())
+            len(split.train_genome_idx),
+            (dataset.phenotype.metadata[split.train_genome_idx] == 1).sum(),
+            (dataset.phenotype.metadata[split.train_genome_idx] == 0).sum())
         report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (
-            len(dataset.get_split(args.split).test_genome_idx),
-            (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum() if len(
-                dataset.get_split(args.split).test_genome_idx) > 0 else 0,
-            (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum() if len(
-                dataset.get_split(args.split).test_genome_idx) > 0 else 0)
+            len(split.test_genome_idx),
+            (dataset.phenotype.metadata[split.test_genome_idx] == 1).sum() if len(split.test_genome_idx) > 0 else 0,
+            (dataset.phenotype.metadata[split.test_genome_idx] == 0).sum() if len(split.test_genome_idx) > 0 else 0)
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
             report += "Selection strategy: %d-fold cross-validation (score = %.5f)\n" % (
-                len(dataset.get_split(args.split).folds), best_hp_score)
+                len(split.folds), best_hp_score)
         elif args.hp_choice == "bound":
             report += "Selection strategy: bound selection (score = %.5f)\n" % best_hp_score
         else:

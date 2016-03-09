@@ -88,20 +88,10 @@ class KoverDataset(object):
     @property
     def splits(self):
         dataset = self.dataset_open()
-        return [KoverDatasetSplit(split_name,
-                                  split.attrs["train_proportion"],
-                                  split["train_genome_idx"],
-                                  split["test_genome_idx"],
-                                  split["unique_risks"],
-                                  split["unique_risk_by_kmer"],
-                                  split["unique_risk_by_anti_kmer"],
-                                  [KoverDatasetFold(fold_name,
-                                                    fold["train_genome_idx"],
-                                                    fold["test_genome_idx"],
-                                                    fold["unique_risks"],
-                                                    fold["unique_risk_by_kmer"],
-                                                    fold["unique_risk_by_anti_kmer"]) for fold_name, fold in split["folds"].iteritems()],
-                                  split.attrs["random_seed"]) for split_name, split in dataset["splits"].iteritems()]
+        if "splits" in dataset:
+            return [self.get_split(split_name) for split_name in dataset["splits"]]
+        else:
+            return []
 
     @property
     def uuid(self):
@@ -113,6 +103,9 @@ class KoverDataset(object):
         split = dataset["splits"][name]
         return KoverDatasetSplit(name,
                                  split.attrs["train_proportion"],
+                                 # Backwards compatibility with datasets without test_proportion
+                                 split.attrs["test_proportion"] if "test_proportion" in split.attrs else
+                                                                1.0 - split.attrs["train_proportion"],
                                  split["train_genome_idx"],
                                  split["test_genome_idx"],
                                  split["unique_risks"],
@@ -134,10 +127,11 @@ class KoverDatasetPhenotype(object):
         self.metadata_source = metadata_source
 
 class KoverDatasetSplit(object):
-    def __init__(self, name, train_proportion, train_genome_idx, test_genome_idx, unique_risks,
+    def __init__(self, name, train_proportion, test_proportion, train_genome_idx, test_genome_idx, unique_risks,
                  unique_risk_by_kmer, unique_risk_by_anti_kmer, folds, random_seed):
         self.name = name
         self.train_proportion = train_proportion
+        self.test_proportion = test_proportion
         self.train_genome_idx = train_genome_idx
         self.test_genome_idx = test_genome_idx
         self.unique_risks = unique_risks
@@ -152,7 +146,7 @@ class KoverDatasetSplit(object):
                 len(self.train_genome_idx),
                 self.train_proportion,
                 len(self.test_genome_idx),
-                1.0 - self.train_proportion,
+                self.test_proportion,
                 len(self.folds),
                 self.random_seed)
 
