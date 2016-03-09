@@ -415,20 +415,21 @@ class CommandLineInterface(object):
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
         model, rule_importances, \
-        equivalent_rules = learn(dataset_file=args.dataset,
-                                 split_name=args.split,
-                                 model_type=args.model_type,
-                                 p=args.p,
-                                 max_rules=args.max_rules,
-                                 max_equiv_rules=args.max_equiv_rules,
-                                 bound_delta = args.bound_delta,
-                                 bound_max_genome_size = args.bound_max_genome_size
-                                                           if args.bound_max_genome_size is not None
-                                                           else dataset_kmer_count,
-                                 parameter_selection=args.hp_choice,
-                                 n_cpu=args.n_cpu,
-                                 random_seed=args.random_seed,
-                                 progress_callback=progress)
+        equivalent_rules, \
+        classifications = learn(dataset_file=args.dataset,
+                                split_name=args.split,
+                                model_type=args.model_type,
+                                p=args.p,
+                                max_rules=args.max_rules,
+                                max_equiv_rules=args.max_equiv_rules,
+                                bound_delta = args.bound_delta,
+                                bound_max_genome_size = args.bound_max_genome_size
+                                                        if args.bound_max_genome_size is not None
+                                                        else dataset_kmer_count,
+                                parameter_selection=args.hp_choice,
+                                n_cpu=args.n_cpu,
+                                random_seed=args.random_seed,
+                                progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
         if args.progress:
@@ -526,6 +527,7 @@ class CommandLineInterface(object):
                              "rules": [str(r) for r in model],
                              "rule_importances": rule_importances.tolist(),
                              "type": best_hp["model_type"]},
+                   "classifications": classifications,
                    "running_time": running_time.seconds}
 
         with open(join(args.output_dir, 'results.json'), 'w') as f:
@@ -539,7 +541,6 @@ class CommandLineInterface(object):
                     f_equiv.write("\n\n".join(
                         [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence)
                          for j, rule in enumerate(equivalent_rules[i])]))
-
 
 if __name__ == '__main__':
     CommandLineInterface()

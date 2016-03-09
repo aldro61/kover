@@ -481,13 +481,22 @@ def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, p
 
     # Test metrics are computed only if there is a testing set
     if len(test_example_idx) > 0:
-        test_metrics = _get_metrics(test_predictions, dataset.phenotype.metadata[test_example_idx])
+        test_answers = dataset.phenotype.metadata[test_example_idx]
+        test_metrics = _get_metrics(test_predictions, test_answers)
     else:
         test_metrics = None
+
+    # Get the idx of the training/testing examples that are correctly/incorrectly classified by the model
+    classifications = defaultdict(list)
+    classifications["train_correct"] = dataset.genome_identifiers[train_example_idx[train_predictions == train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
+    classifications["train_errors"] = dataset.genome_identifiers[train_example_idx[train_predictions != train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
+    if len(test_example_idx) > 0:
+        classifications["test_correct"] = dataset.genome_identifiers[test_example_idx[test_predictions == test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
+        classifications["test_errors"] = dataset.genome_identifiers[test_example_idx[test_predictions != test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
 
     # Convert the equivalent rule indexes to rule objects
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
     model_equivalent_rules = [[rules[i] for i in equiv_idx] for equiv_idx in equivalent_rules]
 
     return best_hp, best_hp_score, train_metrics, test_metrics, model, rule_importances, \
-           model_equivalent_rules
+           model_equivalent_rules, classifications
