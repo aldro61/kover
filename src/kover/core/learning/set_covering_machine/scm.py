@@ -143,10 +143,13 @@ class BaseSetCoveringMachine(object):
                 iteration_callback(iteration_info)
 
         # Get the complete model's rule importances
-        if iteration_rule_importances:
-            self.rule_importances = iteration_info["rule_importances"]
+        if len(model_rules_idx) > 0:
+            if iteration_rule_importances:
+                self.rule_importances = iteration_info["rule_importances"]
+            else:
+                self.rule_importances = _rule_importances(rule_classifications, model_rules_idx, training_example_idx)
         else:
-            self.rule_importances = _rule_importances(rule_classifications, model_rules_idx, training_example_idx)
+            self.rule_importances = []
 
     def predict(self, X):
         """
