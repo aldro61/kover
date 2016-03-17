@@ -313,11 +313,10 @@ class CommandLineInterface(object):
                 print "kover version %s" % VERSION
             elif args.cite:
                 print \
-                    """
-                    If you used Kover in your work, please cite our paper:
+                    """If you used Kover in your work, please cite our paper:
 
-                    Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
-                    """
+Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
+"""
         else:
             args = parser.parse_args(argv[1:2])
             if not hasattr(self, args.command):
@@ -373,10 +372,10 @@ class CommandLineInterface(object):
                             'specified for each hyperparameter.', default='cv')
         parser.add_argument('--bound-delta', type=float, help='The probabilistic bound on the error rate will be valid '
                             'with probability 1-delta. The default value is 0.05.', default=0.05)
-        parser.add_argument('--bound-max-genome-size', type=int, help='The maximum size, in base pairs, of any'
-                            'genome in the dataset. If you are unsure about this value, you should use an over-estimate'
-                            '. This will only affect the tightness of the bound on the error rate. By default number of'
-                            ' k-mers in the dataset is used.')
+        parser.add_argument('--bound-max-genome-size', type=int, help='The maximum size, in base pairs, of any '
+                            'genome in the dataset. If you are unsure about this value, you should use an '
+                            'overestimation. This will only affect the tightness of the bound on the error rate. By '
+                            'default number of k-mers in the dataset is used.')
         parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
                             'Set this if only if you require that the same random choices are made between repeats.')
         parser.add_argument('--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. '
@@ -493,6 +492,7 @@ class CommandLineInterface(object):
             len(split.test_genome_idx),
             (dataset.phenotype.metadata[split.test_genome_idx] == 1).sum() if len(split.test_genome_idx) > 0 else 0,
             (dataset.phenotype.metadata[split.test_genome_idx] == 0).sum() if len(split.test_genome_idx) > 0 else 0)
+        report += "Number of k-mers: %d\n" % dataset.kmer_count
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
