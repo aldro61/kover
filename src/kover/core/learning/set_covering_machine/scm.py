@@ -58,6 +58,10 @@ class BaseSetCoveringMachine(object):
                 if key[:9] == "utility__":
                     utility_function_additional_args[key[9:]] = value
 
+        # Validate that there are some positive and negative examples
+        if len(positive_example_idx) == 0 or  len(negative_example_idx) == 0:
+            raise ValueError("There must be positive and negative examples to train the SCM.")
+
         if self.model_type == disjunction:
             # Switch the example labels
             tmp = positive_example_idx
