@@ -67,14 +67,14 @@ entries:
       print: true
 
       items:
-        - title: Dataset tools
+        - title: Kover Dataset
           url: /doc_dataset.html
           audience: writers, designers
           platform: all
           product: all
           version: all
 
-        - title: Learning engine
+        - title: Kover Learn
           url: /doc_learning.html
           audience: writers, designers
           platform: all

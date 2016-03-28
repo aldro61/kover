@@ -1,9 +1,9 @@
 ---
-title: Kover dataset tools
+title: Data Manipulation Module
 tags: 
 keywords: dataset, tools, kover, genomics, k-mer, machine learning
-last_updated: February 25, 2016
-summary: "Overview of the Kover dataset tools"
+last_updated: March 27, 2016
+summary: "Overview of the data manipulation utilities"
 ---
 
 ## Creating a dataset

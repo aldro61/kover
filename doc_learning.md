@@ -1,23 +1,24 @@
 ---
-title: Kover learning engine
+title: Machine Learning Module
 tags:
 keywords: learning, engine, set covering machine, SCM, kover, genomics, k-mer, machine learning
-last_updated: February 25, 2016
-summary: "Overview of the Kover learning engine"
+last_updated: March 27, 2016
+summary: "Overview of the machine learning functionality"
 ---
 
 ## Learning models
 
-This command is used to learn models from a dataset. It provides an interface on the Set Covering Machine learning
-algorithm.
+This command is used to learn a model from a Kover dataset. It provides an interface on the Set Covering Machine algorithm.
 
 ```
 usage: kover learn [-h] --dataset DATASET --split SPLIT --model-type
                    {conjunction,disjunction} [{conjunction,disjunction} ...]
                    --p P [P ...] --max-rules MAX_RULES
                    [--max-equiv-rules MAX_EQUIV_RULES]
-                   [--hp-choice {bound,cv,none}] [--random-seed RANDOM_SEED]
-                   [--n-cpu N_CPU] [--output-dir OUTPUT_DIR] [-x] [-v]
+                   [--hp-choice {bound,cv,none}] [--bound-delta BOUND_DELTA]
+                   [--bound-max-genome-size BOUND_MAX_GENOME_SIZE]
+                   [--random-seed RANDOM_SEED] [--n-cpu N_CPU]
+                   [--output-dir OUTPUT_DIR] [-x] [-v]
 
 Learn a model from data
 
@@ -49,6 +50,16 @@ optional arguments:
                         the split. Other strategies, such as bound selection
                         are available. Using none selects the first value
                         specified for each hyperparameter.
+  --bound-delta BOUND_DELTA
+                        The probabilistic bound on the error rate will be
+                        valid with probability 1-delta. The default value is
+                        0.05.
+  --bound-max-genome-size BOUND_MAX_GENOME_SIZE
+                        The maximum size, in base pairs, of anygenome in the
+                        dataset. If you are unsure about this value, you
+                        should use an over-estimate. This will only affect the
+                        tightness of the bound on the error rate. By default
+                        number of k-mers in the dataset is used.
   --random-seed RANDOM_SEED
                         The random seed used for any random operation. Set
                         this if only if you require that the same random
