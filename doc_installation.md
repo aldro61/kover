@@ -18,9 +18,12 @@ For each dependency, a link to further installation instructions is provided.
 * [GNU C++ compiler (g++)](https://gcc.gnu.org/)
 * [GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)
 * [The HDF5 library](https://www.hdfgroup.org/HDF5/release/obtain5.html)
-* [Numpy](http://docs.scipy.org/doc/numpy/user/install.html) (recommended)
+* [NumPy](http://docs.scipy.org/doc/numpy/user/install.html)*
 * [Python 2.7.x](https://www.python.org/download/releases/2.7/)
 * [Python development headers](https://docs.python.org/2/c-api/intro.html)
+* [SciPy](https://github.com/scipy/scipy/releases)*
+
+*Numpy and Scipy can be installed automatically, but we recommend a manual installation for optimal performances.
 
 ### Will be installed automatically
 

@@ -10,22 +10,29 @@ published: true
 
 ## Overview 
 
-Kover is an *out-of-core* implementation of the Set Covering Machine learning algorithm.
-Given two sets of whole genomes, it attempts to find a simple model, that relies on a small number of short DNA sequences ([k-mers](https://en.wikipedia.org/wiki/K-mer)), that accurately discriminate them.
-Kover can be used to obtain interpretable models of phenotypes.
+Kover is an out-of-core implementation of the Set Covering Machine algorithm that has been tailored for genomic biomarker discovery.
 
+Given two groups of phenotipically distinct individuals represented by their genomes, Kover seeks an intelligible model that
+accurately discriminates them. The obtained models are conjunctions (logical-AND) or disjunctions (logical-OR) of rules that capture
+the presence or absence of [k-mers](https://en.wikipedia.org/wiki/K-mer).
+
+
+For example, when applied to 462 [*C. difficile*](https://en.wikipedia.org/wiki/Clostridium_difficile_(bacteria)) isolates divided into
+two groups: resistant or sensitive to [Azithromycin](https://en.wikipedia.org/wiki/Azithromycin), Kover found the following model to be
+a good predictor of resistance to this drug:
+
+```
+Presence(AGCCAGGTTCTTCATTTAAGATGCTAACTTC)
+OR
+Presence(CTTAAGCTGCCAGCGGAATGCTTTCATCCTA)
+OR
+Presence(AAGTCGCCCTTTTTTAAGGATACGGCGGTAT)
+```
 
 ## Survey of features
 
-We provide a command line interface for Kover. Kover's features are regrouped in two tools:
-
-* [Kover dataset tools](doc_dataset.html): Manipulate and prepare genomic data for Kover
-* [Kover learning engine](doc_learning.html): Apply the machine learning algorithm to learn models
-
-The back-end of Kover is bundled as a Python package. All the actions available in the command line interface can be
-performed using this package. This is not officially supported, but basic documentation is provided in the 
-docstring of some functions.
-
+A command line interface is provided. It consists in two main modules, [kover dataset](doc_dataset.html) and [kover learn](doc_learning.html). Kover dataset provides
+data manipulation utilities and kover learn is an interface to the machine learning algorithm.
 
 ## Licence
 
