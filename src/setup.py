@@ -16,7 +16,7 @@ setup(
 
     cmdclass={'build_ext':build_ext},
     setup_requires = ['numpy'],
-    install_requires = ['h5py', 'numpy', 'pandas', 'progressbar'],
+    install_requires = ['h5py', 'numpy', 'pandas', 'progressbar', 'scipy'],
 
     author = "Alexandre Drouin",
     author_email = "aldro61@gmail.com",
