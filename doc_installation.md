@@ -23,15 +23,17 @@ For each dependency, a link to further installation instructions is provided.
 * [Python development headers](https://docs.python.org/2/c-api/intro.html)
 * [SciPy](https://github.com/scipy/scipy/releases)*
 
-*Numpy and Scipy can be installed automatically, but we recommend a manual installation for optimal performances.
-
 ### Will be installed automatically
 
 * [Cython](http://docs.cython.org/src/quickstart/install.html)
 * [H5py](http://docs.h5py.org/en/latest/build.html)
-* [Numpy](http://docs.scipy.org/doc/numpy/user/install.html)
+* [Numpy](http://docs.scipy.org/doc/numpy/user/install.html)*
 * [Pandas](http://pandas.pydata.org/pandas-docs/stable/install.html#installing-pandas)
 * [Progressbar](https://pypi.python.org/pypi/progressbar)
+* [SciPy](https://github.com/scipy/scipy/releases)*
+
+*Numpy and Scipy can be installed automatically, but we recommend a manual installation for optimal performances.
+
 
 ## Linux and Mac
 
