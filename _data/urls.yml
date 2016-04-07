@@ -10,8 +10,6 @@ tocpage:
   link: "<a href='tocpage.html'>Table of Contents</a>"
 
 
-
-
 index:
   title: "Introduction"
   url: "index.html"
@@ -28,6 +26,3 @@ doc_example:
   title: "Example"
   url: "doc_example.html"
   link: "<a href='doc_example.html'>Example: Predicting antibiotic resistance</a>"
-
-
-

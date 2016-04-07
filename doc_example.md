@@ -2,7 +2,7 @@
 title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
 keywords: start, introduction, example, kover, genomics, k-mer, machine learning
-last_updated: November 9, 2015
+last_updated: April 7, 2016
 summary: "This page will walk you through an example application of Kover."
 ---
 
@@ -21,7 +21,7 @@ The genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolu
 
 ## Creating a dataset
 
-Before learning a model from the example data, we must package the genomic and phenotypic data into a [Kover Dataset](). 
+Before learning a model from the example data, we must package the genomic and phenotypic data into a [Kover dataset](doc_dataset.html#creating-a-dataset).
 To convert the example data into such a dataset, use the following command:
 
 ```
@@ -30,7 +30,7 @@ kover dataset create --genome-type tsv --genome-source KmerMatrix.tsv --phenotyp
 
 This produces a Kover dataset called "example.kover". From now on, you no longer need the original example data files.
 
-You can now use the [kover dataset info](todo) command to print information about the dataset. For example, to list the identifiers
+You can now use the [kover dataset info](doc_dataset.html#listing-information-about-a-dataset) command to print information about the dataset. For example, to list the identifiers
 of the genomes contained in the dataset, use:
 
 ```
@@ -49,7 +49,7 @@ Your dataset contains 9 701 935 k-mers!
 
 In order to measure the accuracy of the model obtained using Kover, we must split the dataset into a training set and a 
 testing set. The training set will be used to learn a model and the testing set will be used to estimate its accuracy.
-A Kover dataset can contain multiple splits of the data. The command for splitting a dataset is [kover dataset split](todo).
+A Kover dataset can contain multiple splits of the data. The command for splitting a dataset is [kover dataset split](doc_dataset.html#splitting-a-dataset).
 
 Moreover, Kover being a machine learning algorithm, it has [hyperparameters](todo), i.e. user specified parameters, that must
 be adjusted based on the data. Kover can use [multiple strategies](todo) for choosing the hyperparameter values. In this example, we
@@ -66,7 +66,7 @@ kover dataset split --dataset example.kover --id example_split --train-size 0.66
 ## Learning a model
 
 Now that we have created and splitted the dataset, we are ready to learn a model, i.e., a predictive model of Rifampicin resistance in *Mycobacterium tuberculosis*. 
-The [kover learn]() command is used to learn models. 
+The [kover learn](doc_learning.html#learning-models) command is used to learn models.
 The following command tells Kover to learn a model containing at most 5 rules, to try both
 conjunction and disjunction models (see [model types](todo)) and the values 0.1, 1.0 and 10.0 for the *p* 
 hyperparameter (see [hyperparameters](todo)), while using cross-validation as the hyperparameter selection strategy. 
