@@ -517,11 +517,10 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
             for key, alias in metric_aliases:
                 report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        # Print the bound
-        report += "Metrics (Probabilistic bound)\n" + "-" * 22 + "\n"
-        report += "With probability %.1f%%, the model will have a maximum error rate of %.1f%% on any unseen genome." % ((1.0 - args.bound_delta) * 100, train_metrics["bound"] * 100)
-        report += "\n"
-        report += "\n"
+        ## Print the bound
+        #report += "Metrics (Probabilistic bound)\n" + "-" * 22 + "\n"
+        #report += "With probability %.1f%%, the model will have a maximum error rate of %.1f%% on any unseen genome." % ((1.0 - args.bound_delta) * 100, train_metrics["bound"] * 100)
+        #report += "\n"
 
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"
