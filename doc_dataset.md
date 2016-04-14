@@ -20,8 +20,7 @@ Creates a Kover dataset from genomic data and optionally phenotypic metadata
 
 optional arguments:
   -h, --help            show this help message and exit
-  --genome-type {tsv}   The format in which the genomic data is provided. See
-                        documentation for details.
+  --genome-type {tsv}   The format in which the genomic data is provided.
   --genome-source GENOME_SOURCE
                         The genomic data.
   --phenotype-name PHENOTYPE_NAME
@@ -36,6 +35,9 @@ optional arguments:
   -x, --progress        Shows a progress bar for the execution.
   -v, --verbose         Sets the verbosity level.
 ```
+
+Kover is currently limited to genomic data provided as a TSV file (--genome-type tsv). The accepted input data formats
+for genomic and phenotypic data are detailed [here](doc_input_formats.html).
 
 ## Splitting a dataset
 

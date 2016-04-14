@@ -14,10 +14,12 @@ You will need to download the [example data](http://graal.ift.ulaval.ca/adrouin/
 tuberculosis* isolates, along with their susceptibility to Rifampicin, an antibiotic.
 
 The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) genome assembler and subsequently split into
-k-mers of length 31 using [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial). The tsv-format matrix was produced
+k-mers of length 31 using [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial). The TSV k-mer matrix was produced
 by Ray Surveyor.
 
 The genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
+
+Additional links: [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial), [Input file format](doc_input_formats.html).
 
 ## Creating a dataset
 
