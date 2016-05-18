@@ -506,22 +506,18 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
         report += "p: %f\n" % best_hp["p"]
         report += "Maximum number of rules: %d\n" % best_hp["max_rules"]
         report += "\n"
-        # Print the training set metrics
+        # Write the training set metrics
         report += "Metrics (training data)\n" + "-" * 23 + "\n"
         for key, alias in metric_aliases:
             report += "%s: %s\n" % (str(alias), str(round(train_metrics[key][0], 5)))
         report += "\n"
-        # Print the testing set metrics
+        # Write the testing set metrics
         if test_metrics is not None:
             report += "Metrics (testing data)\n" + "-" * 22 + "\n"
             for key, alias in metric_aliases:
                 report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        ## Print the bound
-        #report += "Metrics (Probabilistic bound)\n" + "-" * 22 + "\n"
-        #report += "With probability %.1f%%, the model will have a maximum error rate of %.1f%% on any unseen genome." % ((1.0 - args.bound_delta) * 100, train_metrics["bound"] * 100)
-        #report += "\n"
-
+        # Write the model
         report += "Model (%s - %d rules):\n" % (model.type.title(), len(model)) + "-" * (
             18 + len(model.type) + len(str(len(model)))) + "\n"
         report += ("\n%s\n" % ("AND" if model.type == "conjunction" else "OR")).join(
@@ -529,8 +525,10 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
              i, (rule, importance) in enumerate(zip(model, rule_importances))])
         report += "\n"
 
+        # Show the report
         print report
 
+        # Create the output directory
         if not exists(args.output_dir):
             mkdir(args.output_dir)
 
@@ -538,7 +536,7 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
         with open(join(args.output_dir, "report.txt"), "w") as f:
             f.write(report)
 
-        # Write metrics (not user friendly) [json]
+        # Save detailed results to json
         results = {"data": {"uuid": dataset.uuid,
                             "path": dataset.path,
                             "split": args.split},
@@ -556,9 +554,14 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
                              "type": best_hp["model_type"]},
                    "classifications": classifications,
                    "running_time": running_time.seconds}
-
         with open(join(args.output_dir, 'results.json'), 'w') as f:
             json_dump(results, f)
+
+        # Save command line arguments to json
+        config = dict((k,v) for k,v in args.__dict__.iteritems())
+        config["dataset"] = abspath(config['dataset'])
+        with open(join(args.output_dir, 'config.json'), 'w') as f:
+            json_dump(config, f)
 
         # Save model (also equivalent rules) [Fasta]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
