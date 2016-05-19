@@ -96,7 +96,6 @@ class KoverDatasetTool(object):
             progress_vars["pbar"].finish()
 
     def info(self):
-        # TODO: list the available splits
         parser = argparse.ArgumentParser(prog="kover dataset info",
                                          description='Prints information about the content of a dataset')
         parser.add_argument('--dataset', help='The Kover dataset for which you require information.', required=True)
