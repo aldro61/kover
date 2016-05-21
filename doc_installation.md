@@ -1,7 +1,7 @@
 ---
 title: Installation
 keywords: installation, install, kover, machine learning, genomics
-last_updated: November 5, 2015
+last_updated: May 21, 2016
 tags: [getting-started]
 summary: "This page will walk you through the installation of Kover."
 ---
@@ -69,10 +69,10 @@ cd
 kover --version
 ```
 
-This should print the version of you Kover installation.
+This should print the version of the command line interface (cli-x.y.z) and the core (core-x.y.z).
 
 Thats it! You're done.
 
 ## Windows
 
-Windows is currently not supported, but will be eventually.
+Windows is currently not supported.
