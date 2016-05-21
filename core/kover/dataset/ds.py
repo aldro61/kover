@@ -17,11 +17,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import h5py as h
-
 from functools import partial
 
 from ..utils import _hdf5_open_no_chunk_cache
+
 
 class KoverDataset(object):
     def __init__(self, file):

@@ -83,7 +83,7 @@ class KoverDatasetTool(object):
             progress = None
 
         if args.genome_type == "tsv":
-            from kover.core.dataset.create import from_tsv
+            from kover.dataset.create import from_tsv
 
             from_tsv(tsv_path=args.genome_source,
                      output_path=args.output,
@@ -128,7 +128,7 @@ class KoverDatasetTool(object):
         args = parser.parse_args(argv[3:])
 
         # Package imports
-        from kover.core.dataset import KoverDataset
+        from kover.dataset import KoverDataset
 
         dataset = args.dataset
         dataset = KoverDataset(dataset)
@@ -221,7 +221,7 @@ class KoverDatasetTool(object):
             exit()
 
         # Package imports
-        from kover.core.dataset.split import split_with_ids, split_with_proportion
+        from kover.dataset.split import split_with_ids, split_with_proportion
         from progressbar import Bar, Percentage, ProgressBar, Timer
         from random import randint
 
@@ -395,8 +395,8 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
         # Package imports
         from datetime import timedelta
         from json import dump as json_dump
-        from kover.core.dataset import KoverDataset
-        from kover.core.learning.experiment import learn
+        from kover.dataset import KoverDataset
+        from kover.learning.experiment import learn
         from os import mkdir
         from os.path import abspath, exists, join
         from progressbar import Bar, Percentage, ProgressBar, Timer

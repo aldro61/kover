@@ -26,5 +26,5 @@ setup(
     url = "http://github.com/aldro61/kover",
 
     # Cython Extension
-    ext_modules = [Extension("kover/core/learning/set_covering_machine/popcount", ["kover/core/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])]
+    ext_modules = [Extension("kover/learning/set_covering_machine/popcount", ["kover/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])]
 )

@@ -21,11 +21,11 @@ import logging
 import numpy as np
 
 from h5py.h5f import ACC_RDWR
-from kover.core.dataset import KoverDataset
 from math import ceil
 
-from ..utils import _hdf5_open_no_chunk_cache, _minimum_uint_size
+from ..dataset import KoverDataset
 from ..learning.set_covering_machine.rules import KmerRuleClassifications
+from ..utils import _hdf5_open_no_chunk_cache, _minimum_uint_size
 
 
 def split_with_ids(input, split_name, train_ids, test_ids, random_seed, n_folds, warning_callback=None,

@@ -28,14 +28,13 @@ from os.path import getsize
 from time import time
 from uuid import uuid1
 
-
+from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
 
 
 KMER_MATRIX_PACKING_SIZE = 64
 KMER_MATRIX_DTYPE = np.uint64
 PHENOTYPE_LABEL_DTYPE = np.uint8
 
-from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
 
 def _create_hdf5_file_no_chunk_caching(path):
     # Create the HDF5 File

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 	Copyright (C) 2015  Alexandre Drouin
