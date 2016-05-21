@@ -25,7 +25,7 @@ import logging
 from sys import argv
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "0.1"
+VERSION = "0.1.0"
 
 
 class KoverDatasetTool(object):
