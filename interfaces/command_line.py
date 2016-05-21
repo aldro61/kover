@@ -22,6 +22,7 @@
 import argparse
 import logging
 
+from pkg_resources import get_distribution
 from sys import argv
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
@@ -309,7 +310,9 @@ class CommandLineInterface(object):
                     along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     """
             elif args.version:
-                print "kover version %s" % VERSION
+                print "cli-%s" % VERSION
+                print "core-%s" % get_distribution('kover').version
+
             elif args.cite:
                 print \
                     """If you used Kover in your work, please cite our paper:
