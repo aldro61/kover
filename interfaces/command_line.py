@@ -314,7 +314,19 @@ class CommandLineInterface(object):
                 print \
                     """If you used Kover in your work, please cite our paper:
 
-Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2015). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. submitted.
+Drouin, Alexandre, et al. "Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons." bioRxiv (2016): 045153.
+
+
+Bibtex:
+
+@article{drouin2016predictive,
+  title={Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons},
+  author={Drouin, Alexandre and Gigu{\`e}re, S{\'e}bastien and D{\'e}raspe, Maxime and Marchand, Mario and Tyers, Michael and Loo, Vivian G and Bourgault, Anne-Marie and Laviolette, Fran{\c{c}}ois and Corbeil, Jacques},
+  journal={bioRxiv},
+  pages={045153},
+  year={2016},
+  publisher={Cold Spring Harbor Labs Journals}
+}
 """
         else:
             args = parser.parse_args(argv[1:2])
