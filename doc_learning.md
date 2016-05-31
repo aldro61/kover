@@ -78,7 +78,7 @@ optional arguments:
 
 ### Understanding the hyperparameters
 
-A hyperparameter is a free parameter of a learning algorithm that must be set by the user, prior to seeing the data.
+A hyperparameter is a free parameter of a learning algorithm that must be set by the user, prior to learning the model.
 Generally, the user defines a set of candidate values for each hyperparameter and uses a strategy, such as
 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)), to select the best value.
 
@@ -86,6 +86,8 @@ Kover has 2 hyperparameters:
 
 * The model type (option --model-type)
 * The trade-off parameter (option --p)
+
+*Note: Below, the term example refers to a (genome, phenotype) pair in the dataset.
 
 #### The model type
 
@@ -125,8 +127,8 @@ Again, the optimal value is problem specific and many values must be tried. For 
 
 The are many strategies to select the values of hyperparameters. Kover implements two of them, which are described below:
 
-* k-fold cross-validation
-* Risk bound selection
+* k-fold cross-validation: good for smaller datasets, computationally intensive
+* Risk bound selection: good for larger datasets, k+1 times faster than k-fold CV
 
 #### k-fold cross-validation
 
@@ -149,8 +151,8 @@ the learning algorithm from the entire training set, yielding the final model.
 
 To use this strategy in Kover, you must:
 
-- Define the number of folds when using the ``` kover dataset split``` command.
-- Use ```--hp-choice cv```
+- Define the number of folds when using the [kover dataset split](doc_dataset.html#splitting-a-dataset) command.
+- Use ```--hp-choice cv``` in the [kover learn](#learning-models) command
 
 <br/>
 **Choosing the number of folds**
@@ -158,6 +160,7 @@ To use this strategy in Kover, you must:
 The general standard is 5 or 10 fold cross-validation. For smaller datasets, the number of folds can be increased,
 which results in more data available for training the algorithm and thus, a better estimate of the score of the
 hyperparameter values.
+
 
 **Note**
 
@@ -169,11 +172,19 @@ we recommend trying risk bound selection, which is described below.
 #### Risk bound selection
 
 Risk bound selection is a great alternative to cross-validation for larger datasets. It is much faster and requires a
-single training of the learning algorithm to score each combination of hyperparameter values. This method trains the
-algorithm on the entire training set using each hyperparameter combination and uses a mathematical expression to estimate
-an upper bound on the error rate of the obtained model. The combination of values that yields the smallest bound value is
-retained.
+single training of the learning algorithm to score each combination of hyperparameter values. This method consists of
+training the algorithm on the entire training set using each hyperparameter combination and using a mathematical expression
+to estimate the maximum risk (error rate) of the obtained model on unseen data. The combination of hyperparameter values
+that yields the smallest bound value is retained.
+
+To use this strategy in Kover, you must use the following parameters for the [kover learn](#learning-models) command:
+
+- ```--hp-choice bound```
+- ```--bound-max-genome-size x```, where x is any number that is greater or equal than the number of base pairs in the largest genome of
+the dataset. This will only affect the tightness of the bound on the error rate. By default the number of k-mers in the dataset is used,
+but using a better estimate will help selecting better hyperparameters.
 
 **Note**
+
 While this method is fast, the bound value can be inaccurate if there are too few learning examples. The minimum number
-of examples is problem dependent.
+of examples varies between phenotypes.
