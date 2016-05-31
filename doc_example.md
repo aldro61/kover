@@ -7,24 +7,24 @@ summary: "This page will walk you through an example application of Kover."
 ---
 
 In this example, we show how Kover can be applied to genomic data in order to obtain an interpretable model of a phenotype.
+Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*.
 
 ## Example data
 
-You will need to download the [example data](http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip) (~180 Mb). The data contains the genomes of 141 *Mycobacterium 
-tuberculosis* isolates, along with their susceptibility to Rifampicin, an antibiotic.
+First, download the [example data](http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip) (~180 Mb), which contains the genome of 141 *Mycobacterium
+tuberculosis* isolates, along with their susceptibility to rifampicin. There should be two files: KmerMatrix.tsv and metadata.tsv.
 
-The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) genome assembler and subsequently split into
-k-mers of length 31 using [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial). The TSV k-mer matrix was produced
-by Ray Surveyor.
+The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) and split into k-mers of length 31 using
+[Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial).
 
-The genomes and the metadata were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
+The raw data were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
 
 Additional links: [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial), [Input file format](doc_input_formats.html).
 
 ## Creating a dataset
 
-Before learning a model from the example data, we must package the genomic and phenotypic data into a [Kover dataset](doc_dataset.html#creating-a-dataset).
-To convert the example data into such a dataset, use the following command:
+Before learning a model from these data, we must package the genomic and phenotypic data into a [Kover dataset](doc_dataset.html#creating-a-dataset).
+To create such a dataset, use the following command:
 
 ```
 kover dataset create --genome-type tsv --genome-source KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
@@ -51,15 +51,15 @@ Your dataset contains 9 701 935 k-mers!
 
 In order to measure the accuracy of the model obtained using Kover, we must split the dataset into a training set and a 
 testing set. The training set will be used to learn a model and the testing set will be used to estimate its accuracy.
-A Kover dataset can contain multiple splits of the data. The command for splitting a dataset is [kover dataset split](doc_dataset.html#splitting-a-dataset).
+A Kover dataset can contain multiple splits of the data. The command used for splitting a dataset is [kover dataset split](doc_dataset.html#splitting-a-dataset).
 
-Moreover, Kover being a machine learning algorithm, it has [hyperparameters](todo), i.e. user specified parameters, that must
-be adjusted based on the data. Kover can use [multiple strategies](todo) for choosing the hyperparameter values. In this example, we
-will use [k-fold cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation), 
-which is the most commonly used hyperparameter selection strategy in machine learning.
+Kover implements a machine learning algorithm and thus has [hyperparameters](https://www.quora.com/Machine-Learning-What-are-hyperparameters), which are user-specified
+parameters that must be adjusted to the phenotype of interest. The most widely used method for setting hyperparameter values
+is [k-fold cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation).
+In this example, we will use 5-fold cross-validation.
 
 The following command creates a split of the data called "example_split", which uses 2/3 of the genomes for training and
-1/3 for testing. It also creates 5 cross-validation folds. The data splitting is done randomly with 42 as the random seed.
+1/3 for testing. It also creates 5 cross-validation folds. The data are partitioned randomly, using 72 as the random seed.
 
 ```
 kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 72 --progress
@@ -67,11 +67,11 @@ kover dataset split --dataset example.kover --id example_split --train-size 0.66
 
 ## Learning a model
 
-Now that we have created and splitted the dataset, we are ready to learn a model, i.e., a predictive model of Rifampicin resistance in *Mycobacterium tuberculosis*. 
+Now that we have created and splitted the dataset, we are ready to learn a predictive model of Rifampicin resistance in *Mycobacterium tuberculosis*.
 The [kover learn](doc_learning.html#learning-models) command is used to learn models.
 The following command tells Kover to learn a model containing at most 5 rules, to try both
-conjunction and disjunction models (see [model types](todo)) and the values 0.1, 1.0 and 10.0 for the *p* 
-hyperparameter (see [hyperparameters](todo)), while using cross-validation as the hyperparameter selection strategy. 
+conjunction (logical-AND) and disjunction (logical-OR) models and the values 0.1, 1.0 and 10.0 for the *p*
+hyperparameter (see [hyperparameters](todo)), while using cross-validation as the hyperparameter selection strategy.
 Moreover, it distributes the cross-validation on 2 CPUs.
 
 ```
