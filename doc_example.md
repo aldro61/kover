@@ -53,9 +53,9 @@ In order to measure the accuracy of the model obtained using Kover, we must spli
 testing set. The training set will be used to learn a model and the testing set will be used to estimate its accuracy.
 A Kover dataset can contain multiple splits of the data. The command used for splitting a dataset is [kover dataset split](doc_dataset.html#splitting-a-dataset).
 
-Kover implements a machine learning algorithm and thus has [hyperparameters](https://www.quora.com/Machine-Learning-What-are-hyperparameters),
+Kover implements a machine learning algorithm and thus has [hyperparameters](doc_learning.html#understanding-the-hyperparameters),
 which are free parameters that must be tuned to the data at hand. The most widely used method for setting hyperparameter values
-is [k-fold cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation).
+is [k-fold cross-validation](doc_learning.html#k-fold-cross-validation).
 In this example, we will use 5-fold cross-validation.
 
 The following command creates a split of the data called "example_split", which uses 2/3 of the genomes for training and
@@ -71,7 +71,7 @@ Now that we have created and split the dataset, we are ready to learn a predicti
 The [kover learn](doc_learning.html#learning-models) command is used to learn models.
 The following command tells Kover to learn a model containing at most 5 rules, to try both
 conjunction (logical-AND) and disjunction (logical-OR) models and the values 0.1, 1.0 and 10.0 for the *p*
-hyperparameter (see [hyperparameters](todo)), while using cross-validation as the hyperparameter selection strategy.
+hyperparameter (see [hyperparameters](doc_learning.html#understanding-the-hyperparameters)), while using cross-validation as the [hyperparameter selection strategy](doc_learning.html#hyperparameter-selection-strategies).
 Moreover, it distributes the cross-validation on 2 CPUs.
 
 ```
