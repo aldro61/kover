@@ -1,6 +1,6 @@
 <img src="http://graal.ift.ulaval.ca/adrouin/kover.png" height="50" />
 
-Kover is an *out-of-core* implementation of the Set Covering Machine learning algorithm. It compares large sets of wholes genomes and produces highly interpretable models of phenotypes.
+Kover is an *out-of-core* implementation of the Set Covering Machine algorithm that has been tailored for genomic biomarker discovery. It produces highly interpretable models of phenotypes. The models are rule-based and rely on the presence/absence of k-mers.
 
 ## Introduction
 
@@ -20,10 +20,6 @@ For an example of use, see: http://aldro61.github.io/kover/doc_example.html
 
 The documentation can be found at: http://aldro61.github.io/kover/
 
-## Questions?
+## Contact
 
-If you need help using Kover, please have a look at https://www.biostars.org/t/Kover/. If you don't find an answer to your question, please create a new post with the tag *kover*.
-
-## Issues
-
-Please use GitHub issues to report any bug or to request additional features.
+If you need help using Kover or to report any bug, please use [Biostars](https://www.biostars.org/p/194520/).
