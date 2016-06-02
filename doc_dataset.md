@@ -46,8 +46,11 @@ This must be done prior to learning models from the data.
 
 ```
 usage: kover dataset split [-h] --dataset DATASET --id ID
-                           [--train-size TRAIN_SIZE] [--folds FOLDS]
-                           [--random-seed RANDOM_SEED] [-v] [-x]
+                           [--train-size TRAIN_SIZE]
+                           [--train-ids TRAIN_IDS [TRAIN_IDS ...]]
+                           [--test-ids TEST_IDS [TEST_IDS ...]]
+                           [--folds FOLDS] [--random-seed RANDOM_SEED] [-v]
+                           [-x]
 
 Splits a kover dataset file into a training set, a testing set and optionally
 cross-validation folds
@@ -60,6 +63,19 @@ optional arguments:
   --train-size TRAIN_SIZE
                         The proportion of the data that will be reserved for
                         training the learning algorithm (default is 0.5).
+                        Alternatively, you can specify which genomes to use
+                        for training and testing by using --train-ids and
+                        --test-ids.
+  --train-ids TRAIN_IDS [TRAIN_IDS ...]
+                        The identifiers of the genomes used to train the
+                        learning algorithm. If you provide a value for this
+                        argument, you must also provide a value for --test-
+                        ids.
+  --test-ids TEST_IDS [TEST_IDS ...]
+                        The identifiers of the genomes used to evaluate the
+                        accuracy of the model generated. If you provide a
+                        value for this argument, you must also provide a value
+                        for --train-ids.
   --folds FOLDS         The number of k-fold cross-validation folds to create
                         (default is 0 for none, the minimum value is 2). Folds
                         are required for using k-fold cross-validation in
