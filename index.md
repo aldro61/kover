@@ -18,8 +18,8 @@ the presence or absence of [k-mers](https://en.wikipedia.org/wiki/K-mer).
 
 
 For example, when applied to 462 [*C. difficile*](https://en.wikipedia.org/wiki/Clostridium_difficile_(bacteria)) isolates divided into
-two groups: resistant or sensitive to [Azithromycin](https://en.wikipedia.org/wiki/Azithromycin), Kover found the following model to be
-a good predictor of resistance to this drug:
+two groups: resistant or sensitive to [Azithromycin](https://en.wikipedia.org/wiki/Azithromycin), Kover found that the
+following model is a good predictor of resistance to this drug:
 
 ```
 Presence(AGCCAGGTTCTTCATTTAAGATGCTAACTTC)
@@ -28,6 +28,13 @@ Presence(CTTAAGCTGCCAGCGGAATGCTTTCATCCTA)
 OR
 Presence(AAGTCGCCCTTTTTTAAGGATACGGCGGTAT)
 ```
+
+Kover has been found to outperform the widely used pipeline consisting of using univariate feature selection (e.g. chi2 test) coupled with a learning algorithm (e.g.: SVM, CART). These results are described in:
+
+> Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V.
+> G., ... & Corbeil, J. (2016). Predictive computational phenotyping and
+> biomarker discovery using reference-free genome comparisons. bioRxiv,
+> 045153.
 
 ## Survey of features
 
