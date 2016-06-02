@@ -26,7 +26,7 @@ For each dependency, a link to further installation instructions is provided.
 ### Will be installed automatically
 
 * [Cython](http://docs.cython.org/src/quickstart/install.html)
-* [H5py](http://docs.h5py.org/en/latest/build.html)
+* [H5py >= 2.4.0](http://docs.h5py.org/en/latest/build.html)
 * [Numpy](http://docs.scipy.org/doc/numpy/user/install.html)*
 * [Pandas](http://pandas.pydata.org/pandas-docs/stable/install.html#installing-pandas)
 * [Progressbar](https://pypi.python.org/pypi/progressbar)
