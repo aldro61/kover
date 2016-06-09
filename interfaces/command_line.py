@@ -367,12 +367,14 @@ Bibtex:
                             required=True)
         parser.add_argument('--model-type', choices=['conjunction', 'disjunction'], nargs='+',
                             help='Hyperparameter: The type of model to learn, conjunction (logical-AND) or disjunction '
-                                 '(logical-OR). You can specify multiple space separated values.',
+                                 '(logical-OR). You can specify multiple space separated values. Refer to the documentation '
+                                 'for more information.',
                             required=True)
         parser.add_argument('--p', type=float, nargs='+',
                             help='Hyperparameter: The value of the trade-off parameter in the rule scoring criterion. '
-                                 'You can specify multiple space separated values.',
-                            required=True)
+                                 'You can specify multiple space separated values. Refer to the documentation for '
+                                 'more information.',
+                            required=True, default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
                             'model.', required=True)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '
@@ -382,14 +384,12 @@ Bibtex:
         parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
                             help='The strategy used to select the best values for hyperparameters. The default is '
                             'k-fold cross-validation, where k is the number of folds defined in the split. Other '
-                            'strategies, such as bound selection are available. Using none selects the first value '
-                            'specified for each hyperparameter.', default='cv')
-        parser.add_argument('--bound-delta', type=float, help='The probabilistic bound on the error rate will be valid '
-                            'with probability 1-delta. The default value is 0.05.', default=0.05)
-        parser.add_argument('--bound-max-genome-size', type=int, help='The maximum size, in base pairs, of any '
-                            'genome in the dataset. If you are unsure about this value, you should use an '
-                            'overestimation. This will only affect the tightness of the bound on the error rate. By '
-                            'default number of k-mers in the dataset is used.')
+                            'strategies, such as bound selection are available (refer to the documentation). Using none '
+                            'selects the first value specified for each hyperparameter.', default='cv')
+        parser.add_argument('--bound-max-genome-size', type=int, help='Specify this only if --hp-choice is bound. The '
+                            'maximum size, in base pairs, of any genome in the dataset. If you are unsure about this '
+                            'value, you should use an overestimation. This will only affect the tightness of the bound '
+                            'on the error rate. By default number of k-mers in the dataset is used.')
         parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
                             'Set this if only if you require that the same random choices are made between repeats.')
         parser.add_argument('--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. '
