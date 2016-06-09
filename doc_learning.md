@@ -30,10 +30,12 @@ optional arguments:
   --model-type {conjunction,disjunction} [{conjunction,disjunction} ...]
                         Hyperparameter: The type of model to learn,
                         conjunction (logical-AND) or disjunction (logical-OR).
-                        You can specify multiple space separated values.
+                        You can specify multiple space separated values. Refer
+                        to the documentation for more information.
   --p P [P ...]         Hyperparameter: The value of the trade-off parameter
                         in the rule scoring criterion. You can specify
-                        multiple space separated values.
+                        multiple space separated values. Refer to the
+                        documentation for more information.
   --max-rules MAX_RULES
                         The maximum number of rules that can be included in
                         the model.
@@ -48,18 +50,16 @@ optional arguments:
                         hyperparameters. The default is k-fold cross-
                         validation, where k is the number of folds defined in
                         the split. Other strategies, such as bound selection
-                        are available. Using none selects the first value
-                        specified for each hyperparameter.
-  --bound-delta BOUND_DELTA
-                        The probabilistic bound on the error rate will be
-                        valid with probability 1-delta. The default value is
-                        0.05.
+                        are available (refer to the documentation). Using none
+                        selects the first value specified for each
+                        hyperparameter.
   --bound-max-genome-size BOUND_MAX_GENOME_SIZE
-                        The maximum size, in base pairs, of anygenome in the
-                        dataset. If you are unsure about this value, you
-                        should use an over-estimate. This will only affect the
-                        tightness of the bound on the error rate. By default
-                        number of k-mers in the dataset is used.
+                        Specify this only if --hp-choice is bound. The maximum
+                        size, in base pairs, of any genome in the dataset. If
+                        you are unsure about this value, you should use an
+                        overestimation. This will only affect the tightness of
+                        the bound on the error rate. By default number of
+                        k-mers in the dataset is used.
   --random-seed RANDOM_SEED
                         The random seed used for any random operation. Set
                         this if only if you require that the same random
