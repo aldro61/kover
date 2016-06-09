@@ -464,7 +464,7 @@ Bibtex:
                                 p=args.p,
                                 max_rules=args.max_rules,
                                 max_equiv_rules=args.max_equiv_rules,
-                                bound_delta = args.bound_delta,
+                                bound_delta = 0.05,  # We use a fixed 5% delta to simplify the user experience
                                 bound_max_genome_size = args.bound_max_genome_size
                                                         if args.bound_max_genome_size is not None
                                                         else dataset_kmer_count,
