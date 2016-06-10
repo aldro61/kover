@@ -369,14 +369,14 @@ Bibtex:
                             help='Hyperparameter: The type of model to learn, conjunction (logical-AND) or disjunction '
                                  '(logical-OR). You can specify multiple space separated values. Refer to the documentation '
                                  'for more information.',
-                            required=True)
+                            default=['conjunction', 'disjunction'])
         parser.add_argument('--p', type=float, nargs='+',
                             help='Hyperparameter: The value of the trade-off parameter in the rule scoring criterion. '
                                  'You can specify multiple space separated values. Refer to the documentation for '
                                  'more information.',
-                            required=True, default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
+                            default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
-                            'model.', required=True)
+                            'model.', default=10)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '
                             'each rule in the model. This only affects model interpretation. Use the default unless you'
                             ' expect that the rules in the model will be equivalent to more than 10000 other rules.',
