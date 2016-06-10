@@ -1,5 +1,7 @@
 <img src="http://graal.ift.ulaval.ca/adrouin/kover.png" height="50" />
 
+[![DOI](https://zenodo.org/badge/20289/aldro61/kover.svg)](https://zenodo.org/badge/latestdoi/20289/aldro61/kover)
+
 Kover is an *out-of-core* implementation of the Set Covering Machine algorithm that has been tailored for genomic biomarker discovery. It produces highly interpretable models of phenotypes. The models are rule-based and rely on the presence/absence of k-mers.
 
 ## Introduction
