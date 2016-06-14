@@ -34,6 +34,7 @@ from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
 KMER_MATRIX_PACKING_SIZE = 64
 KMER_MATRIX_DTYPE = np.uint64
 PHENOTYPE_LABEL_DTYPE = np.uint8
+BLOCK_SIZE = 100000
 
 
 def _create_hdf5_file_no_chunk_caching(path):
@@ -124,7 +125,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     kmer_by_matrix_column_dtype = _minimum_uint_size(kmer_count)
     compression = "gzip" if gzip > 0 else None
     compression_opts = gzip if gzip > 0 else None
-    tsv_block_size = min(kmer_count, 100000)
+    tsv_block_size = min(kmer_count, BLOCK_SIZE)
 
     h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
     h5py_file.attrs["created"] = time()

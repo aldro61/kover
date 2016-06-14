@@ -1,4 +1,4 @@
-project(kgb)
+project(dsk2kover)
 
 cmake_minimum_required (VERSION 2.6)
 

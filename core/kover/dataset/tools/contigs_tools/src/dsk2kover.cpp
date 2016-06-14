@@ -9,13 +9,13 @@ static const char* STR_FILTER= "-filter";
 static const char* STR_COMPRESSION= "-compression";
 static const char* STR_CHUNK_SIZE= "-chunk-size";
 /********************************************************************************/
-class KGB : public Tool
+class DSK2Kover : public Tool
 {
 private:
 public:
 
     /** */
-    KGB () : Tool ("K-mers Global Buffering")
+    DSK2Kover () : Tool ("K-mers Global Buffering")
     {
 		// Ajout option en ligne de commande
 		
@@ -64,7 +64,7 @@ int main (int argc, char* argv[])
 {
     try
     {
-        KGB().run (argc, argv);
+        DSK2Kover().run (argc, argv);
     }
     catch (Exception& e)
     {

@@ -8,7 +8,7 @@ add_definitions (${gatb-core-flags} " -Wno-ambiguous-member-template")
 
 include_directories (${gatb-core-includes})
 
-list (APPEND PROGRAMS kcm)
+list (APPEND PROGRAMS multidsk)
 
 FOREACH (program ${PROGRAMS})
   add_executable(${program} ${program}.cpp)
@@ -18,4 +18,4 @@ ENDFOREACH (program)
 ################################################################################
 #  INSTALLATION 
 ################################################################################
-INSTALL (TARGETS kcm DESTINATION bin)
+INSTALL (TARGETS multidsk DESTINATION bin)
