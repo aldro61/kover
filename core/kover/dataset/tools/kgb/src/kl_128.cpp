@@ -21,6 +21,7 @@ template<size_t span> struct Functor_Analyse_All_128 { void operator () (Options
 	KmerLister128::packing_type* p_buffer = options.p_buffer;
 	
 	typedef typename Kmer<span>::Count Count;
+	
 	// Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
 	Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");;
 	
@@ -210,7 +211,7 @@ template<size_t span> struct Functor_Read_Filter_128  {  void operator ()  (Para
 KmerLister128::KmerLister128 (size_t kmerSize):kmerSize(kmerSize)
 {}
 /** */
-void KmerLister128::analyse (string input_file, string output_file, string filter)
+void KmerLister128::analyse (string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size)
 {
 	string line;
 	string path = input_file;
@@ -259,11 +260,20 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 	h5_list.close();
 	
 	// Initializing hdf5 interface
-	hid_t    dataset, datatype, dataspace, memspace;
+	hid_t    dataset, datatype, dataspace, memspace, dcpl;
 	
 	// Creating output file
 	h5_file = H5Fcreate((output_file + ".h5").c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	//h5_file = H5Fopen((getInput()->getStr(STR_URI_OUTPUT)).c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	//h5_file = H5Fopen((output_file + ".h5").c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	
+	// Initializing compression parameters
+	unsigned int chunk_length = (nb_kmers < chunk_size) ? nb_kmers : chunk_size;
+	hsize_t chunk[2] = {1, chunk_length};
+	
+	// Setting dataset creation property list
+	dcpl = H5Pcreate (H5P_DATASET_CREATE);
+    H5Pset_deflate (dcpl, compression);
+    H5Pset_chunk (dcpl, 2, chunk);
 
 	// Creating dataspace
 	hsize_t dim[2] = {(unsigned long long) (ceil((1.0 * nb_genomes) / KMER_MATRIX_PACKING_SIZE_128)), nb_kmers};
@@ -291,7 +301,7 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 	H5Tset_order(datatype, H5T_ORDER_LE);
 	
 	// Creating dataset in output file
-	dataset = H5Dcreate2(h5_file, "kmer_matrix", datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	dataset = H5Dcreate2(h5_file, "kmer_matrix", datatype, dataspace, H5P_DEFAULT, dcpl, H5P_DEFAULT);
 	
 	// Creating files name buffer
 	string buffer_genomes[KMER_MATRIX_PACKING_SIZE_128];
@@ -357,6 +367,7 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 			delete(buffer);
 		}
 		// Closing hdf5 interface
+		H5Pclose (dcpl);
 		H5Tclose(datatype);
 		H5Sclose(memspace);
 		H5Sclose(dataspace);
@@ -365,6 +376,7 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 		// Initializing hdf5 interface
 		hid_t    dataset_kmers, datatype_kmers, dataspace_kmers, memspace_kmers;
 		hid_t    dataset_index, datatype_index, dataspace_index, memspace_index;
+		hid_t 	 dcpl;
 		
 		// Defining block size of buffers for output 
 		// (number of elements to fill the buffers before a writing operation in the output file)
@@ -379,6 +391,14 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 		hsize_t stride[] = {1};
 		hsize_t count[] = {block_size};
 		hsize_t block[] = {1};
+		
+		// Initializing compression parameters
+		hsize_t chunk[] = {block_size};
+		
+		// Setting dataset creation property list
+		dcpl = H5Pcreate (H5P_DATASET_CREATE);
+		H5Pset_deflate (dcpl, compression);
+		H5Pset_chunk (dcpl, 1, chunk);
 		
 		// Creating dataspaces
 		hsize_t dim[1] = {nb_kmers};
@@ -398,8 +418,8 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 		memspace_index = H5Screate_simple (1, dim_sub, NULL); 
 		
 		// Creating datasets in output file
-		dataset_kmers = H5Dcreate2(h5_file, "kmer_sequences", datatype_kmers, dataspace_kmers, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		dataset_index = H5Dcreate2(h5_file, "kmer_by_matrix_column", datatype_index, dataspace_index, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dataset_kmers = H5Dcreate2(h5_file, "kmer_sequences", datatype_kmers, dataspace_kmers, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+		dataset_index = H5Dcreate2(h5_file, "kmer_by_matrix_column", datatype_index, dataspace_index, H5P_DEFAULT, dcpl, H5P_DEFAULT);
 		
 		// Iterating over the unordered map
 		unordered_map<bitset<128>, unsigned long>::const_iterator iter;
@@ -463,6 +483,7 @@ void KmerLister128::analyse (string input_file, string output_file, string filte
 			H5Dwrite (dataset_index, datatype_index, memspace_index, dataspace_index, H5P_DEFAULT, index_buffer);
 		}
 		// Closing hdf5 interface
+		H5Pclose (dcpl);
 		H5Tclose(datatype_kmers);
 		H5Sclose(memspace_kmers);
 		H5Sclose(dataspace_kmers);
