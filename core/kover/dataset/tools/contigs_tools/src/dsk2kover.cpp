@@ -15,7 +15,7 @@ private:
 public:
 
     /** */
-    DSK2Kover () : Tool ("K-mers Global Buffering")
+    DSK2Kover () : Tool ("DSK2Kover")
     {
 		// Ajout option en ligne de commande
 		

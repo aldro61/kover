@@ -156,13 +156,6 @@ KmerLister64::KmerLister64 (size_t kmerSize):kmerSize(kmerSize)
 void KmerLister64::analyse(string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size)
 {
 	string line;
-	string path = input_file;
-	size_t found;
-	
-	// Searching for path to directory
-	found = path.find_last_of("/");
-	path = path.substr(0, found);
-	
 	// Opening file containing list of files from dsk to process
 	ifstream h5_list (input_file);
 	try
@@ -172,8 +165,6 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 			while (getline(h5_list, line))
 			{
 				nb_genomes ++;
-				// Path to file
-				line = path + "/" + line;
 				
 				// Loading dsk output file
 				// Note : StorageFactory dynamically allocates an instance
@@ -204,9 +195,14 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 	// Initializing hdf5 interface (dcpl = dataset creation property list)
 	hid_t    dataset, datatype, dataspace, memspace, dcpl;
 	
-	// Creating output file
-	h5_file = H5Fcreate((output_file + ".h5").c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	//h5_file = H5Fopen((output_file + ".h5").c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	// Opening output file
+	h5_file = H5Fopen((output_file).c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	hid_t plist;
+	plist = H5Fget_access_plist(h5_file);
+	H5Pset_cache(plist, 0, 0, 0, 0);
+	H5Fclose(h5_file); 
+	h5_file = H5Fopen ((output_file).c_str(), H5F_ACC_RDWR, plist);
+	
 	
 	// Initializing compression parameters
 	unsigned int chunk_length = (nb_kmers < chunk_size) ? nb_kmers : chunk_size;
@@ -280,7 +276,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 				for (int genome = (files_checked - 1); genome >= 0; genome--)
 				{
 					// Loading dsk output file
-					line = path + "/" + buffer_genomes[genome];
+					line = buffer_genomes[genome];
 					Storage* storage = StorageFactory(STORAGE_HDF5).load (line);
 					LOCAL (storage);
 

@@ -9,12 +9,6 @@ using namespace std;
 int main (int argc, char* argv[])
 {
 	string line;
-	string path(argv[2]);
-	size_t found;
-	
-	// Searching for absolute path
-	found = path.find_last_of("/");
-	path = path.substr(0, found);
 	
 	// Opening file containing list of files to process
 	ifstream genome_list (argv[2]);
@@ -24,8 +18,6 @@ int main (int argc, char* argv[])
 		{
 			while (getline(genome_list, line))
 			{
-				// Path to file
-				line = path + "/" + line;
 				
 				// Modifying path argv for DSK
 				argv[2] = strdup(line.c_str());

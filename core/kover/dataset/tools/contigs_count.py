@@ -1,7 +1,7 @@
 from subprocess import call
 from os.path import dirname, abspath
 
-def contigs_count(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose):
+def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose):
 
 	dir_path = dirname(abspath(__file__))
 	
@@ -13,4 +13,5 @@ def contigs_count(file_path, out_dir, kmer_size, abundance_min, out_compress, nb
 					"-abundance-min", abundance_min,
 					"-out-compress", out_compress,
 					"-nb-cores", nb_cores,
+					"-out-tmp", out_dir,
 					"-verbose", verbose])

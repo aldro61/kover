@@ -1,7 +1,7 @@
 from subprocess import call
 from os.path import dirname, abspath
 
-def contigs_pack(file_path, out_path, filter_singleton, kmer_length, compression, chunk_size):
+def contigs_pack_kmers(file_path, out_path, filter_singleton, kmer_length, compression, chunk_size, verbose):
 	
 	dir_path = dirname(abspath(__file__))
 
@@ -12,4 +12,5 @@ def contigs_pack(file_path, out_path, filter_singleton, kmer_length, compression
 					"-filter", filter_singleton, 
 					"-kmer-length", kmer_length, 
 					"-compression", compression, 
-					"-chunk-size", chunk_size])
+					"-chunk-size", chunk_size,
+					"-verbose", verbose])
