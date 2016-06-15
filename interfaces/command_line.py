@@ -30,243 +30,268 @@ VERSION = "1.0.0"
 
 
 class KoverDatasetTool(object):
-    def __init__(self):
-        self.available_commands = ['create', 'info', 'split']
+	def __init__(self):
+		self.available_commands = ['create', 'info', 'split']
 
-    def create(self):
-        parser = argparse.ArgumentParser(prog="kover dataset create",
-                                         description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
-        parser.add_argument('--genome-type', choices=['tsv'], help='The format in which the genomic data is '
-                            'provided. See documentation for details.', required=True)
-        parser.add_argument('--genome-source', help='The genomic data.',
-                            required=True)
-        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
-        parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
-        parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
-        parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
-                            '. The default value is 4.', default=4)
-        parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
-        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+	def create(self):
+		parser = argparse.ArgumentParser(prog="kover dataset create",
+										 description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
+		parser.add_argument('--genome-type', choices=['tsv', 'contigs'], help='The format in which the genomic data is '
+							'provided. See documentation for details.', required=True)
+		parser.add_argument('--genome-source', help='The genomic data.',
+							required=True)
+		parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+		parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
+		parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
+		parser.add_argument('--kmer-size', help='Size of a kmer (max is 128). The default is 31', default=31)
+		parser.add_argument('--filter-singleton', help='Filter singleton k-mers. The default is False--', default=False, action='store_true')
+		parser.add_argument('--nb_cores', help='Number of cores used by DSK''. The default value is 0 (all cores)', default=0)
+		parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
+							'. The default value is 4.', default=4)
+		parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
+		parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
 
-        # If no argument has been specified, default to help
-        if len(argv) == 3:
-            argv.append("--help")
+		# If no argument has been specified, default to help
+		if len(argv) == 3:
+			argv.append("--help")
 
-        args = parser.parse_args(argv[3:])
+		args = parser.parse_args(argv[3:])
 
-        # Input validation logic
-        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
-                        args.phenotype_name is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype name and metadata file must be specified."
-            exit()
+		# Input validation logic
+		if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
+						args.phenotype_name is None and args.phenotype_metadata is not None):
+			print "Error: The phenotype name and metadata file must be specified."
+			exit()
 
-        # Package imports
-        from progressbar import Bar, Percentage, ProgressBar, Timer
+		# Package imports
+		from progressbar import Bar, Percentage, ProgressBar, Timer
 
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+		from_contigs_verbose = 0
+		if args.verbose:
+			from_contigs_verbose = 1
+			logging.basicConfig(level=logging.DEBUG,
+								format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
-        if args.progress:
-            progress_vars = {"current_task": None, "pbar": None}
+		if args.progress:
+			progress_vars = {"current_task": None, "pbar": None}
 
-            def progress(task_name, p):
-                if task_name != progress_vars["current_task"]:
-                    if progress_vars["pbar"] is not None:
-                        progress_vars["pbar"].finish()
-                    progress_vars["current_task"] = task_name
-                    progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()],
-                                                        maxval=1.0)
-                    progress_vars["pbar"].start()
-                else:
-                    progress_vars["pbar"].update(p)
-        else:
-            progress = None
+			def progress(task_name, p):
+				if task_name != progress_vars["current_task"]:
+					if progress_vars["pbar"] is not None:
+						progress_vars["pbar"].finish()
+					progress_vars["current_task"] = task_name
+					progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()],
+														maxval=1.0)
+					progress_vars["pbar"].start()
+				else:
+					progress_vars["pbar"].update(p)
+		else:
+			progress = None
 
-        if args.genome_type == "tsv":
-            from kover.dataset.create import from_tsv
+		if args.genome_type == "tsv":
+			from kover.dataset.create import from_tsv
 
-            from_tsv(tsv_path=args.genome_source,
-                     output_path=args.output,
-                     phenotype_name=args.phenotype_name,
-                     phenotype_metadata_path=args.phenotype_metadata,
-                     gzip=args.compression,
-                     progress_callback=progress)
+			from_tsv(tsv_path=args.genome_source,
+					 output_path=args.output,
+					 phenotype_name=args.phenotype_name,
+					 phenotype_metadata_path=args.phenotype_metadata,
+					 gzip=args.compression,
+					 progress_callback=progress)
+		elif args.genome_type == "contigs":
+			from kover.dataset.create import from_contigs
+			
+			if args.filter_singleton:
+				filter_option = "singleton"
+			else:
+				filter_option = "nothing"
+				
+			from_contigs(contig_list_path=args.genome_source,
+						 output_path=args.output,
+						 kmer_size=args.kmer_size,
+						 filter_singleton=filter_option,
+						 phenotype_name=args.phenotype_name,
+						 phenotype_metadata_path=args.phenotype_metadata,
+						 gzip=args.compression,
+						 nb_cores=args.nb_cores,
+						 verbose=from_contigs_verbose,
+						 progress_callback=progress)
+						 
+						 
 
-        if args.progress:
-            progress_vars["pbar"].finish()
+		if args.progress:
+			progress_vars["pbar"].finish()
 
-    def info(self):
-        parser = argparse.ArgumentParser(prog="kover dataset info",
-                                         description='Prints information about the content of a dataset')
-        parser.add_argument('--dataset', help='The Kover dataset for which you require information.', required=True)
-        parser.add_argument('--all', help='Prints all the available information.', action='store_true')
-        parser.add_argument('--genome-type', help='Prints the type of genomic data that was used to create the dataset.',
-                            action='store_true')
-        parser.add_argument('--genome-source', help='Prints the source (e.g.: path) from which the genomic data was'
-                            ' acquired.', action='store_true')
-        parser.add_argument('--genome-ids', help='Prints the identifiers of the genomes in the dataset.',
-                            action='store_true')
-        parser.add_argument('--genome-count', help='Prints the number of genomes in the dataset.', action='store_true')
-        parser.add_argument('--kmers', help='Prints the sequence of each k-mer in the dataset (fasta).',
-                            action='store_true')
-        parser.add_argument('--kmer-len', help='Prints the length of the k-mers in the dataset.', action='store_true')
-        parser.add_argument('--kmer-count', help='Prints the number of k-mers in the dataset.', action='store_true')
-        parser.add_argument('--phenotype-name', help='Prints the identifier that was assigned to the phenotype.',
-                            action='store_true')
-        parser.add_argument('--phenotype-metadata', help='Prints the path of the file from which the phenotypic metadata'
-                            ' was acquired.', action='store_true')
-        parser.add_argument('--splits', help='Prints the lists of splits of the dataset that are available for learning.',
-                            action='store_true')
-        parser.add_argument('--uuid', help='Prints the unique identifier of the dataset.', action='store_true')
-        parser.add_argument('--compression', help='Print the data compression options of the dataset.',
-                            action='store_true')
+	def info(self):
+		parser = argparse.ArgumentParser(prog="kover dataset info",
+										 description='Prints information about the content of a dataset')
+		parser.add_argument('--dataset', help='The Kover dataset for which you require information.', required=True)
+		parser.add_argument('--all', help='Prints all the available information.', action='store_true')
+		parser.add_argument('--genome-type', help='Prints the type of genomic data that was used to create the dataset.',
+							action='store_true')
+		parser.add_argument('--genome-source', help='Prints the source (e.g.: path) from which the genomic data was'
+							' acquired.', action='store_true')
+		parser.add_argument('--genome-ids', help='Prints the identifiers of the genomes in the dataset.',
+							action='store_true')
+		parser.add_argument('--genome-count', help='Prints the number of genomes in the dataset.', action='store_true')
+		parser.add_argument('--kmers', help='Prints the sequence of each k-mer in the dataset (fasta).',
+							action='store_true')
+		parser.add_argument('--kmer-len', help='Prints the length of the k-mers in the dataset.', action='store_true')
+		parser.add_argument('--kmer-count', help='Prints the number of k-mers in the dataset.', action='store_true')
+		parser.add_argument('--phenotype-name', help='Prints the identifier that was assigned to the phenotype.',
+							action='store_true')
+		parser.add_argument('--phenotype-metadata', help='Prints the path of the file from which the phenotypic metadata'
+							' was acquired.', action='store_true')
+		parser.add_argument('--splits', help='Prints the lists of splits of the dataset that are available for learning.',
+							action='store_true')
+		parser.add_argument('--uuid', help='Prints the unique identifier of the dataset.', action='store_true')
+		parser.add_argument('--compression', help='Print the data compression options of the dataset.',
+							action='store_true')
 
-        # If no argument has been specified, default to help
-        if len(argv) == 3:
-            argv.append("--help")
+		# If no argument has been specified, default to help
+		if len(argv) == 3:
+			argv.append("--help")
 
-        args = parser.parse_args(argv[3:])
+		args = parser.parse_args(argv[3:])
 
-        # Package imports
-        from kover.dataset import KoverDataset
+		# Package imports
+		from kover.dataset import KoverDataset
 
-        dataset = args.dataset
-        dataset = KoverDataset(dataset)
-        if args.genome_type or args.all:
-            print "Genome type:", dataset.genome_source_type
-            print
-        if args.genome_source or args.all:
-            print "Genome source:", dataset.genome_source
-            print
-        if args.genome_ids or args.all:
-            print "Genome IDs:"
-            for id in dataset.genome_identifiers:
-                print id
-            print
-        if args.genome_count:
-            print "Genome count:", dataset.genome_count
-            print
-        if args.kmers or args.all:
-            print "Kmer sequences (fasta):"
-            for i, k in enumerate(dataset.kmer_sequences):
-                print ">k%d" % (i + 1)
-                print k
-            print
-        if args.kmer_len or args.all:
-            print "K-mer length:", dataset.kmer_length
-            print
-        if args.kmer_count or args.all:
-            print "K-mer count:", dataset.kmer_count
-            print
-        if args.phenotype_name or args.all:
-            print "Phenotype name:", dataset.phenotype.name
-            print
-        if args.phenotype_metadata or args.all:
-            if dataset.phenotype.name != "NA":
-                print "Phenotype metadata source:", dataset.phenotype.metadata_source
-            else:
-                print "No phenotype metadata."
-            print
-        if args.compression or args.all:
-            print "Compression:", dataset.compression
-            print
-        if args.splits or args.all:
-            splits = dataset.splits
-            if len(splits) > 0:
-                print "The following splits are available for learning:"
-                for split in splits:
-                    print split
-            else:
-                print "There are no splits available for learning."
+		dataset = args.dataset
+		dataset = KoverDataset(dataset)
+		if args.genome_type or args.all:
+			print "Genome type:", dataset.genome_source_type
+			print
+		if args.genome_source or args.all:
+			print "Genome source:", dataset.genome_source
+			print
+		if args.genome_ids or args.all:
+			print "Genome IDs:"
+			for id in dataset.genome_identifiers:
+				print id
+			print
+		if args.genome_count:
+			print "Genome count:", dataset.genome_count
+			print
+		if args.kmers or args.all:
+			print "Kmer sequences (fasta):"
+			for i, k in enumerate(dataset.kmer_sequences):
+				print ">k%d" % (i + 1)
+				print k
+			print
+		if args.kmer_len or args.all:
+			print "K-mer length:", dataset.kmer_length
+			print
+		if args.kmer_count or args.all:
+			print "K-mer count:", dataset.kmer_count
+			print
+		if args.phenotype_name or args.all:
+			print "Phenotype name:", dataset.phenotype.name
+			print
+		if args.phenotype_metadata or args.all:
+			if dataset.phenotype.name != "NA":
+				print "Phenotype metadata source:", dataset.phenotype.metadata_source
+			else:
+				print "No phenotype metadata."
+			print
+		if args.compression or args.all:
+			print "Compression:", dataset.compression
+			print
+		if args.splits or args.all:
+			splits = dataset.splits
+			if len(splits) > 0:
+				print "The following splits are available for learning:"
+				for split in splits:
+					print split
+			else:
+				print "There are no splits available for learning."
 
-    def split(self):
-        parser = argparse.ArgumentParser(prog="kover dataset split",
-                                         description='Splits a kover dataset file into a training set, a testing set '
-                                                     'and optionally cross-validation folds')
-        parser.add_argument('--dataset', help='The Kover dataset to be split.', required=True)
-        parser.add_argument('--id', help='A unique identifier that will be assigned to the split.', required=True)
-        parser.add_argument('--train-size', type=float, help='The proportion of the data that will be reserved for '
-                            'training the learning algorithm (default is 0.5). Alternatively, you can specify which '
-                            'genomes to use for training and testing by using --train-ids and --test-ids.', default=0.5)
-        parser.add_argument('--train-ids', type=str, nargs='+', help='The identifiers of the genomes used to train the '
-                            'learning algorithm. If you provide a value for this argument, you must also provide a '
-                             'value for --test-ids.')
-        parser.add_argument('--test-ids', type=str, nargs='+', help='The identifiers of the genomes used to evaluate '
-                            'the accuracy of the model generated. If you provide a value for this argument, you must '
-                            'also provide a value for --train-ids.')
-        parser.add_argument('--folds', type=int,
-                            help='The number of k-fold cross-validation folds to create (default is 0 for none, '
-                                 'the minimum value is 2). Folds are required for using k-fold cross-validation '
-                                 'in \'kover learn\'.', default=0)
-        parser.add_argument('--random-seed', type=int, help='A random seed used for randomly splitting the data. A '
-                            'specific seed will always lead to the same split. If not provided, it is set randomly.')
-        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
-        parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
+	def split(self):
+		parser = argparse.ArgumentParser(prog="kover dataset split",
+										 description='Splits a kover dataset file into a training set, a testing set '
+													 'and optionally cross-validation folds')
+		parser.add_argument('--dataset', help='The Kover dataset to be split.', required=True)
+		parser.add_argument('--id', help='A unique identifier that will be assigned to the split.', required=True)
+		parser.add_argument('--train-size', type=float, help='The proportion of the data that will be reserved for '
+							'training the learning algorithm (default is 0.5). Alternatively, you can specify which '
+							'genomes to use for training and testing by using --train-ids and --test-ids.', default=0.5)
+		parser.add_argument('--train-ids', type=str, nargs='+', help='The identifiers of the genomes used to train the '
+							'learning algorithm. If you provide a value for this argument, you must also provide a '
+							 'value for --test-ids.')
+		parser.add_argument('--test-ids', type=str, nargs='+', help='The identifiers of the genomes used to evaluate '
+							'the accuracy of the model generated. If you provide a value for this argument, you must '
+							'also provide a value for --train-ids.')
+		parser.add_argument('--folds', type=int,
+							help='The number of k-fold cross-validation folds to create (default is 0 for none, '
+								 'the minimum value is 2). Folds are required for using k-fold cross-validation '
+								 'in \'kover learn\'.', default=0)
+		parser.add_argument('--random-seed', type=int, help='A random seed used for randomly splitting the data. A '
+							'specific seed will always lead to the same split. If not provided, it is set randomly.')
+		parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+		parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
 
-        # If no argument has been specified, default to help
-        if len(argv) == 3:
-            argv.append("--help")
+		# If no argument has been specified, default to help
+		if len(argv) == 3:
+			argv.append("--help")
 
-        args = parser.parse_args(argv[3:])
+		args = parser.parse_args(argv[3:])
 
-        # Validate the number of cross-validation folds
-        if args.folds == 1:
-            print "Error: The number of cross-validation folds must be 0 or >= 2."
-            exit()
+		# Validate the number of cross-validation folds
+		if args.folds == 1:
+			print "Error: The number of cross-validation folds must be 0 or >= 2."
+			exit()
 
-        # Validate that training and testing genome ids are both specified if one of them is specified
-        if (args.train_ids is not None and args.test_ids is None) or \
-           (args.test_ids is not None and args.train_ids is None):
-            print "Error: Training and testing genome identifiers must be specified simultaneously."
-            exit()
+		# Validate that training and testing genome ids are both specified if one of them is specified
+		if (args.train_ids is not None and args.test_ids is None) or \
+		   (args.test_ids is not None and args.train_ids is None):
+			print "Error: Training and testing genome identifiers must be specified simultaneously."
+			exit()
 
-        # Package imports
-        from kover.dataset.split import split_with_ids, split_with_proportion
-        from progressbar import Bar, Percentage, ProgressBar, Timer
-        from random import randint
+		# Package imports
+		from kover.dataset.split import split_with_ids, split_with_proportion
+		from progressbar import Bar, Percentage, ProgressBar, Timer
+		from random import randint
 
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+		if args.verbose:
+			logging.basicConfig(level=logging.DEBUG,
+								format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
-        if args.random_seed is None:
-            args.random_seed = randint(0, 4294967295)
+		if args.random_seed is None:
+			args.random_seed = randint(0, 4294967295)
 
-        if args.progress:
-            progress_vars = {"current_task": None, "pbar": None}
+		if args.progress:
+			progress_vars = {"current_task": None, "pbar": None}
 
-            def progress(task_name, p):
-                if task_name != progress_vars["current_task"]:
-                    if progress_vars["pbar"] is not None:
-                        progress_vars["pbar"].finish()
-                    progress_vars["current_task"] = task_name
-                    progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()],
-                                                        maxval=1.0)
-                    progress_vars["pbar"].start()
-                else:
-                    progress_vars["pbar"].update(p)
-        else:
-            progress = None
+			def progress(task_name, p):
+				if task_name != progress_vars["current_task"]:
+					if progress_vars["pbar"] is not None:
+						progress_vars["pbar"].finish()
+					progress_vars["current_task"] = task_name
+					progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()],
+														maxval=1.0)
+					progress_vars["pbar"].start()
+				else:
+					progress_vars["pbar"].update(p)
+		else:
+			progress = None
 
-        if args.train_ids is not None and args.test_ids is not None:
-            split_with_ids(input=args.dataset,
-                           split_name=args.id,
-                           train_ids=args.train_ids,
-                           test_ids=args.test_ids,
-                           random_seed=args.random_seed,
-                           n_folds=args.folds,
-                           progress_callback=progress)
-        else:
-            split_with_proportion(input=args.dataset,
-                                  split_name=args.id,
-                                  train_prop=args.train_size,
-                                  random_seed=args.random_seed,
-                                  n_folds=args.folds,
-                                  progress_callback=progress)
+		if args.train_ids is not None and args.test_ids is not None:
+			split_with_ids(input=args.dataset,
+						   split_name=args.id,
+						   train_ids=args.train_ids,
+						   test_ids=args.test_ids,
+						   random_seed=args.random_seed,
+						   n_folds=args.folds,
+						   progress_callback=progress)
+		else:
+			split_with_proportion(input=args.dataset,
+								  split_name=args.id,
+								  train_prop=args.train_size,
+								  random_seed=args.random_seed,
+								  n_folds=args.folds,
+								  progress_callback=progress)
 
-        if args.progress:
-            progress_vars["pbar"].finish()
+		if args.progress:
+			progress_vars["pbar"].finish()
 
 
 class CommandLineInterface(object):

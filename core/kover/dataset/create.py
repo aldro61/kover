@@ -29,7 +29,7 @@ from time import time
 from uuid import uuid1
 from tempfile import gettempdir
 
-#from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
+from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
 from tools.contigs_count import contigs_count_kmers
 from tools.contigs_pack import contigs_pack_kmers
 
