@@ -4,7 +4,7 @@ baseurl: "/doc_writers"
 port: 4004
 print: true
 print_title: Kover Documentation
-print_subtitle: version 0.1
+print_subtitle: v1.0.0
 defaults:
   -
     scope:
