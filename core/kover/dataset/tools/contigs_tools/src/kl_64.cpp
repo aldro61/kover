@@ -273,7 +273,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 				}
 				
 				// Filling array data buffer
-				for (int genome = (files_checked - 1); genome >= 0; genome--)
+				for (unsigned int genome = 0; genome < files_checked; genome++)
 				{
 					// Loading dsk output file
 					line = buffer_genomes[genome];
@@ -291,11 +291,21 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 					}
 					
 					// Shifting array data bits except if last genome
-					if (genome)
+					if (genome != files_checked - 1)
 					{
 						bit_shift(buffer, &nb_kmers);
 					}
-						
+					else
+					{
+						unsigned int empty_rows = KMER_MATRIX_PACKING_SIZE_64 - files_checked;
+						if (empty_rows)
+						{
+							for (unsigned int row = 0; row < empty_rows; row++)
+							{
+								bit_shift(buffer, &nb_kmers);
+							}
+						}
+					}				
 				}
 			// Writing array data buffer in output file
 			offset[0] = i;

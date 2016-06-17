@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <unordered_map>
 
-const int KMER_MATRIX_PACKING_SIZE_256 = 32;	
+const int KMER_MATRIX_PACKING_SIZE_256 = 64;	
 
 class KmerLister256
 {

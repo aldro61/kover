@@ -287,7 +287,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
 	logging.debug("Initializing DSK.")
 	temp_path = gettempdir()
-	abundance_min = 1
+	abundance_min = 3
 	
 	# Preparing input file for multidsk
 	file_contigs = open(temp_path + "/list_contigs_files", "w")
