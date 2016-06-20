@@ -27,7 +27,6 @@ from math import ceil
 from os.path import getsize , splitext, basename
 from time import time
 from uuid import uuid1
-from tempfile import gettempdir
 
 from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
 from tools.contigs_count import contigs_count_kmers
@@ -228,8 +227,8 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
 
     logging.debug("Dataset creation completed.")
     
-def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phenotype_name, phenotype_metadata_path, gzip, nb_cores, verbose, warning_callback=None,
-             error_callback=None, progress_callback=None):
+def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phenotype_name, phenotype_metadata_path, gzip, temp_dir, nb_cores, verbose, warning_callback=None, 
+				error_callback=None, progress_callback=None):
 				 
 	compression = "gzip" if gzip > 0 else None
 	compression_opts = gzip if gzip > 0 else None
@@ -286,43 +285,44 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 	h5py_file.close()
 
 	logging.debug("Initializing DSK.")
-	temp_path = gettempdir()
-	abundance_min = 3
+	abundance_min = 1
 	
 	# Preparing input file for multidsk
-	file_contigs = open(temp_path + "/list_contigs_files", "w")
+	file_contigs = open(temp_dir + "/list_contigs_files", "w")
 	for files in contig_files:
 		file_contigs.write(files + "\n")
 	file_contigs.close()
 	
 	# Calling multidsk
-	contigs_count_kmers(str(temp_path + "/list_contigs_files"),
-						str(temp_path), 
+	contigs_count_kmers(str(temp_dir + "/list_contigs_files"),
+						str(temp_dir), 
 						str(kmer_size), 
 						str(abundance_min), 
 						str(gzip),
 						str(nb_cores), 
 						str(verbose))
+	progress_callback("multidsk", 1)
 	logging.debug("K-mers counting completed.")
 	
 	# Preparing input file for dsk2kover
 	list_contigs = []
 	for files in contig_files:
-		list_contigs.append(temp_path + "/" + basename(splitext(files)[0]) + ".h5")
+		list_contigs.append(temp_dir + "/" + basename(splitext(files)[0]) + ".h5")
 	
-	file_dsk_output = open(temp_path + "/list_h5", "w")
+	file_dsk_output = open(temp_dir + "/list_h5", "w")
 	for line in list_contigs:
 		file_dsk_output.write(line + "\n")
 	file_dsk_output.close()	
 	
 	# Calling dsk2kover
 	logging.debug("Initializing DSK2Kover.")
-	contigs_pack_kmers(str(temp_path + "/list_h5"), 
+	contigs_pack_kmers(str(temp_dir + "/list_h5"), 
 					   str(output_path), 
 					   str(filter_singleton), 
 					   str(kmer_size), 
 					   str(gzip), 
 					   str(BLOCK_SIZE), 
 					   str(verbose))
-	
+					   
+	progress_callback("dsk2kover", 1)
 	logging.debug("Dataset creation completed.")

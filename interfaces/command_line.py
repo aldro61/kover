@@ -22,6 +22,7 @@
 import argparse
 import logging
 
+from tempfile import gettempdir
 from pkg_resources import get_distribution
 from sys import argv
 
@@ -48,6 +49,7 @@ class KoverDatasetTool(object):
 		parser.add_argument('--nb_cores', help='Number of cores used by DSK''. The default value is 0 (all cores)', default=0)
 		parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
 							'. The default value is 4.', default=4)
+		parser.add_argument('--temp-dir', help='Output directory for temporary files.', default=gettempdir())
 		parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
 		parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
 
@@ -112,6 +114,7 @@ class KoverDatasetTool(object):
 						 phenotype_name=args.phenotype_name,
 						 phenotype_metadata_path=args.phenotype_metadata,
 						 gzip=args.compression,
+						 temp_dir=args.temp_dir,
 						 nb_cores=args.nb_cores,
 						 verbose=from_contigs_verbose,
 						 progress_callback=progress)
