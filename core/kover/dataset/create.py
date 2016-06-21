@@ -260,6 +260,8 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 	h5py_file.attrs["genome_source"] = contig_list_path
 	h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
 	h5py_file.attrs["phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+	h5py_file.attrs["kmer_size"] = kmer_size
+	h5py_file.attrs["filter"] = filter_singleton
 	h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 	
 	# Extract/write the metadata
