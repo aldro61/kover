@@ -73,7 +73,7 @@ class LazyKmerRuleList(object):
         else:
             type = "presence"
             kmer_idx = self.kmer_by_rule[idx]
-        return KmerRule(kmer_idx, self.kmer_sequences[kmer_idx], type)
+        return KmerRule(idx % len(self.kmer_sequences), self.kmer_sequences[kmer_idx], type)
 
     def __len__(self):
         return self.n_rules
