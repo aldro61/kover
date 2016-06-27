@@ -192,8 +192,11 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 	// Closing file
 	h5_list.close();
 	
+	// Clearing unordered_set
+	k_set.clear();
+	
 	// Initializing hdf5 interface (dcpl = dataset creation property list)
-	hid_t    dataset, datatype, dataspace, memspace, dcpl;
+	hid_t    dataset, datatype, dataspace, memspace, dcpl_matrix;
 	
 	// Opening output file
 	h5_file = H5Fopen((output_file).c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -209,9 +212,9 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 	hsize_t chunk[2] = {1, chunk_length};
 	
 	// Setting dataset creation property list
-	dcpl = H5Pcreate (H5P_DATASET_CREATE);
-    H5Pset_deflate (dcpl, compression);
-    H5Pset_chunk (dcpl, 2, chunk);
+	dcpl_matrix = H5Pcreate (H5P_DATASET_CREATE);
+    H5Pset_deflate (dcpl_matrix, compression);
+    H5Pset_chunk (dcpl_matrix, 2, chunk);
 	
 	// Creating dataspace
 	hsize_t dim[2] = {(unsigned long long) (ceil((1.0 * nb_genomes) / KMER_MATRIX_PACKING_SIZE_64)), nb_kmers};
@@ -239,7 +242,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 	H5Tset_order(datatype, H5T_ORDER_LE);
 	
 	// Creating dataset in output file
-	dataset = H5Dcreate2(h5_file, "kmer_matrix", datatype, dataspace, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+	dataset = H5Dcreate2(h5_file, "kmer_matrix", datatype, dataspace, H5P_DEFAULT, dcpl_matrix, H5P_DEFAULT);
 	
 	// Creating files name buffer
 	string buffer_genomes[KMER_MATRIX_PACKING_SIZE_64];
@@ -273,7 +276,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 				}
 				
 				// Filling array data buffer
-				for (int genome = (files_checked - 1); genome >= 0; genome--)
+				for (unsigned int genome = 0; genome < files_checked; genome++)
 				{
 					// Loading dsk output file
 					line = buffer_genomes[genome];
@@ -291,11 +294,21 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 					}
 					
 					// Shifting array data bits except if last genome
-					if (genome)
+					if (genome != files_checked - 1)
 					{
 						bit_shift(buffer, &nb_kmers);
 					}
-						
+					else
+					{
+						unsigned int empty_rows = KMER_MATRIX_PACKING_SIZE_64 - files_checked;
+						if (empty_rows)
+						{
+							for (unsigned int row = 0; row < empty_rows; row++)
+							{
+								bit_shift(buffer, &nb_kmers);
+							}
+						}
+					}				
 				}
 			// Writing array data buffer in output file
 			offset[0] = i;
@@ -305,7 +318,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 			delete(buffer);
 		}
 		// Closing hdf5 interface
-		H5Pclose (dcpl);
+		H5Pclose (dcpl_matrix);
 		H5Tclose(datatype);
 		H5Sclose(memspace);
 		H5Sclose(dataspace);
@@ -313,8 +326,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 		
 		// Initializing hdf5 interface
 		hid_t    dataset_kmers, datatype_kmers, dataspace_kmers, memspace_kmers;
-		hid_t    dataset_index, datatype_index, dataspace_index, memspace_index;
-		hid_t 	 dcpl;
+		hid_t 	 dcpl_kmers;
 		
 		// Defining block size of buffers for output 
 		// (number of elements to fill the buffers before a writing operation in the output file)
@@ -322,7 +334,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 		
 		// Creating buffers for output (k-mer sequences and matrix index)
 		char *string_buffer[block_size];
-		unsigned int index_buffer[block_size];
+		unsigned long* index = new unsigned long[nb_kmers];
 		
 		// Initializing dataspace subset creation parameters
 		hsize_t offset[] = {0};
@@ -334,30 +346,24 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 		hsize_t chunk[] = {block_size};
 		
 		// Setting dataset creation property list
-		dcpl = H5Pcreate (H5P_DATASET_CREATE);
-		H5Pset_deflate (dcpl, compression);
-		H5Pset_chunk (dcpl, 1, chunk);
+		dcpl_kmers = H5Pcreate (H5P_DATASET_CREATE);
+		H5Pset_deflate (dcpl_kmers, compression);
+		H5Pset_chunk (dcpl_kmers, 1, chunk);
 		
 		// Creating dataspaces
 		hsize_t dim[1] = {nb_kmers};
 		dataspace_kmers = H5Screate_simple(1, dim, NULL);
-		dataspace_index = H5Screate_simple(1, dim, NULL);
 		
 		// Defining datatypes
 		datatype_kmers = H5Tcopy (H5T_C_S1);
 		H5Tset_size (datatype_kmers, H5T_VARIABLE);
 		
-		datatype_index = H5Tcopy(H5T_NATIVE_UINT);
-		H5Tset_order(datatype_index, H5T_ORDER_LE);
-		
 		// Creating memory spaces for writing
 		hsize_t dim_sub[1] = {block_size};
-		memspace_kmers = H5Screate_simple (1, dim_sub, NULL); 
-		memspace_index = H5Screate_simple (1, dim_sub, NULL); 
+		memspace_kmers = H5Screate_simple (1, dim_sub, NULL);  
 		
 		// Creating datasets in output file
-		dataset_kmers = H5Dcreate2(h5_file, "kmer_sequences", datatype_kmers, dataspace_kmers, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-		dataset_index = H5Dcreate2(h5_file, "kmer_by_matrix_column", datatype_index, dataspace_index, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+		dataset_kmers = H5Dcreate2(h5_file, "kmer_sequences", datatype_kmers, dataspace_kmers, H5P_DEFAULT, dcpl_kmers, H5P_DEFAULT);
 		
 		// Iterating over the unordered map
 		unordered_map<bitset<64>, unsigned long>::const_iterator iter;
@@ -370,7 +376,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 			
 			// Filling buffers
 			string_buffer[element] = strdup(convert(iter->first).c_str());
-			index_buffer[element] = iter->second;
+			index[iter->second] = kmer_checked;
 			
 			// Case buffer is filled
 			if ( element == (block_size -1))
@@ -385,10 +391,6 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 				{
 					free(string_buffer[i]);
 				}
-				
-				// Writing matrix index from buffer in output file
-				H5Sselect_hyperslab (dataspace_index, H5S_SELECT_SET, offset,  stride, count, block);
-				H5Dwrite (dataset_index, datatype_index, memspace_index, dataspace_index, H5P_DEFAULT, index_buffer);
 			}
 			iter++;
 		}
@@ -401,10 +403,9 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 			offset[0] = (kmer_checked / block_size) * block_size;
 			count[0] = last_kmers;
 			
-			// Creating adeqaute memory spaces
+			// Creating adequate memory spaces
 			dim_sub[0] = last_kmers;
 			memspace_kmers = H5Screate_simple (1, dim_sub, NULL); 
-			memspace_index = H5Screate_simple (1, dim_sub, NULL);
 			
 			// Writing kmer sequences from buffer in output file
 			H5Sselect_hyperslab (dataspace_kmers, H5S_SELECT_SET, offset,  stride, count, block);
@@ -415,19 +416,47 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 			{
 				free(string_buffer[i]);
 			}
-			
-			// Writing matrix index from buffer in output file
-			H5Sselect_hyperslab (dataspace_index, H5S_SELECT_SET, offset,  stride, count, block);
-			H5Dwrite (dataset_index, datatype_index, memspace_index, dataspace_index, H5P_DEFAULT, index_buffer);
 		}
+		// Clearing unordered_map
+		k_map.clear();
+		
 		// Closing hdf5 interface
-		H5Pclose (dcpl);
+		H5Pclose (dcpl_kmers);
 		H5Tclose(datatype_kmers);
 		H5Sclose(memspace_kmers);
 		H5Sclose(dataspace_kmers);
 		H5Dclose(dataset_kmers);
+		
+		hid_t    dataset_index, datatype_index, dataspace_index, memspace_index;
+		hid_t 	 dcpl_index;
+		
+		// Initializing compression parameters
+		hsize_t chunk_index[] = {chunk_length};
+		
+		// Setting dataset creation property list
+		dcpl_index = H5Pcreate (H5P_DATASET_CREATE);
+		H5Pset_deflate (dcpl_index, compression);
+		H5Pset_chunk (dcpl_index, 1, chunk_index);
+		
+		// Creating dataspaces
+		hsize_t dim_index[1] = {nb_kmers};
+		dataspace_index = H5Screate_simple(1, dim_index, NULL);
+		
+		// Defining datatypes
+		datatype_index = H5Tcopy(H5T_NATIVE_ULONG);
+		H5Tset_order(datatype_index, H5T_ORDER_LE);
+		
+		// Creating datasets in output file
+		dataset_index = H5Dcreate2(h5_file, "kmer_by_matrix_column", datatype_index, dataspace_index, H5P_DEFAULT, dcpl_index, H5P_DEFAULT);
+		
+		H5Dwrite (dataset_index, datatype_index, H5S_ALL, dataspace_index, H5P_DEFAULT, index);
+		
+		// Releasing index vector allocated on heap
+		delete(index);
+		
+		// Closing hdf5 interface
+		H5Pclose (dcpl_index);
 		H5Tclose(datatype_index);
-		H5Sclose(memspace_index);
 		H5Sclose(dataspace_index);
 		H5Dclose(dataset_index);
 		H5Fclose(h5_file); 

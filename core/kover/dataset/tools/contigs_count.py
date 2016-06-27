@@ -6,7 +6,7 @@ def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compre
 	dir_path = dirname(abspath(__file__))
 	
 	# Calling MultiDSK tool
-	call([dir_path + "/contigs_tools/build/bin/multidsk", 
+	call([dir_path + "/contigs_tools/multidsk", 
 					"-file", file_path, 
 					"-out-dir", out_dir,
 					"-kmer-size", kmer_size,
