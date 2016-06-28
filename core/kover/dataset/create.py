@@ -133,7 +133,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     h5py_file.attrs["created"] = time()
     h5py_file.attrs["uuid"] = str(uuid1())
     h5py_file.attrs["genome_source_type"] = "tsv"
-    h5py_file.attrs["genome_source"] = tsv_path
+    h5py_file.attrs["genome_data"] = tsv_path
     h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
     h5py_file.attrs["phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
@@ -257,7 +257,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 	h5py_file.attrs["created"] = time()
 	h5py_file.attrs["uuid"] = str(uuid1())
 	h5py_file.attrs["genome_source_type"] = "contigs"
-	h5py_file.attrs["genome_source"] = contig_list_path
+	h5py_file.attrs["genome_data"] = contig_list_path
 	h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
 	h5py_file.attrs["phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
 	h5py_file.attrs["kmer_size"] = kmer_size
