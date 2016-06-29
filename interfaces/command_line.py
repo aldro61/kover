@@ -36,7 +36,7 @@ class KoverCreateTool(object):
 	def from_tsv(self):
 		parser = argparse.ArgumentParser(prog="kover dataset create from_tsv",
 										 description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
-		parser.add_argument('--genome-source', help='The genomic data.',
+		parser.add_argument('--genome-data', help='The genomic data.',
 							required=True)
 		parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
 		parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
@@ -83,7 +83,7 @@ class KoverCreateTool(object):
 
 		from kover.dataset.create import from_tsv
 
-		from_tsv(tsv_path=args.genome_source,
+		from_tsv(tsv_path=args.genome_data,
 				 output_path=args.output,
 				 phenotype_name=args.phenotype_name,
 				 phenotype_metadata_path=args.phenotype_metadata,
@@ -96,13 +96,13 @@ class KoverCreateTool(object):
 	def from_contigs(self):
 		parser = argparse.ArgumentParser(prog="kover dataset create from_contigs",
 										 description='Creates a Kover dataset from genomic data and optionally phenotypic metadata')
-		parser.add_argument('--genome-source', help='The genomic data.',
+		parser.add_argument('--genome-data', help='The genomic data.',
 							required=True)
 		parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
 		parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
 		parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
 		parser.add_argument('--kmer-size', help='Size of a kmer (max is 128). The default is 31', default=31)
-		parser.add_argument('--filter-singleton', help='Filter singleton k-mers. The default is False--', default=False, action='store_true')
+		parser.add_argument('--filter-singleton', help='Filter singleton k-mers. The default is True', default=False, action='store_true')
 		parser.add_argument('--nb_cores', help='Number of cores used by DSK''. The default value is 0 (all cores)', default=0)
 		parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
 							'. The default value is 4.', default=4)
@@ -154,7 +154,7 @@ class KoverCreateTool(object):
 		else:
 			filter_option = "nothing"
 			
-		from_contigs(contig_list_path=args.genome_source,
+		from_contigs(contig_list_path=args.genome_data,
 					 output_path=args.output,
 					 kmer_size=args.kmer_size,
 					 filter_singleton=filter_option,
@@ -179,7 +179,7 @@ class KoverDatasetTool(object):
 		parser = argparse.ArgumentParser(usage= \
 											 '''%(prog)s dataset <command> [<args>]
 											 The two available creation sources are:
-												 from-tsv     Create Kover datasets from Genomic data in a tsv format
+												 from-tsv     Create Kover datasets from genomic data in a tsv format
 												 from-contigs      Create Kover datasets from contigs''')
 
 		parser.add_argument('command', help='The dataset creation manipulation to perform',
@@ -594,6 +594,7 @@ Bibtex:
 		report += "Dataset file: %s\n" % abspath(args.dataset)
 		report += "Dataset UUID: %s\n" % dataset.uuid
 		report += "Phenotype: %s\n" % dataset.phenotype.name.title()
+		report += "Genomic data type: %s\n" % dataset.genome_source_type
 		report += "Split: %s\n" % args.split
 		report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (
 			len(split.train_genome_idx),
@@ -604,6 +605,9 @@ Bibtex:
 			(dataset.phenotype.metadata[split.test_genome_idx] == 1).sum() if len(split.test_genome_idx) > 0 else 0,
 			(dataset.phenotype.metadata[split.test_genome_idx] == 0).sum() if len(split.test_genome_idx) > 0 else 0)
 		report += "Number of k-mers: %d\n" % dataset.kmer_count
+		if dataset.genome_source_type == "contigs":
+			report += "K-mers size : %s\n" % dataset.kmer_length
+			report += "Filtering : %s\n" % dataset.filter_singleton
 		report += "\n"
 		report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
 		if args.hp_choice == "cv":
