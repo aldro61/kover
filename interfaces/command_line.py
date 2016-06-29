@@ -30,7 +30,7 @@ KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models
 VERSION = "1.0.0"
 
 
-class KoverDatasetCreateTool(object):
+class KoverDatasetCreationTool(object):
     def __init__(self):
         self.available_data_sources = ['from-tsv', 'from-contigs']
 
@@ -183,7 +183,7 @@ class KoverDatasetTool(object):
         self.available_commands = ['create', 'info', 'split']
 
     def create(self):
-        creation_tool = KoverDatasetCreateTool()
+        creation_tool = KoverDatasetCreationTool()
 
         parser = argparse.ArgumentParser(usage= \
 '''%(prog)s dataset create <data source> [<args>]
