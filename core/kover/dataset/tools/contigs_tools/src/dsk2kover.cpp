@@ -21,11 +21,13 @@
 #include "kl_128.h"
 #include "kl_192.h"
 #include "kl_256.h"
+#include "progress.h"
 
 static const char* STR_KMER_LENGTH= "-kmer-length";
 static const char* STR_FILTER= "-filter";
 static const char* STR_COMPRESSION= "-compression";
 static const char* STR_CHUNK_SIZE= "-chunk-size";
+static const char* STR_NB_GENOMES= "-nb-genomes";
 /********************************************************************************/
 class DSK2Kover : public Tool
 {
@@ -43,31 +45,37 @@ public:
         getParser()->push_front(new OptionOneParam (STR_KMER_LENGTH, "kmer-length", false, "31"));
         getParser()->push_front(new OptionOneParam (STR_COMPRESSION, "compression", false, "4"));
         getParser()->push_front(new OptionOneParam (STR_CHUNK_SIZE, "chunk size", false, "100000"));
+        getParser()->push_front(new OptionOneParam (STR_NB_GENOMES,   "Number of genomes", true));
     }
 
     /** */
     void execute ()
     {
+        // Initializing progress bar
+        bool progress;
+        getInput()->getStr(STR_VERBOSE) == "True" ? progress = true : progress = false;
+        ProgressBar bar(2 * (getInput()->getInt(STR_NB_GENOMES)) + 2, progress, "dsk2kover");
+        
 		size_t kmer_size = getInput()->getInt(STR_KMER_LENGTH);
 		if (kmer_size <= 32)
 		{
 			KmerLister64 tool(kmer_size);
-			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE));
+			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE), bar);
 		}
 		else if (kmer_size <= 64)
 		{
 			KmerLister128 tool(kmer_size);
-			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE));
+			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE), bar);
 		}
 				else if (kmer_size <= 96)
 		{
 			KmerLister192 tool(kmer_size);
-			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE));
+			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE), bar);
 		}
 		else if (kmer_size <= 128)
 		{
 			KmerLister256 tool(kmer_size);
-			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE));
+			tool.analyse(getInput()->getStr(STR_URI_FILE), getInput()->getStr(STR_URI_OUTPUT), getInput()->getStr(STR_FILTER), getInput()->getInt(STR_COMPRESSION), getInput()->getInt(STR_CHUNK_SIZE), bar);
 		}
 		else
 		{

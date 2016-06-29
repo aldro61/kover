@@ -18,7 +18,6 @@
 
 #include "kl_64.h"
 
-using namespace std;
 /********************************************************************************/
 
 struct Options_64
@@ -171,7 +170,7 @@ template<size_t span> struct Functor_Read_Filter_64  {void operator ()  (Paramet
 KmerLister64::KmerLister64 (size_t kmerSize):kmerSize(kmerSize)
 {}
 /** */
-void KmerLister64::analyse(string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size)
+void KmerLister64::analyse(string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& callable)
 {
 	string line;
 	// Opening file containing list of files from dsk to process
@@ -198,6 +197,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 				{
 					Integer::apply<Functor_Read_Filter_64,Parameter_64> (kmerSize, Parameter_64(storage, kmerSize, k_map, &nb_kmers, k_set));	
 				}
+				callable();
 			}
 		}
 	}
@@ -310,6 +310,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 					{
 						Integer::apply<Functor_Analyse_Filter_64,Options_64> (kmerSize, Options_64(storage, kmerSize, k_map, buffer));
 					}
+					callable();
 					
 					// Shifting array data bits except if last genome
 					if (genome != files_checked - 1)
@@ -437,6 +438,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 		}
 		// Clearing unordered_map
 		k_map.clear();
+		callable();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_kmers);
@@ -471,6 +473,7 @@ void KmerLister64::analyse(string input_file, string output_file, string filter,
 		
 		// Releasing index vector allocated on heap
 		delete(index);
+		callable();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_index);

@@ -48,6 +48,10 @@ SET (GATB_CORE_EXCLUDE_EXAMPLES  1)
 # GATB CORE
 include (GatbCore)
 
+# Progress Bar
+include_directories(progressbar)
+add_subdirectory(progressbar)
+
 ################################################################################
 # TOOLS
 ################################################################################
@@ -67,7 +71,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include_directories (${PROGRAM_SOURCE_DIR})
 file (GLOB_RECURSE  ProjectFiles  ${PROGRAM_SOURCE_DIR}/*)
 add_executable(${PROJECT_NAME} ${ProjectFiles})
-target_link_libraries(${PROJECT_NAME} ${gatb-core-libraries})
+target_link_libraries(${PROJECT_NAME} ${gatb-core-libraries} progressbar)
 
 set (DSK_SOURCE_DIR ${PROJECT_SOURCE_DIR}/thirdparty/dsk)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

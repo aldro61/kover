@@ -18,7 +18,6 @@
 
 #include "kl_192.h"
 
-using namespace std;
 /********************************************************************************/
 
 struct Options_192
@@ -249,7 +248,7 @@ template<size_t span> struct Functor_Read_Filter_192  {  void operator ()  (Para
 KmerLister192::KmerLister192 (size_t kmerSize):kmerSize(kmerSize)
 {}
 /** */
-void KmerLister192::analyse (string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size)
+void KmerLister192::analyse (string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& callable)
 {
 	string line;
 
@@ -278,6 +277,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 				{
 					Integer::apply<Functor_Read_Filter_192,Parameter_192> (kmerSize, Parameter_192(storage, kmerSize, k_map, &nb_kmers, k_set));	
 				}
+				callable();
 			}
 		}
 	}
@@ -389,6 +389,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 					{
 						Integer::apply<Functor_Analyse_Filter_192,Options_192> (kmerSize, Options_192(storage, kmerSize, k_map, buffer));
 					}
+					callable();
 					
 					// Shifting array data bits except if last genome
 					if (genome != files_checked - 1)
@@ -517,6 +518,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		}
 		// Clearing unordered_map
 		k_map.clear();
+		callable();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_kmers);
@@ -551,6 +553,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		
 		// Releasing index vector allocated on heap
 		delete(index);
+		callable();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_index);

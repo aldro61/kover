@@ -12,7 +12,7 @@ list (APPEND PROGRAMS multidsk)
 
 FOREACH (program ${PROGRAMS})
   add_executable(${program} ${program}.cpp)
-  target_link_libraries(${program} ${gatb-core-libraries})
+  target_link_libraries(${program} ${gatb-core-libraries} progressbar)
 ENDFOREACH (program)
 
 ################################################################################

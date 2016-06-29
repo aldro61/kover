@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
@@ -19,7 +20,7 @@
 from subprocess import call
 from os.path import dirname, abspath
 
-def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose):
+def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose, progress):
 
 	dir_path = dirname(abspath(__file__))
 	
@@ -32,4 +33,5 @@ def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compre
 					"-out-compress", out_compress,
 					"-nb-cores", nb_cores,
 					"-out-tmp", out_dir,
-					"-verbose", verbose])
+					"-verbose", verbose,
+					"-progress", progress])
