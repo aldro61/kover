@@ -11,7 +11,7 @@ class build_ext(_build_ext):
 
 setup(
     name = "kover",
-    version = "1.0.1",
+    version = "1.1.0",
     packages = find_packages(),
 
     cmdclass={'build_ext':build_ext},
@@ -24,7 +24,10 @@ setup(
     license = "GPLv3",
     keywords = "genomics, machine learning, set covering machine, kmer",
     url = "http://github.com/aldro61/kover",
-
+    
     # Cython Extension
-    ext_modules = [Extension("kover/learning/set_covering_machine/popcount", ["kover/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])]
+    ext_modules = [Extension("kover/learning/set_covering_machine/popcount", ["kover/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])],
+    data_files=[('kover/dataset/tools/contigs_tools/', ['kover/dataset/tools/contigs_tools/build/bin/dsk2kover', 
+																  'kover/dataset/tools/contigs_tools/build/bin/multidsk', 
+																  'kover/dataset/tools/contigs_tools/build/bin/dsk'])]
 )
