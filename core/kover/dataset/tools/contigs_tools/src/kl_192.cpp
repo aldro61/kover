@@ -30,97 +30,103 @@ struct Options_192
 	KmerLister192::packing_type* p_buffer;
 };	
 
-template<size_t span> struct Functor_Analyse_All_192 { void operator () (Options_192 options)
-{
-	Storage*   storage  = options.storage;
-	size_t     kmerSize = options.kmerSize;
-	const unordered_map<bitset<192>, unsigned long>& k_map = options.k_map;
-	KmerLister192::packing_type* p_buffer = options.p_buffer;
-	
-	typedef typename Kmer<span>::Count Count;
+template<size_t span> struct Functor_Analyse_All_192 { 
+    void operator () (Options_192 options)
+    {
+        Storage*   storage  = options.storage;
+        size_t     kmerSize = options.kmerSize;
+        const unordered_map<bitset<192>, unsigned long>& k_map = options.k_map;
+        KmerLister192::packing_type* p_buffer = options.p_buffer;
+        
+        typedef typename Kmer<span>::Count Count;
 
-	// Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
-	Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");;
+        // Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
+        Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
 
-	// Iterating over the kmers collection
-	Iterator<Count>* itKmers = solidKmers.iterator();
-	LOCAL(itKmers);
-	for (itKmers->first(); !itKmers->isDone(); itKmers->next())
-	{
-		const Count& count = itKmers->item();
-		
-		/* ################################
-		 * Beginning of unique code section
-		 * ################################
-		 * */
-		bitset<192> bits (count.value.getVal());
-		for(int j = 1; j < 3; j++)
-		{
-			unsigned int limit;
-			j == 2 ? limit = (2*kmerSize-128) : limit = 64;
-			bitset<64> temp ((count.value>>(j *64)).getVal());
-			for(unsigned int i = 0; i < limit; i++)
-			{
-				bits[(j*64) + i] = temp[i];
-			}
-		}
-		/* ##########################
-		 * End of unique code section
-		 * ##########################
-		 * */
-		 
-		// Adding presence in the kmers-genome array at the kmer column
-		p_buffer[k_map.at(bits)] += 1;
-	}
-}};
+        // Iterating over the kmers collection
+        Iterator<Count>* itKmers = solidKmers.iterator();
+        LOCAL(itKmers);
+        for (itKmers->first(); !itKmers->isDone(); itKmers->next())
+        {
+            const Count& count = itKmers->item();
+            
+            /* ################################
+             * Beginning of unique code section
+             * ################################
+             * Cause: getValue return only the 64 last bits of kmer.
+             * */
+            bitset<192> bits (count.value.getVal());
+            for(int j = 1; j < 3; j++)
+            {
+                unsigned int limit;
+                j == 2 ? limit = (2*kmerSize-128) : limit = 64;
+                bitset<64> temp ((count.value>>(j *64)).getVal());
+                for(unsigned int i = 0; i < limit; i++)
+                {
+                    bits[(j*64) + i] = temp[i];
+                }
+            }
+            /* ##########################
+             * End of unique code section
+             * ##########################
+             * */
+             
+            // Adding presence in the kmers-genome array at the kmer column
+            p_buffer[k_map.at(bits)] += 1;
+        }
+    }
+};
 
-	template<size_t span> struct Functor_Analyse_Filter_192 { void operator () (Options_192 options)
-{
-	Storage*   storage  = options.storage;
-	size_t     kmerSize = options.kmerSize;
-	const unordered_map<bitset<192>, unsigned long>& k_map = options.k_map;
-	KmerLister192::packing_type* p_buffer = options.p_buffer;
-	
-	typedef typename Kmer<span>::Count Count;
+	template<size_t span> struct Functor_Analyse_Filter_192 { 
+        void operator () (Options_192 options)
+    {
+        Storage*   storage  = options.storage;
+        size_t     kmerSize = options.kmerSize;
+        const unordered_map<bitset<192>, unsigned long>& k_map = options.k_map;
+        KmerLister192::packing_type* p_buffer = options.p_buffer;
+        
+        typedef typename Kmer<span>::Count Count;
 
-	// Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
-	Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
+        // Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
+        Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
 
-	// Iterating over the kmers collection
-	Iterator<Count>* itKmers = solidKmers.iterator();
-	LOCAL(itKmers);
-	for (itKmers->first(); !itKmers->isDone(); itKmers->next())
-	{
-		const Count& count = itKmers->item();
-	   
-		/* ################################
-		 * Beginning of unique code section
-		 * ################################
-		 * */
-		bitset<192> bits (count.value.getVal());
-		for(int j = 1; j < 3; j++)
-		{
-			unsigned int limit;
-			j == 2 ? limit = (2*kmerSize-128) : limit = 64;
-			bitset<64> temp ((count.value>>(j *64)).getVal());
-			for(unsigned int i = 0; i < limit; i++)
-			{
-				bits[(j*64) + i] = temp[i];
-			}
-		}
-		/* ##########################
-		 * End of unique code section
-		 * ##########################
-		 * */
-		
-		// Verifying kmer presence in unordered map to filter singleton
-		if (k_map.count(bits))
-		{
-			// Adding presence in the kmers-genome array at the kmer column
-			p_buffer[k_map.at(bits)] += 1;
-		}
-	}
-}};
+        // Iterating over the kmers collection
+        Iterator<Count>* itKmers = solidKmers.iterator();
+        LOCAL(itKmers);
+        for (itKmers->first(); !itKmers->isDone(); itKmers->next())
+        {
+            const Count& count = itKmers->item();
+           
+            /* ################################
+             * Beginning of unique code section
+             * ################################
+             * Cause: getValue return only the 64 last bits of kmer.
+             * */
+            bitset<192> bits (count.value.getVal());
+            for(int j = 1; j < 3; j++)
+            {
+                unsigned int limit;
+                j == 2 ? limit = (2*kmerSize-128) : limit = 64;
+                bitset<64> temp ((count.value>>(j *64)).getVal());
+                for(unsigned int i = 0; i < limit; i++)
+                {
+                    bits[(j*64) + i] = temp[i];
+                }
+            }
+            /* ##########################
+             * End of unique code section
+             * ##########################
+             * */
+            
+            // Verifying kmer presence in unordered map to filter singleton
+            if (k_map.count(bits))
+            {
+                // Adding presence in the kmers-genome array at the kmer column
+                p_buffer[k_map.at(bits)] += 1;
+            }
+        }
+    }
+};
 
 struct Parameter_192
 {
@@ -133,126 +139,131 @@ struct Parameter_192
 	unordered_set<bitset<192>>& k_set;
 };
 
-template<size_t span> struct Functor_Read_All_192  {  void operator ()  (Parameter_192 parameter)
-{
-	Storage*   storage  = parameter.storage;
-	size_t     kmerSize = parameter.kmerSize;
-	unordered_map<bitset<192>, unsigned long>& k_map = parameter.k_map;
-	unsigned long* p_nb_kmers = parameter.p_nb_kmers;
+template<size_t span> struct Functor_Read_All_192  {  
+    void operator ()  (Parameter_192 parameter)
+    {
+        Storage*   storage  = parameter.storage;
+        size_t     kmerSize = parameter.kmerSize;
+        unordered_map<bitset<192>, unsigned long>& k_map = parameter.k_map;
+        unsigned long* p_nb_kmers = parameter.p_nb_kmers;
 
-	typedef typename Kmer<span>::Count Count;
+        typedef typename Kmer<span>::Count Count;
 
-	// Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
-	Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
-	
-	// Iterating over the kmers collection
-	Iterator<Count>* itKmers = solidKmers.iterator();
-	LOCAL(itKmers);
+        // Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
+        Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
+        
+        // Iterating over the kmers collection
+        Iterator<Count>* itKmers = solidKmers.iterator();
+        LOCAL(itKmers);
 
-	for (itKmers->first(); !itKmers->isDone(); itKmers->next())
-	{
-		const Count& count = itKmers->item();
-		
-		/* ################################
-		 * Beginning of unique code section
-		 * ################################
-		 * */
-		bitset<192> bits (count.value.getVal());
-		for(int j = 1; j < 3; j++)
-		{
-			unsigned int limit;
-			j == 2 ? limit = (2*kmerSize-128) : limit = 64;
-			bitset<64> temp ((count.value>>(j *64)).getVal());
-			for(unsigned int i = 0; i < limit; i++)
-			{
-				bits[(j*64) + i] = temp[i];
-			}
-		}
-		/* ##########################
-		 * End of unique code section
-		 * ##########################
-		 * */
-		
-		// Creating unordered map with every unique kmers
-		if (not(k_map.count(bits)))
-		{
-			k_map[bits] = *p_nb_kmers;
-			(*p_nb_kmers)++;
-		}
-		
-	}
-}};
+        for (itKmers->first(); !itKmers->isDone(); itKmers->next())
+        {
+            const Count& count = itKmers->item();
+            
+            /* ################################
+             * Beginning of unique code section
+             * ################################
+             * Cause: getValue return only the 64 last bits of kmer.
+             * */
+            bitset<192> bits (count.value.getVal());
+            for(int j = 1; j < 3; j++)
+            {
+                unsigned int limit;
+                j == 2 ? limit = (2*kmerSize-128) : limit = 64;
+                bitset<64> temp ((count.value>>(j *64)).getVal());
+                for(unsigned int i = 0; i < limit; i++)
+                {
+                    bits[(j*64) + i] = temp[i];
+                }
+            }
+            /* ##########################
+             * End of unique code section
+             * ##########################
+             * */
+            
+            // Creating unordered map with every unique kmers
+            if (not(k_map.count(bits)))
+            {
+                k_map[bits] = *p_nb_kmers;
+                (*p_nb_kmers)++;
+            }
+            
+        }
+    }
+};
 
-template<size_t span> struct Functor_Read_Filter_192  {  void operator ()  (Parameter_192 parameter)
-{
-	Storage*   storage  = parameter.storage;
-	size_t     kmerSize = parameter.kmerSize;
-	unordered_map<bitset<192>, unsigned long>& k_map = parameter.k_map;
-	unsigned long* p_nb_kmers = parameter.p_nb_kmers;
-	unordered_set<bitset<192>>& k_set = parameter.k_set;
+template<size_t span> struct Functor_Read_Filter_192  {  
+    void operator ()  (Parameter_192 parameter)
+    {
+        Storage*   storage  = parameter.storage;
+        size_t     kmerSize = parameter.kmerSize;
+        unordered_map<bitset<192>, unsigned long>& k_map = parameter.k_map;
+        unsigned long* p_nb_kmers = parameter.p_nb_kmers;
+        unordered_set<bitset<192>>& k_set = parameter.k_set;
 
-	typedef typename Kmer<span>::Count Count;
+        typedef typename Kmer<span>::Count Count;
 
-	// Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
-	Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
-	
+        // Obtaining solid kmers collection from the 'dsk' group and from the 'solid' collection
+        Partition<Count>& solidKmers = storage->getGroup("dsk").getPartition<Count> ("solid");
+        
 
-	// Iterating over the kmers collection
-	Iterator<Count>* itKmers = solidKmers.iterator();
-	LOCAL(itKmers);
-	for (itKmers->first(); !itKmers->isDone(); itKmers->next())
-	{
-		const Count& count = itKmers->item();
-		
-		/* ################################
-		 * Beginning of unique code section
-		 * ################################
-		 * */
-		bitset<192> bits (count.value.getVal());
-		for(int j = 1; j < 3; j++)
-		{
-			unsigned int limit;
-			j == 2 ? limit = (2*kmerSize-128) : limit = 64;
-			bitset<64> temp ((count.value>>(j *64)).getVal());
-			for(unsigned int i = 0; i < limit; i++)
-			{
-				bits[(j*64) + i] = temp[i];
-			}
-		}
-		/* ##########################
-		 * End of unique code section
-		 * ##########################
-		 * */
-		
-		/* Creating unordered map while filtering singleton
-		 * k_set is used to store kmers that appeared only once
-		 * The second time they appear, they are added to the unordered map
-		 * */
-		if (not(k_map.count(bits)))
-		{
-			if (k_set.count(bits) == 1)
-			{
-				k_map[bits] = *p_nb_kmers;
-				(*p_nb_kmers)++;
-				k_set.erase(bits);
-			}
-			else
-			{ 
-				k_set.insert(bits);
-			}
-		}
-	}
-}};
+        // Iterating over the kmers collection
+        Iterator<Count>* itKmers = solidKmers.iterator();
+        LOCAL(itKmers);
+        for (itKmers->first(); !itKmers->isDone(); itKmers->next())
+        {
+            const Count& count = itKmers->item();
+            
+            /* ################################
+             * Beginning of unique code section
+             * ################################
+             * Cause: getValue return only the 64 last bits of kmer.
+             * */
+            bitset<192> bits (count.value.getVal());
+            for(int j = 1; j < 3; j++)
+            {
+                unsigned int limit;
+                j == 2 ? limit = (2*kmerSize-128) : limit = 64;
+                bitset<64> temp ((count.value>>(j *64)).getVal());
+                for(unsigned int i = 0; i < limit; i++)
+                {
+                    bits[(j*64) + i] = temp[i];
+                }
+            }
+            /* ##########################
+             * End of unique code section
+             * ##########################
+             * */
+            
+            /* Creating unordered map while filtering singleton.
+             * k_set is used to store kmers that appeared only once
+             * The second time they appear, they are added to the unordered map
+             * */
+            if (not(k_map.count(bits)))
+            {
+                if (k_set.count(bits) == 1)
+                {
+                    k_map[bits] = *p_nb_kmers;
+                    (*p_nb_kmers)++;
+                    k_set.erase(bits);
+                }
+                else
+                { 
+                    k_set.insert(bits);
+                }
+            }
+        }
+    }
+};
 
 /** */
 KmerLister192::KmerLister192 (size_t kmerSize):kmerSize(kmerSize)
 {}
 /** */
-void KmerLister192::analyse (string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& callable)
+void KmerLister192::analyse (string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& progressbar)
 {
 	string line;
 
-	
 	// Opening file containing list of files from dsk to process
 	ifstream h5_list (input_file);
 	try
@@ -266,7 +277,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 				// Loading dsk output file
 				// Note : StorageFactory dynamically allocates an instance
 				// which explains the use of LOCAL.
-				Storage* storage = StorageFactory(STORAGE_HDF5).load (line);
+				Storage* storage = StorageFactory(STORAGE_HDF5).load(line);
 				LOCAL (storage);
 				// Launching functor to read kmers with adequate filtering mode
 				if (filter == "nothing")
@@ -277,7 +288,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 				{
 					Integer::apply<Functor_Read_Filter_192,Parameter_192> (kmerSize, Parameter_192(storage, kmerSize, k_map, &nb_kmers, k_set));	
 				}
-				callable();
+				progressbar();
 			}
 		}
 	}
@@ -302,14 +313,14 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 	plist = H5Fget_access_plist(h5_file);
 	H5Pset_cache(plist, 0, 0, 0, 0);
 	H5Fclose(h5_file); 
-	h5_file = H5Fopen ((output_file).c_str(), H5F_ACC_RDWR, plist);
+	h5_file = H5Fopen((output_file).c_str(), H5F_ACC_RDWR, plist);
 	
 	// Initializing compression parameters
 	unsigned int chunk_length = (nb_kmers < chunk_size) ? nb_kmers : chunk_size;
 	hsize_t chunk[2] = {1, chunk_length};
 	
 	// Setting dataset creation property list
-	dcpl_matrix = H5Pcreate (H5P_DATASET_CREATE);
+	dcpl_matrix = H5Pcreate(H5P_DATASET_CREATE);
     H5Pset_deflate (dcpl_matrix, compression);
     H5Pset_chunk (dcpl_matrix, 2, chunk);
 
@@ -325,7 +336,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 	
 	// Creating memory space for writing
 	hsize_t dim_sub[2] = {1, nb_kmers};
-	memspace = H5Screate_simple (2, dim_sub, NULL); 
+	memspace = H5Screate_simple(2, dim_sub, NULL); 
 
 	// Defining datatype
 	if (KMER_MATRIX_PACKING_SIZE_192 == 32)
@@ -377,7 +388,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 				{
 					// Loading dsk output file
 					line = buffer_genomes[genome];
-					Storage* storage = StorageFactory(STORAGE_HDF5).load (line);
+					Storage* storage = StorageFactory(STORAGE_HDF5).load(line);
 					LOCAL (storage);
 
 					// Launching functor to read kmers and create array with adequate filtering mode
@@ -389,7 +400,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 					{
 						Integer::apply<Functor_Analyse_Filter_192,Options_192> (kmerSize, Options_192(storage, kmerSize, k_map, buffer));
 					}
-					callable();
+					progressbar();
 					
 					// Shifting array data bits except if last genome
 					if (genome != files_checked - 1)
@@ -398,6 +409,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 					}
 					else
 					{
+                        // Fill remaining rows of the buffer with zeros
 						unsigned int empty_rows = KMER_MATRIX_PACKING_SIZE_192 - files_checked;
 						if (empty_rows)
 						{
@@ -411,8 +423,8 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 				}
 			// Writing array data buffer in output file
 			offset[0] = i;
-			H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset,  stride, count, block);
-			H5Dwrite (dataset, datatype, memspace, dataspace, H5P_DEFAULT, buffer);
+			H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset,  stride, count, block);
+			H5Dwrite(dataset, datatype, memspace, dataspace, H5P_DEFAULT, buffer);
 			}
 			delete(buffer);
 		}
@@ -446,8 +458,8 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		
 		// Setting dataset creation property list
 		dcpl_kmers = H5Pcreate (H5P_DATASET_CREATE);
-		H5Pset_deflate (dcpl_kmers, compression);
-		H5Pset_chunk (dcpl_kmers, 1, chunk);
+		H5Pset_deflate(dcpl_kmers, compression);
+		H5Pset_chunk(dcpl_kmers, 1, chunk);
 		
 		// Creating dataspaces
 		hsize_t dim[1] = {nb_kmers};
@@ -455,11 +467,11 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		
 		// Defining datatypes
 		datatype_kmers = H5Tcopy (H5T_C_S1);
-		H5Tset_size (datatype_kmers, H5T_VARIABLE);
+		H5Tset_size(datatype_kmers, H5T_VARIABLE);
 		
 		// Creating memory spaces for writing
 		hsize_t dim_sub[1] = {block_size};
-		memspace_kmers = H5Screate_simple (1, dim_sub, NULL);  
+		memspace_kmers = H5Screate_simple(1, dim_sub, NULL);  
 		
 		// Creating datasets in output file
 		dataset_kmers = H5Dcreate2(h5_file, "kmer_sequences", datatype_kmers, dataspace_kmers, H5P_DEFAULT, dcpl_kmers, H5P_DEFAULT);
@@ -478,12 +490,12 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 			index[iter->second] = kmer_checked;
 			
 			// Case buffer is filled
-			if ( element == (block_size -1))
+			if (element == (block_size -1))
 			{
 				// Writing kmer sequences from buffer in output file
 				offset[0] = (kmer_checked / block_size) * block_size;
-				H5Sselect_hyperslab (dataspace_kmers, H5S_SELECT_SET, offset,  stride, count, block);
-				H5Dwrite (dataset_kmers, datatype_kmers, memspace_kmers, dataspace_kmers, H5P_DEFAULT, string_buffer);
+				H5Sselect_hyperslab(dataspace_kmers, H5S_SELECT_SET, offset,  stride, count, block);
+				H5Dwrite(dataset_kmers, datatype_kmers, memspace_kmers, dataspace_kmers, H5P_DEFAULT, string_buffer);
 				
 				// Releasing string allocated on heap
 				for (unsigned int i = 0; i < block_size; i++)
@@ -507,8 +519,8 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 			memspace_kmers = H5Screate_simple (1, dim_sub, NULL); 
 			
 			// Writing kmer sequences from buffer in output file
-			H5Sselect_hyperslab (dataspace_kmers, H5S_SELECT_SET, offset,  stride, count, block);
-			H5Dwrite (dataset_kmers, datatype_kmers, memspace_kmers, dataspace_kmers, H5P_DEFAULT, string_buffer);
+			H5Sselect_hyperslab(dataspace_kmers, H5S_SELECT_SET, offset,  stride, count, block);
+			H5Dwrite(dataset_kmers, datatype_kmers, memspace_kmers, dataspace_kmers, H5P_DEFAULT, string_buffer);
 			
 			// Releasing string allocated on heap
 			for (unsigned int i = 0; i < last_kmers; i++)
@@ -518,7 +530,7 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		}
 		// Clearing unordered_map
 		k_map.clear();
-		callable();
+		progressbar();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_kmers);
@@ -535,8 +547,8 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		
 		// Setting dataset creation property list
 		dcpl_index = H5Pcreate (H5P_DATASET_CREATE);
-		H5Pset_deflate (dcpl_index, compression);
-		H5Pset_chunk (dcpl_index, 1, chunk_index);
+		H5Pset_deflate(dcpl_index, compression);
+		H5Pset_chunk(dcpl_index, 1, chunk_index);
 		
 		// Creating dataspaces
 		hsize_t dim_index[1] = {nb_kmers};
@@ -549,11 +561,11 @@ void KmerLister192::analyse (string input_file, string output_file, string filte
 		// Creating datasets in output file
 		dataset_index = H5Dcreate2(h5_file, "kmer_by_matrix_column", datatype_index, dataspace_index, H5P_DEFAULT, dcpl_index, H5P_DEFAULT);
 		
-		H5Dwrite (dataset_index, datatype_index, H5S_ALL, dataspace_index, H5P_DEFAULT, index);
+		H5Dwrite(dataset_index, datatype_index, H5S_ALL, dataspace_index, H5P_DEFAULT, index);
 		
 		// Releasing index vector allocated on heap
 		delete(index);
-		callable();
+		progressbar();
 		
 		// Closing hdf5 interface
 		H5Pclose (dcpl_index);

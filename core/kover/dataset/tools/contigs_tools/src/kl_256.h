@@ -34,7 +34,7 @@ public:
 	typedef conditional<KMER_MATRIX_PACKING_SIZE_256==32, unsigned int, unsigned long>::type packing_type;
 	
 	KmerLister256 (size_t kmerSize);
-	void analyse(string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& callable);
+	void analyse(string input_file, string output_file, string filter, unsigned int compression, unsigned int chunk_size, Callable& progressbar);
 	void bit_shift(packing_type* p_buffer, unsigned long* p_nb_kmers);
 	string convert(bitset<256> bits);
 	

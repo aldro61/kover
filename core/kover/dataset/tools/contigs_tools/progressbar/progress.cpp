@@ -18,8 +18,8 @@
 
 #include "progress.h"
 
-ProgressBar::ProgressBar(unsigned int goal, bool verbose, std::string toolname):goal(goal), verbose(verbose), toolname(toolname)
-{if (verbose)
+ProgressBar::ProgressBar(unsigned int goal, bool visible, std::string toolname):goal(goal), visible(visible), toolname(toolname)
+{if (visible)
 {
     std::cout << std::endl;
     display();
@@ -29,7 +29,7 @@ ProgressBar::ProgressBar(unsigned int goal, bool verbose, std::string toolname):
 void ProgressBar::operator ()()
 {
     ++progress;
-    if (verbose)
+    if (visible)
     {
         display();
     }

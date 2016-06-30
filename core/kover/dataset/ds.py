@@ -33,6 +33,11 @@ class KoverDataset(object):
 		return dataset.attrs["compression"]
 
 	@property
+	def kmer_filter(self):
+		dataset = self.dataset_open()
+		return dataset.attrs["filter"]
+
+	@property
 	def genome_count(self):
 		dataset = self.dataset_open()
 		return dataset["genome_identifiers"].shape[0]
@@ -96,11 +101,6 @@ class KoverDataset(object):
 	def uuid(self):
 		dataset = self.dataset_open()
 		return dataset.attrs["uuid"]
-		
-	@property
-	def filter_singleton(self):
-		dataset = self.dataset_open()
-		return dataset.attrs["filter"]
 
 	def get_split(self, name):
 		dataset = self.dataset_open()

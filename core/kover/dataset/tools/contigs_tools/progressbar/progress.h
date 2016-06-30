@@ -25,13 +25,13 @@
 class ProgressBar: public Callable
 {
 public:
-    ProgressBar(unsigned int goal, bool verbose, std::string toolname);
+    ProgressBar(unsigned int goal, bool visible, std::string toolname);
     virtual  void operator()();
     void display();
 private:
     unsigned int progress = 0;
     unsigned int goal;
-    bool verbose;
+    bool visible;
     std::string toolname;
 };
     

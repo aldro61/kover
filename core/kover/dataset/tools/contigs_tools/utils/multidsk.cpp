@@ -25,14 +25,18 @@
 
 int main (int argc, char* argv[])
 {
+    // Counting number of genomes to process
 	string line;
 	unsigned int nb_genomes = 0;
 	ifstream file (argv[2]);
 	while (getline(file, line))
 		{
 			nb_genomes++;
-		}
-	bool progress;
+        }
+    file.close();
+	
+    // Initializing progress bar
+    bool progress;
 	string(argv[18]) == "True" ? progress = true : progress = false;
 	ProgressBar bar(nb_genomes, progress, "multidsk ");
 	
@@ -62,6 +66,7 @@ int main (int argc, char* argv[])
 				// Applying DSK tool to the file
 				DSK().run(argc, argv);
 				
+                // Updating progress
 				bar();
 			}
 		}

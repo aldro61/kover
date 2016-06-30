@@ -106,14 +106,14 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
-        parser.add_argument('--kmer-size', help='Size of a kmer (max is 128). The default is 31', default=31)
-        parser.add_argument('--filter-singleton', help='Filter singleton k-mers. The default is True', default=False,
+        parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
+        parser.add_argument('--singleton-kmers', help='Consider k-mers that occur only once. Disabled by default.', default=False,
                             action='store_true')
-        parser.add_argument('--nb_cores', help='Number of cores used by DSK''. The default value is 0 (all cores)',
+        parser.add_argument('--nb_cores', help='The number of cores used by DSK''. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
-        parser.add_argument('--temp-dir', help='Output directory for temporary files.', default=gettempdir())
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', default=gettempdir())
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
 
@@ -129,33 +129,28 @@ class KoverDatasetCreationTool(object):
             print "Error: The phenotype name and metadata file must be specified."
             exit()
 
-        # Package imports
-        from progressbar import Bar, Percentage, ProgressBar, Timer
-
-        from_contigs_verbose = 0
         if args.verbose:
-            from_contigs_verbose = 1
             logging.basicConfig(level=logging.DEBUG,
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
         from kover.dataset.create import from_contigs
 
-        if args.filter_singleton:
+        if not args.singleton_kmers:
             filter_option = "singleton"
         else:
             filter_option = "nothing"
 
-            from_contigs(contig_list_path=args.genome_data,
-                         output_path=args.output,
-                         kmer_size=args.kmer_size,
-                         filter_singleton=filter_option,
-                         phenotype_name=args.phenotype_name,
-                         phenotype_metadata_path=args.phenotype_metadata,
-                         gzip=args.compression,
-                         temp_dir=args.temp_dir,
-                         nb_cores=args.nb_cores,
-                         verbose=from_contigs_verbose,
-                         progress=args.progress)
+        from_contigs(contig_list_path=args.genomic_data,
+                     output_path=args.output,
+                     kmer_size=args.kmer_size,
+                     filter_singleton=filter_option,
+                     phenotype_name=args.phenotype_name,
+                     phenotype_metadata_path=args.phenotype_metadata,
+                     gzip=args.compression,
+                     temp_dir=args.temp_dir,
+                     nb_cores=args.nb_cores,
+                     verbose=args.verbose,
+                     progress=args.progress)
 
 
 class KoverDatasetTool(object):
@@ -600,8 +595,8 @@ The most commonly used commands are:
             (dataset.phenotype.metadata[split.test_genome_idx] == 0).sum() if len(split.test_genome_idx) > 0 else 0)
         report += "Number of k-mers: %d\n" % dataset.kmer_count
         if dataset.genome_source_type == "contigs":
-            report += "K-mers size : %s\n" % dataset.kmer_length
-            report += "Filtering : %s\n" % dataset.filter_singleton
+            report += "K-mer size : %s\n" % dataset.kmer_length
+            report += "K-mer filtering : %s\n" % dataset.kmer_filter
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
