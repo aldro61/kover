@@ -18,7 +18,7 @@
 
 #include "progress.h"
 
-ProgressBar::ProgressBar(unsigned int goal, bool visible, std::string toolname):goal(goal), visible(visible), toolname(toolname)
+ProgressBar::ProgressBar(unsigned int goal, bool visible, std::string toolname):progress(0), goal(goal), visible(visible), toolname(toolname)
 {if (visible)
 {
     std::cout << std::endl;

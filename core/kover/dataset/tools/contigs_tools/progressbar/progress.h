@@ -29,7 +29,7 @@ public:
     virtual  void operator()();
     void display();
 private:
-    unsigned int progress = 0;
+    unsigned int progress;
     unsigned int goal;
     bool visible;
     std::string toolname;
