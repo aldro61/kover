@@ -61,25 +61,46 @@ def _get_metrics(predictions, answers):
         metrics["f1_score"].append(f1_score)
     return metrics
 
+
 def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progress_callback=None):
-    """
-    Makes predictions by loading only the columns of the kmer matrix that are targetted by the model.
+    """Computes predictions by loading only the columns of the kmer matrix that are targetted by the model.
+
+    Parameters
+    ----------
+    model: BaseModel
+        The model used for predicting.
+
+    kmer_matrix: BaseRuleClassifications
+        The matrix containing the classifications of each rule on each learning example.
+
+    train_example_idx: array-like, dtype=uint
+        The index of the rows of kmer_matrix corresponding to the training examples.
+
+    test_example_idx: array-like, dtype=uint
+        The index of the rows of kmer_matrix corresponding to the testing examples.
+
+    progress_callback: function with arguments task, percent_completed
+        A callback function used to keep track of the task's completion.
+
     """
     if progress_callback is None:
         progress_callback = lambda t, p: None
 
     progress_callback("Testing", 0.0)
-    kmer_idx_by_rule = np.array([r.kmer_index for r in model])
-    kmer_sequence_by_rule = np.array([r.kmer_sequence for r in model])
 
-    sort_by_idx = np.argsort(kmer_idx_by_rule)
-    kmer_idx_by_rule = kmer_idx_by_rule[sort_by_idx]
-    kmer_sequence_by_rule = kmer_sequence_by_rule[sort_by_idx]
+    # We use h5py to load only the columns of the k-mer matrix targeted by the model. The indices passed to h5py need
+    # to be sorted. We change the kmer_idx of the rules in the model to be 0 ... n_rules, with the rule that initially had
+    # the smallest kmer_idx pointing to 0 and the one with the largest kmer_idx pointing to n_rules. We then load only
+    # the appropriate columns and apply the readdressed model to the data (in RAM).
+    columns_to_load = []
+    readdressed_model = deepcopy(model)
+    for i, rule_idx in enumerate(np.argsort([r.kmer_index for r in model.rules])):
+        rule = readdressed_model.rules[rule_idx]
+        columns_to_load.append(rule.kmer_index)
+        rule.kmer_index = i
 
-    readdressed_kmer_idx_by_rule = dict((s, i) for i, s in enumerate(kmer_sequence_by_rule))
-    readdressed_model = _readdress_model(model=model, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule)
-
-    X = _unpack_binary_bytes_from_ints(kmer_matrix[:, kmer_idx_by_rule.tolist()])
+    # Load the columns targeted by the model and make predictions using the readdressed model
+    X = _unpack_binary_bytes_from_ints(kmer_matrix[:, columns_to_load])
     train_predictions = readdressed_model.predict(X[train_example_idx])
     progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
     test_predictions = readdressed_model.predict(X[test_example_idx])
@@ -87,14 +108,6 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
 
     return train_predictions, test_predictions
 
-def _readdress_model(model, rule_new_idx_by_kmer_seq):
-    """
-    Produces a new model that looks for the k-mers at different locations in the input
-    """
-    new_model = deepcopy(model)
-    for r in new_model:
-        r.kmer_index = rule_new_idx_by_kmer_seq[r.kmer_sequence]
-    return new_model
 
 def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     model_type = hp_values[0]
@@ -154,6 +167,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     best_model_length = best_score_idx + 1
 
     return (model_type, p, best_model_length), best_hp_score
+
 
 def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules, n_cpu, progress_callback,
                       warning_callback, error_callback):
