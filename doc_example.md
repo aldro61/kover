@@ -27,7 +27,7 @@ Before learning a model from these data, we must package the genomic and phenoty
 To create such a dataset, use the following command:
 
 ```
-kover dataset create --genome-type tsv --genome-source KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
+kover dataset create from-tsv --genome-type tsv --genome-source KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
 ```
 
 This produces a Kover dataset called "example.kover". From now on, you no longer need the original data files.
