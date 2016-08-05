@@ -107,9 +107,9 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
-        parser.add_argument('--singleton-kmers', help='Consider k-mers that occur only once. Disabled by default.', default=False,
+        parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
                             action='store_true')
-        parser.add_argument('--nb_cores', help='The number of cores used by DSK''. The default value is 0 (all cores).',
+        parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -148,7 +148,7 @@ class KoverDatasetCreationTool(object):
                      phenotype_metadata_path=args.phenotype_metadata,
                      gzip=args.compression,
                      temp_dir=args.temp_dir,
-                     nb_cores=args.nb_cores,
+                     nb_cores=args.n_cores,
                      verbose=args.verbose,
                      progress=args.progress)
 
