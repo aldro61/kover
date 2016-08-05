@@ -10,19 +10,67 @@ summary: "Overview of the data manipulation utility"
 
 This command is used to combine genomic and phenotypic data into a Kover dataset.
 
+### From contigs
+
+Use this command if the genomic data consists of one FASTA file per genome (see [input data format](doc_input_formats.html)).
+The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count the k-mers present in the genomes.
+
 ```
-usage: kover dataset create [-h] --genome-type {tsv} --genome-source
-                            GENOME_SOURCE [--phenotype-name PHENOTYPE_NAME]
-                            [--phenotype-metadata PHENOTYPE_METADATA] --output
-                            OUTPUT [--compression COMPRESSION] [-x] [-v]
+usage: kover dataset create from_contigs [-h] --genomic-data GENOMIC_DATA
+                                         [--phenotype-name PHENOTYPE_NAME]
+                                         [--phenotype-metadata PHENOTYPE_METADATA]
+                                         --output OUTPUT
+                                         [--kmer-size KMER_SIZE]
+                                         [--singleton-kmers]
+                                         [--n_cores N_CORES]
+                                         [--compression COMPRESSION]
+                                         [--temp-dir TEMP_DIR] [-x] [-v]
 
 Creates a Kover dataset from genomic data and optionally phenotypic metadata
 
 optional arguments:
   -h, --help            show this help message and exit
-  --genome-type {tsv}   The format in which the genomic data is provided.
-  --genome-source GENOME_SOURCE
-                        The genomic data.
+  --genomic-data GENOMIC_DATA
+                        A tab-separated file with one line per genome in the
+                        format GENOME_ID{tab}PATH, where the path refers to a
+                        fasta file containing the genome's contigs.
+  --phenotype-name PHENOTYPE_NAME
+                        An informative name that is assigned to the phenotypic
+                        metadata.
+  --phenotype-metadata PHENOTYPE_METADATA
+                        A file containing the phenotypic metadata.
+  --output OUTPUT       The Kover dataset to be created.
+  --kmer-size KMER_SIZE
+                        The k-mer size (max is 128). The default is 31.
+  --singleton-kmers     Include k-mers that occur only once. Disabled by
+                        default.
+  --n_cores N_CORES     The number of cores used by DSK. The default value is
+                        0 (all cores).
+  --compression COMPRESSION
+                        The gzip compression level (0 - 9). 0 means no
+                        compression. The default value is 4.
+  --temp-dir TEMP_DIR   Output directory for temporary files. The default is
+                        the system's temp dir.
+  -x, --progress        Shows a progress bar for the execution.
+  -v, --verbose         Sets the verbosity level.
+```
+
+### From a k-mer matrix
+Use this command if the genomic data consists of a matrix giving the presence or absence of each k-mer in each genome (see [input data format](doc_input_formats.html)).
+
+```
+usage: kover dataset create from-tsv [-h] --genomic-data GENOMIC_DATA
+                                     [--phenotype-name PHENOTYPE_NAME]
+                                     [--phenotype-metadata PHENOTYPE_METADATA]
+                                     --output OUTPUT
+                                     [--compression COMPRESSION] [-x] [-v]
+
+Creates a Kover dataset from genomic data and optionally phenotypic metadata
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --genomic-data GENOMIC_DATA
+                        A tab-separated file containing the k-mer matrix.
   --phenotype-name PHENOTYPE_NAME
                         An informative name that is assigned to the phenotypic
                         metadata.
@@ -35,9 +83,6 @@ optional arguments:
   -x, --progress        Shows a progress bar for the execution.
   -v, --verbose         Sets the verbosity level.
 ```
-
-Kover is currently limited to genomic data provided as a TSV file (--genome-type tsv). The accepted input data formats
-for genomic and phenotypic data are detailed [here](doc_input_formats.html).
 
 ## Splitting a dataset
 

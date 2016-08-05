@@ -8,14 +8,39 @@ summary: "An overview of the file formats accepted by Kover."
 
 ## Genomic Data
 
-Kover currently accepts genomic data in a specific tab-separated value (TSV) file format, which corresponds to the k-mer
-matrix produced by [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial).
+Kover currently accepts genomic data in two formats:
 
-* The first line should be a header, with the first column labelled "kmers" and the remaining columns labelled with
+* contigs: a set of FASTA files containing assembled genomic sequences
+
+* k-mer matrix: a matrix giving the presence/absence of each k-mer in each genome
+
+
+### Contigs
+
+In this case, the genomic data is available as a set of [FASTA files](https://en.wikipedia.org/wiki/FASTA_format) (one per genome).
+Each file contains a set of contigs, which are assembled genomic sequences. 
+A tab-separated value (TSV) file relating each FASTA file to a genome is also required.
+It should have the following format:
+
+| | |
+| :-: | :-: | :-: | :-: | :-: |
+|GenomeID_1| FASTA_Path_1|
+|GenomeID_2| FASTA_Path_2|
+| ...      | ... |
+|GenomeID_m| FASTA_Path_m|
+
+**Please make sure that the genome identifiers in the k-mer matrix match the ones in the metadata.*
+
+
+### K-mer matrix
+
+In this case, the genomic data is available as a tab-separated value (TSV) file where:
+
+* The first line is a header, with the first column labelled "kmers" and the remaining columns labelled with
 genome identifiers. For example, for a study based on 100 genomes, there should be 101 columns in the file.
 
-* Each of the remaining lines gives the presence or absence of a k-mer in each genome. Each line should start with the
-k-mer sequence and the remaining columns should contain a 0 if the k-mer is absent in the genome or a 1 if it is
+* Each of the remaining lines gives the presence or absence of a k-mer in each genome. Each line starts with the
+k-mer sequence and the remaining columns contain a 0 if the k-mer is absent in the genome or a 1 if it is
 present.
 
 | kmers | GenomeID_1 | GenomeID_2 | ... | GenomeID_m |
@@ -24,6 +49,8 @@ present.
 | kmer_2 | 0 | 1 | ... | 1 |
 | ... | ... | ... | ... | ... |
 | kmer_n | 1 | 0 | ... | 1 |
+
+Such a matrix can be generated with [Ray Surveyor](https://github.com/zorino/RaySurveyor-Tutorial).
 
 **Please make sure that the genome identifiers in the k-mer matrix match the ones in the metadata.*
 
@@ -43,4 +70,4 @@ genomes. This is the phenotypic data that will be used to train the learning alg
 
 **Notice that there is no header.*
 
-**Please make sure that the genome identifiers in the metadata match the ones in the k-mer matrix.*
+**Please make sure that the genome identifiers in the metadata match the ones in the genomic data.*
