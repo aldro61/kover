@@ -20,10 +20,13 @@
 import logging
 import numpy as np
 
-from functools import partial
+from math import ceil
 
 from .models import conjunction, ConjunctionModel, disjunction, DisjunctionModel
 from ...utils import _class_to_string
+
+
+UTIL_BLOCK_SIZE = 1000000
 
 
 def _rule_importances(rule_classifications, model_rules_idx, training_example_idx):
@@ -31,6 +34,7 @@ def _rule_importances(rule_classifications, model_rules_idx, training_example_id
     model_neg_prediction_idx = np.where(np.prod(model_rule_classifications, axis=1) == 0)[0]
     return (float(len(model_neg_prediction_idx)) - model_rule_classifications[model_neg_prediction_idx].sum(axis=0)) / \
            len(model_neg_prediction_idx)
+
 
 class BaseSetCoveringMachine(object):
     def __init__(self, model_type, max_rules):
@@ -47,7 +51,7 @@ class BaseSetCoveringMachine(object):
         self._flags = {}
         super(BaseSetCoveringMachine, self).__init__()
 
-    def fit(self, rules, rule_classifications, positive_example_idx, negative_example_idx, rule_blacklist=None,
+    def fit(self, rules, rule_classifications, positive_example_idx, negative_example_idx, rule_blacklist=[],
             tiebreaker=None, iteration_callback=None, iteration_rule_importances=False, **kwargs):
         """
         TODO
@@ -73,7 +77,7 @@ class BaseSetCoveringMachine(object):
             raise ValueError("The number of rules must match between rule_classifications and rules.")
 
         # Validate the rule blacklist
-        if rule_blacklist is not None:
+        if len(rule_blacklist) > 0:
             rule_blacklist = np.unique(rule_blacklist)
             if len(rule_blacklist) == rule_classifications.shape[1]:
                 raise ValueError("The blacklist cannot include all the rules.")
@@ -84,28 +88,26 @@ class BaseSetCoveringMachine(object):
         while len(negative_example_idx) > 0 and len(self.model) < self.max_rules:
             iteration_info = {"iteration_number": len(self.model) + 1}
 
-            utilities, \
-            positive_error_count, \
-            negative_cover_count = self._get_binary_rule_utilities(
-                rule_classifications=rule_classifications,
-                positive_example_idx=positive_example_idx,
-                negative_example_idx=negative_example_idx,
-                **utility_function_additional_args)
-
-            # Exclude the rules in the blacklist
-            if rule_blacklist is not None:
-                utilities[rule_blacklist] = -np.infty
+            best_utility, \
+            best_utility_idx, \
+            best_utility_pos_error_counts, \
+            best_utility_neg_cover_counts = \
+                self._get_best_utility_rules(rule_classifications=rule_classifications,
+                                             positive_example_idx=positive_example_idx,
+                                             negative_example_idx=negative_example_idx,
+                                             rule_blacklist=rule_blacklist,
+                                             **utility_function_additional_args)
 
             # Find all the indexes of all rules with the best utility
-            iteration_info["utility_max"] = np.max(utilities)
-            iteration_info["utility_argmax"] = np.where(utilities == iteration_info["utility_max"])[0]
+            iteration_info["utility_max"] = best_utility
+            iteration_info["utility_argmax"] = best_utility_idx
             logging.debug("Greatest utility is %.5f" % iteration_info["utility_max"])
             logging.debug("There are %d rules with the same utility." % len(iteration_info["utility_argmax"]))
-            del utilities
+            del best_utility, best_utility_idx
 
             # Do not select rules that cover no negative examples and make errors on no positive examples
-            best_utility_idx = iteration_info["utility_argmax"][np.logical_or(negative_cover_count[iteration_info["utility_argmax"]] != 0, positive_error_count[iteration_info["utility_argmax"]] != 0)]
-            del positive_error_count, negative_cover_count
+            best_utility_idx = iteration_info["utility_argmax"][np.logical_or(best_utility_neg_cover_counts != 0, best_utility_pos_error_counts != 0)]
+            del best_utility_pos_error_counts, best_utility_neg_cover_counts
             if len(best_utility_idx) == 0:
                 logging.debug("The rule of maximal utility does not cover negative examples or make errors" +
                                     " on positive examples. It will not be added to the model. Stopping here.")
@@ -203,6 +205,7 @@ class BaseSetCoveringMachine(object):
     def __str__(self):
         return _class_to_string(self)
 
+
 class SetCoveringMachine(BaseSetCoveringMachine):
     """
     The Set Covering Machine (SCM).
@@ -231,7 +234,12 @@ class SetCoveringMachine(BaseSetCoveringMachine):
 
         self.p = p
 
-    def _get_binary_rule_utilities(self, rule_classifications, positive_example_idx, negative_example_idx):
+    def _get_best_utility_rules(self, rule_classifications, positive_example_idx, negative_example_idx,
+                                rule_blacklist=[]):
+        assert isinstance(rule_blacklist, list) or isinstance(rule_blacklist, np.ndarray)
+        rule_is_blacklisted = np.zeros(rule_classifications.shape[1], dtype=np.bool)
+        rule_is_blacklisted[rule_blacklist] = True
+
         logging.debug("Counting covered negative examples")
         negative_cover_counts = negative_example_idx.shape[0] - rule_classifications.sum_rows(negative_example_idx)
 
@@ -244,6 +252,36 @@ class SetCoveringMachine(BaseSetCoveringMachine):
             positive_error_counts = np.zeros(rule_classifications.shape[1], dtype=negative_cover_counts.dtype)
 
         logging.debug("Computing rule utilities")
-        utilities = negative_cover_counts - float(self.p) * positive_error_counts
+        # We compute the rule utilities in blocks. This limits the effect of the conversion of integers to floats,
+        # which is very memory intensive.
+        best_utility = -np.infty
+        best_utility_idx = np.array([])
+        best_utility_pos_error_count = np.array([])
+        best_utility_neg_cover_count = np.array([])
+        for block in xrange(int(ceil(1.0 * rule_classifications.shape[1] / UTIL_BLOCK_SIZE))):
+            block_utilities = negative_cover_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE] - \
+                              float(self.p) * positive_error_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE]
 
-        return utilities, positive_error_counts, negative_cover_counts
+            # Check if there is a better rule or equal in this block
+            block_max_utility = np.max(block_utilities)
+            if block_max_utility > best_utility or np.allclose(best_utility, block_max_utility):
+
+                # Find the indices of the better rules that are not blacklisted
+                block_utility_argmax = np.where(block_utilities == block_max_utility)[0] + block * UTIL_BLOCK_SIZE
+                block_utility_argmax = block_utility_argmax[~rule_is_blacklisted[block_utility_argmax]]
+
+                # Update the best utility value and other infos
+                if len(block_utility_argmax) > 0:
+                    if np.allclose(block_max_utility, best_utility):
+                        best_utility_idx = np.hstack((best_utility_idx, block_utility_argmax))
+                        best_utility_pos_error_count = np.hstack((best_utility_pos_error_count,
+                                                                  positive_error_counts[block_utility_argmax]))
+                        best_utility_neg_cover_count = np.hstack((best_utility_neg_cover_count,
+                                                                  negative_cover_counts[block_utility_argmax]))
+                    else:
+                        best_utility = block_max_utility
+                        best_utility_idx = block_utility_argmax
+                        best_utility_pos_error_count = positive_error_counts[block_utility_argmax]
+                        best_utility_neg_cover_count = negative_cover_counts[block_utility_argmax]
+
+        return best_utility, best_utility_idx, best_utility_pos_error_count, best_utility_neg_cover_count
