@@ -402,18 +402,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 print \
 """If you used Kover in your work, please cite our paper:
 
-Drouin, Alexandre, et al. "Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons." bioRxiv (2016): 045153.
+Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2016). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. BMC Genomics, 17(1), 754.
 
 
 Bibtex:
 
-@article{drouin2016predictive,
-  title={Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons},
-  author={Drouin, Alexandre and Gigu{\`e}re, S{\'e}bastien and D{\'e}raspe, Maxime and Marchand, Mario and Tyers, Michael and Loo, Vivian G and Bourgault, Anne-Marie and Laviolette, Fran{\c{c}}ois and Corbeil, Jacques},
-  journal={bioRxiv},
-  pages={045153},
-  year={2016},
-  publisher={Cold Spring Harbor Labs Journals}
+@article{Drouin2016,
+author="Drouin, Alexandre
+and Gigu{\\`e}re, S{\\'e}bastien
+and D{\\'e}raspe, Maxime
+and Marchand, Mario
+and Tyers, Michael
+and Loo, Vivian G.
+and Bourgault, Anne-Marie
+and Laviolette, Fran{\\c{c}}ois
+and Corbeil, Jacques",
+title="Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons",
+journal="BMC Genomics",
+year="2016",
+volume="17",
+number="1",
+pages="754",
+issn="1471-2164",
+doi="10.1186/s12864-016-2889-6",
+url="http://dx.doi.org/10.1186/s12864-016-2889-6"
 }
 """
         else:
