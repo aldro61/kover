@@ -24,7 +24,9 @@ import numpy as np
 import pandas as pd
 
 from math import ceil
-from os.path import basename, getsize, join, splitext
+from os import getpid, mkdir
+from os.path import basename, exists, getsize, join, splitext
+from shutil import rmtree
 from time import time
 from uuid import uuid1
 
@@ -253,6 +255,11 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
         error_callback = normal_raise
 
+    # Make sure that the tmp data is unique to the current process
+    temp_dir = join(temp_dir, str(getpid()))
+    if not exists(temp_dir):
+        mkdir(temp_dir)
+
     if (phenotype_name is None and phenotype_metadata_path is not None) or (
                     phenotype_name is not None and phenotype_metadata_path is None):
         error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
@@ -316,7 +323,6 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # Preparing input file for dsk2kover
     list_contigs = [join(temp_dir, basename(splitext(file)[0]) + ".h5") for file in files_sorted]
-
     file_dsk_output = open(join(temp_dir, "list_h5"), "w")
     for line in list_contigs:
         file_dsk_output.write(line + "\n")
@@ -332,6 +338,9 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
                        chunk_size=BLOCK_SIZE,
                        nb_genomes=len(genome_ids),
                        progress=progress)
+
+    logging.debug("Removing temporary files.")
+    rmtree(temp_dir)
 
     # progress_callback("dsk2kover", 1)
     logging.debug("Dataset creation completed.")
