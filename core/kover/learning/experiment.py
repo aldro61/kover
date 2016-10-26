@@ -277,8 +277,8 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta, ma
     m = float(len(train_answers))
     mz = float(len(compression_set))
     r = float((train_predictions != train_answers).sum() - (train_predictions[compression_set] != train_answers[compression_set]).sum())
-    return 1.0 - exp((-1.0 / (m - mz - r)) * (ln(comb(m, mz)) +
-                                              ln(comb(m - mz, r)) +
+    return 1.0 - exp((-1.0 / (m - mz - r)) * (ln(comb(m, mz, exact=True)) +
+                                              ln(comb(m - mz, r, exact=True)) +
                                               h_card * ln(2 * Z_card) +
                                               ln(pi**6 *
                                                  (h_card + 1)**2 *
