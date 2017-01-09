@@ -37,13 +37,7 @@ For each dependency, a link to further installation instructions is provided.
 
 ## Linux and Mac
 
-Download the latest version of Kover from the GitHub repository by clicking [here](https://github.com/aldro61/kover/archive/master.zip), or alternatively:
-
-```
- wget https://github.com/aldro61/kover/archive/master.zip
-```
-
-or
+Download the latest version of Kover from the GitHub repository:
 
 ```
 git clone --recursive https://github.com/aldro61/kover.git
