@@ -46,7 +46,7 @@ Download the latest version of Kover from the GitHub repository by clicking [her
 or
 
 ```
-git clone https://github.com/aldro61/kover.git
+git clone --recursive https://github.com/aldro61/kover.git
 ```
 
 Then, in the *kover* directory, run the installer (you might have to run it as super user):
