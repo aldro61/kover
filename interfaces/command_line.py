@@ -32,7 +32,7 @@ VERSION = "1.1.0"
 class KoverDatasetCreationTool(object):
 
     def __init__(self):
-        self.available_data_sources = ['from-tsv', 'from-contigs']
+        self.available_data_sources = ['from-tsv', 'from-contigs', 'from-reads']
 
     def from_tsv(self):
         parser = argparse.ArgumentParser(prog="kover dataset create from-tsv",
@@ -97,6 +97,63 @@ class KoverDatasetCreationTool(object):
 
     def from_contigs(self):
         parser = argparse.ArgumentParser(prog="kover dataset create from_contigs",
+                                         description='Creates a Kover dataset from genomic data and optionally '
+                                                     'phenotypic metadata')
+        parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
+                                                   'GENOME_ID{tab}PATH, where the path refers to a fasta file '
+                                                   'containing the genome\'s contigs.',
+                            required=True)
+        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+        parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
+        parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
+        parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
+        parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
+                            action='store_true')
+        parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
+                            default=0)
+        parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
+                                                            '. The default value is 4.', default=4)
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', default=gettempdir())
+        parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
+        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+
+        # If no argument has been specified, default to help
+        if len(argv) == 4:
+            argv.append("--help")
+
+        args = parser.parse_args(argv[4:])
+
+        # Input validation logic
+        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
+                        args.phenotype_name is None and args.phenotype_metadata is not None):
+            print "Error: The phenotype name and metadata file must be specified."
+            exit()
+
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+
+        from kover.dataset.create import from_contigs
+
+        if not args.singleton_kmers:
+            filter_option = "singleton"
+        else:
+            filter_option = "nothing"
+
+        from_contigs(contig_list_path=args.genomic_data,
+                     output_path=args.output,
+                     kmer_size=args.kmer_size,
+                     filter_singleton=filter_option,
+                     phenotype_name=args.phenotype_name,
+                     phenotype_metadata_path=args.phenotype_metadata,
+                     gzip=args.compression,
+                     temp_dir=args.temp_dir,
+                     nb_cores=args.n_cores,
+                     verbose=args.verbose,
+                     progress=args.progress)
+                     
+    def from_reads(self):
+        parser = argparse.ArgumentParser(prog="kover dataset create from_reads",
                                          description='Creates a Kover dataset from genomic data and optionally '
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
