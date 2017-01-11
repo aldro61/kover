@@ -159,7 +159,7 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
                                                    'GENOME_ID{tab}PATH, where the path refers to a directory '
                                                    'containing the genome\'s reads in fastq files.',
-                            required=True)32
+                            required=True)
         parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
@@ -198,7 +198,7 @@ class KoverDatasetCreationTool(object):
         else:
             filter_option = "nothing"
 
-        from_reads(contig_list_path=args.genomic_data,
+        from_reads(reads_folders_list_path=args.genomic_data,
                      output_path=args.output,
                      kmer_size=args.kmer_size,
                      abundance_min=args.abundance_min,
@@ -223,7 +223,8 @@ class KoverDatasetTool(object):
 '''%(prog)s dataset create <data source> [<args>]
 The two available data sources are:
     from-tsv     Create a Kover dataset from genomic data in a tsv format
-    from-contigs      Create a Kover dataset from contigs''')
+    from-contigs      Create a Kover dataset from contigs
+    from-reads      Create a Kover dataset from reads''')
 
         parser.add_argument('datasource', help='The type of genomic data to be used.',
                             choices=creation_tool.available_data_sources)
