@@ -344,3 +344,108 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # progress_callback("dsk2kover", 1)
     logging.debug("Dataset creation completed.")
+    
+def from_reads(contig_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_name, phenotype_metadata_path,
+                 gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
+                 error_callback=None):
+    compression = "gzip" if gzip > 0 else None
+    compression_opts = gzip if gzip > 0 else None
+
+    # Execution callback functions
+    if warning_callback is None:
+        warning_callback = lambda w: logging.warning(w)
+    if error_callback is None:
+        def normal_raise(exception):
+            raise exception
+
+        error_callback = normal_raise
+
+    # Make sure that the tmp data is unique to the current process
+    temp_dir = join(temp_dir, str(getpid()))
+    if not exists(temp_dir):
+        mkdir(temp_dir)
+
+    if (phenotype_name is None and phenotype_metadata_path is not None) or (
+                    phenotype_name is not None and phenotype_metadata_path is None):
+        error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
+
+    # Read list of genome identifiers
+    contig_file_by_genome_id = dict(l.split() for l in open(contig_list_path, "r"))
+
+    logging.debug("The k-mer matrix contains %d genomes." % len(contig_file_by_genome_id))
+    if len(set(contig_file_by_genome_id.keys())) < len(contig_file_by_genome_id.keys()):
+        error_callback(Exception("The genomic data contains genomes with the same identifier."))
+
+    h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
+    h5py_file.attrs["created"] = time()
+    h5py_file.attrs["uuid"] = str(uuid1())
+    h5py_file.attrs["genome_source_type"] = "contigs"
+    h5py_file.attrs["genomic_data"] = contig_list_path
+    h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
+    h5py_file.attrs[
+        "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    h5py_file.attrs["filter"] = filter_singleton
+    h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
+
+    # Extract/write the metadata
+    if phenotype_name is not None:
+        genome_ids, labels = _parse_metadata(phenotype_metadata_path, contig_file_by_genome_id.keys(), warning_callback,
+                                             error_callback)
+        # Sort the genomes by label for optimal better performance
+        logging.debug("Sorting genomes by metadata label for optimal performance.")
+        sorter = np.argsort(labels)
+        genome_ids = genome_ids[sorter]
+        labels = labels[sorter]
+        logging.debug("Creating the phenotype metadata dataset.")
+        phenotype = h5py_file.create_dataset("phenotype", data=labels, dtype=PHENOTYPE_LABEL_DTYPE)
+        phenotype.attrs["name"] = phenotype_name
+        del phenotype, labels
+
+    # Write genome ids
+    logging.debug("Creating the genome identifier dataset.")
+    h5py_file.create_dataset("genome_identifiers",
+                             data=genome_ids,
+                             compression=compression,
+                             compression_opts=compression_opts)
+    h5py_file.close()
+
+    logging.debug("Initializing DSK.")
+
+    # Preparing input file for multidsk
+    files_sorted = ["%s\n" % contig_file_by_genome_id[id] for id in genome_ids]
+    open(join(temp_dir, "list_contigs_files"), "w").writelines(files_sorted)
+
+    # Calling multidsk
+    contigs_count_kmers(file_path=join(temp_dir, "list_contigs_files"),
+                        out_dir=temp_dir,
+                        kmer_size=kmer_size,
+                        abundance_min=abundance_min,
+                        out_compress=gzip,
+                        nb_cores=nb_cores,
+                        verbose=int(verbose),
+                        progress=progress)
+    logging.debug("K-mers counting completed.")
+
+    # Preparing input file for dsk2kover
+    list_contigs = [join(temp_dir, basename(splitext(file)[0]) + ".h5") for file in files_sorted]
+    file_dsk_output = open(join(temp_dir, "list_h5"), "w")
+    for line in list_contigs:
+        file_dsk_output.write(line + "\n")
+    file_dsk_output.close()
+
+    # Calling dsk2kover
+    logging.debug("Initializing DSK2Kover.")
+    contigs_pack_kmers(file_path=join(temp_dir, "list_h5"),
+                       out_path=output_path,
+                       filter_singleton=filter_singleton,
+                       kmer_length=kmer_size,
+                       compression=gzip,
+                       chunk_size=BLOCK_SIZE,
+                       nb_genomes=len(genome_ids),
+                       progress=progress)
+
+    logging.debug("Removing temporary files.")
+    rmtree(temp_dir)
+
+    # progress_callback("dsk2kover", 1)
+    logging.debug("Dataset creation completed.")

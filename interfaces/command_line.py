@@ -157,13 +157,14 @@ class KoverDatasetCreationTool(object):
                                          description='Creates a Kover dataset from genomic data and optionally '
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
-                                                   'GENOME_ID{tab}PATH, where the path refers to a fasta file '
-                                                   'containing the genome\'s contigs.',
-                            required=True)
+                                                   'GENOME_ID{tab}PATH, where the path refers to a directory '
+                                                   'containing the genome\'s reads in fastq files.',
+                            required=True)32
         parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
+        parser.add_argument('--abundance-min', help='The minimal abundance threshold for solid kmers. The default is 3.', default=3)
         parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
                             action='store_true')
         parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
@@ -190,16 +191,17 @@ class KoverDatasetCreationTool(object):
             logging.basicConfig(level=logging.DEBUG,
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
 
-        from kover.dataset.create import from_contigs
+        from kover.dataset.create import from_reads
 
         if not args.singleton_kmers:
             filter_option = "singleton"
         else:
             filter_option = "nothing"
 
-        from_contigs(contig_list_path=args.genomic_data,
+        from_reads(contig_list_path=args.genomic_data,
                      output_path=args.output,
                      kmer_size=args.kmer_size,
+                     abundance_min=args.abundance_min,
                      filter_singleton=filter_option,
                      phenotype_name=args.phenotype_name,
                      phenotype_metadata_path=args.phenotype_metadata,
