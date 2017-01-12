@@ -96,7 +96,7 @@ class KoverDatasetCreationTool(object):
 
 
     def from_contigs(self):
-        parser = argparse.ArgumentParser(prog="kover dataset create from_contigs",
+        parser = argparse.ArgumentParser(prog="kover dataset create from-contigs",
                                          description='Creates a Kover dataset from genomic data and optionally '
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
@@ -107,9 +107,10 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
-        parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
+        parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
+                                                      'default.', default=False,
                             action='store_true')
-        parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
+        parser.add_argument('--n-cpu', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -148,26 +149,31 @@ class KoverDatasetCreationTool(object):
                      phenotype_metadata_path=args.phenotype_metadata,
                      gzip=args.compression,
                      temp_dir=args.temp_dir,
-                     nb_cores=args.n_cores,
+                     nb_cores=args.n_cpu,
                      verbose=args.verbose,
                      progress=args.progress)
                      
     def from_reads(self):
-        parser = argparse.ArgumentParser(prog="kover dataset create from_reads",
+        parser = argparse.ArgumentParser(prog="kover dataset create from-reads",
                                          description='Creates a Kover dataset from genomic data and optionally '
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
                                                    'GENOME_ID{tab}PATH, where the path refers to a directory '
-                                                   'containing the genome\'s reads in fastq files.',
+                                                   'containing the genome\'s reads in fastq(.gz) files.',
                             required=True)
         parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
-        parser.add_argument('--abundance-min', help='The minimal abundance threshold for solid kmers. The default is 3.', default=3)
-        parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
+        parser.add_argument('--abundance-min', help='The minimum number of times a k-mer must be found in a read file '
+                                                    'in order to be considered. All k-mers that do not meet this '
+                                                    'threshold are discarded. This value should be chosen based on '
+                                                    'genome coverage (ex: 100x coverage -> you could use 10). '
+                                                    'The default is 1.', default=1)
+        parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
+                                                      'default.', default=False,
                             action='store_true')
-        parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
+        parser.add_argument('--n-cpu', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -199,17 +205,17 @@ class KoverDatasetCreationTool(object):
             filter_option = "nothing"
 
         from_reads(reads_folders_list_path=args.genomic_data,
-                     output_path=args.output,
-                     kmer_size=args.kmer_size,
-                     abundance_min=args.abundance_min,
-                     filter_singleton=filter_option,
-                     phenotype_name=args.phenotype_name,
-                     phenotype_metadata_path=args.phenotype_metadata,
-                     gzip=args.compression,
-                     temp_dir=args.temp_dir,
-                     nb_cores=args.n_cores,
-                     verbose=args.verbose,
-                     progress=args.progress)
+                   output_path=args.output,
+                   kmer_size=args.kmer_size,
+                   abundance_min=args.abundance_min,
+                   filter_singleton=filter_option,
+                   phenotype_name=args.phenotype_name,
+                   phenotype_metadata_path=args.phenotype_metadata,
+                   gzip=args.compression,
+                   temp_dir=args.temp_dir,
+                   nb_cores=args.n_cpu,
+                   verbose=args.verbose,
+                   progress=args.progress)
 
 
 class KoverDatasetTool(object):

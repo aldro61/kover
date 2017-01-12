@@ -27,7 +27,7 @@ setup(
     
     # Cython Extension
     ext_modules = [Extension("kover/learning/set_covering_machine/popcount", ["kover/learning/set_covering_machine/popcount.c"], extra_compile_args=["-march=native"])],
-    data_files=[('kover/dataset/tools/contigs_tools/', ['kover/dataset/tools/contigs_tools/build/bin/dsk2kover', 
-																  'kover/dataset/tools/contigs_tools/build/bin/multidsk', 
-																  'kover/dataset/tools/contigs_tools/build/bin/dsk'])]
+    data_files=[('kover/dataset/tools/kmer_tools/', ['kover/dataset/tools/kmer_tools/build/bin/dsk2kover', 
+																  'kover/dataset/tools/kmer_tools/build/bin/multidsk', 
+																  'kover/dataset/tools/kmer_tools/build/bin/dsk'])]
 )

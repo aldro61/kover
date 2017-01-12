@@ -31,8 +31,8 @@ from time import time
 from uuid import uuid1
 
 from ..utils import _minimum_uint_size, _pack_binary_bytes_to_ints
-from .tools.contigs_count import contigs_count_kmers
-from .tools.contigs_pack import contigs_pack_kmers
+from .tools.kmer_count import contigs_count_kmers, reads_count_kmers
+from .tools.kmer_pack import contigs_pack_kmers, reads_pack_kmers
 
 KMER_MATRIX_PACKING_SIZE = 64
 KMER_MATRIX_DTYPE = np.uint64
@@ -252,7 +252,6 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     if error_callback is None:
         def normal_raise(exception):
             raise exception
-
         error_callback = normal_raise
 
     # Make sure that the tmp data is unique to the current process
@@ -264,8 +263,11 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
                     phenotype_name is not None and phenotype_metadata_path is None):
         error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
 
-    # Read list of genome identifiers
+    # Find the contig file for each genome and verify that it exists
     contig_file_by_genome_id = dict(l.split() for l in open(contig_list_path, "r"))
+    for g_id, contig_file in contig_file_by_genome_id.iteritems():
+        if not exists(contig_file):
+            error_callback(IOError("The contig file for genome %s cannot be found: %s" % (str(g_id), contig_file)))
 
     logging.debug("The k-mer matrix contains %d genomes." % len(contig_file_by_genome_id))
     if len(set(contig_file_by_genome_id.keys())) < len(contig_file_by_genome_id.keys()):
@@ -314,7 +316,6 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     contigs_count_kmers(file_path=join(temp_dir, "list_contigs_files"),
                         out_dir=temp_dir,
                         kmer_size=kmer_size,
-                        abundance_min=1,
                         out_compress=gzip,
                         nb_cores=nb_cores,
                         verbose=int(verbose),
@@ -344,10 +345,12 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # progress_callback("dsk2kover", 1)
     logging.debug("Dataset creation completed.")
-    
-def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_name, phenotype_metadata_path,
-                 gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
+
+
+def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_name,
+               phenotype_metadata_path, gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
                  error_callback=None):
+    supported_extensions = ['.fastq','.fastq.gz']
     compression = "gzip" if gzip > 0 else None
     compression_opts = gzip if gzip > 0 else None
 
@@ -357,7 +360,6 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     if error_callback is None:
         def normal_raise(exception):
             raise exception
-
         error_callback = normal_raise
 
     # Make sure that the tmp data is unique to the current process
@@ -369,8 +371,11 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
                     phenotype_name is not None and phenotype_metadata_path is None):
         error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
 
-    # Read list of genome identifiers
+    # Find the read folder for each genome and verify that it exists
     reads_folder_by_genome_id = dict(l.split() for l in open(reads_folders_list_path, "r"))
+    for g_id, read_dir in reads_folder_by_genome_id.iteritems():
+        if not exists(read_dir):
+            error_callback(IOError("The read directory for genome %s cannot be found: %s" % (str(g_id), read_dir)))
 
     logging.debug("The k-mer matrix contains %d genomes." % len(reads_folder_by_genome_id))
     if len(set(reads_folder_by_genome_id.keys())) < len(reads_folder_by_genome_id.keys()):
@@ -379,7 +384,7 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
     h5py_file.attrs["created"] = time()
     h5py_file.attrs["uuid"] = str(uuid1())
-    h5py_file.attrs["genome_source_type"] = "contigs"
+    h5py_file.attrs["genome_source_type"] = "reads"
     h5py_file.attrs["genomic_data"] = reads_folders_list_path
     h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
     h5py_file.attrs[
@@ -415,24 +420,24 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     files_sorted = []
     list_reads_dsk_output = []
     for id in genome_ids:
-        files = [ join(reads_folder_by_genome_id[id],file) for file in listdir(reads_folder_by_genome_id[id]) if file.endswith( ('.fastq','.fastq.gz') ) ]
+        files = [join(reads_folder_by_genome_id[id], file) for file in listdir(reads_folder_by_genome_id[id])
+                 if file.endswith(tuple(supported_extensions))]  # Supported extensions
         files_sorted.append(",".join(files) + "\n")
         list_reads_dsk_output.append(join(temp_dir, basename(splitext(files[-1])[0]) + ".h5"))
     open(join(temp_dir, "list_reads_files"), "w").writelines(files_sorted)
 
     # Calling multidsk
-    contigs_count_kmers(file_path=join(temp_dir, "list_reads_files"),
-                        out_dir=temp_dir,
-                        kmer_size=kmer_size,
-                        abundance_min=abundance_min,
-                        out_compress=gzip,
-                        nb_cores=nb_cores,
-                        verbose=int(verbose),
-                        progress=progress)
+    reads_count_kmers(file_path=join(temp_dir, "list_reads_files"),
+                      out_dir=temp_dir,
+                      kmer_size=kmer_size,
+                      abundance_min=abundance_min,
+                      out_compress=gzip,
+                      nb_cores=nb_cores,
+                      verbose=int(verbose),
+                      progress=progress)
     logging.debug("K-mers counting completed.")
 
     # Preparing input file for dsk2kover
-    #list_reads_folders = [join(temp_dir, basename(reads_folder_by_genome_id[id]) + ".h5") for id in genome_ids]
     file_dsk_output = open(join(temp_dir, "list_h5"), "w")
     for line in list_reads_dsk_output:
         file_dsk_output.write(line + "\n")
@@ -440,14 +445,14 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
 
     # Calling dsk2kover
     logging.debug("Initializing DSK2Kover.")
-    contigs_pack_kmers(file_path=join(temp_dir, "list_h5"),
-                       out_path=output_path,
-                       filter_singleton=filter_singleton,
-                       kmer_length=kmer_size,
-                       compression=gzip,
-                       chunk_size=BLOCK_SIZE,
-                       nb_genomes=len(genome_ids),
-                       progress=progress)
+    reads_pack_kmers(file_path=join(temp_dir, "list_h5"),
+                     out_path=output_path,
+                     filter_singleton=filter_singleton,
+                     kmer_length=kmer_size,
+                     compression=gzip,
+                     chunk_size=BLOCK_SIZE,
+                     nb_genomes=len(genome_ids),
+                     progress=progress)
 
     logging.debug("Removing temporary files.")
     rmtree(temp_dir)

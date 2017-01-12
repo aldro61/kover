@@ -25,7 +25,7 @@ def contigs_pack_kmers(file_path, out_path, filter_singleton, kmer_length, compr
 	dir_path = dirname(abspath(__file__))
 
 	# Calling DSK2Kover tool
-	call([str(join(dir_path, "contigs_tools", "dsk2kover")),
+	call([str(join(dir_path, "kmer_tools", "dsk2kover")),
 					"-file", str(file_path),
 					"-out", str(out_path),
 					"-filter", str(filter_singleton),
@@ -34,3 +34,6 @@ def contigs_pack_kmers(file_path, out_path, filter_singleton, kmer_length, compr
 					"-chunk-size", str(chunk_size),
 					"-nb-genomes", str(nb_genomes),
 					"-verbose", str(progress)])
+
+
+read_pack_kmers = contigs_pack_kmers
