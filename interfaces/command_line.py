@@ -110,7 +110,7 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
                                                       'default.', default=False,
                             action='store_true')
-        parser.add_argument('--n-cpu', help='The number of cores used by DSK. The default value is 0 (all cores).',
+        parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -173,7 +173,7 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
                                                       'default.', default=False,
                             action='store_true')
-        parser.add_argument('--n-cpu', help='The number of cores used by DSK. The default value is 0 (all cores).',
+        parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -555,7 +555,7 @@ The most commonly used commands are:
                                                                       'on the error rate. By default number of k-mers in the dataset is used.')
         parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
                                                             'Set this if only if you require that the same random choices are made between repeats.')
-        parser.add_argument('--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. '
+        parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
                                                       'algorithm and that your storage device will not be a bottleneck (simultaneous reading).',
                             default=1)
