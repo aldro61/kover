@@ -36,4 +36,4 @@ def contigs_pack_kmers(file_path, out_path, filter_singleton, kmer_length, compr
 					"-verbose", str(progress)])
 
 
-read_pack_kmers = contigs_pack_kmers
+reads_pack_kmers = contigs_pack_kmers
