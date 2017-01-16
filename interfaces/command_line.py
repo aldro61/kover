@@ -27,7 +27,7 @@ from pkg_resources import get_distribution
 from sys import argv
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 class KoverDatasetCreationTool(object):
 
