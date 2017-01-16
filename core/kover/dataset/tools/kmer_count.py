@@ -29,7 +29,7 @@ def contigs_count_kmers(file_path, out_dir, kmer_size, out_compress, nb_cores, v
 					"-file", str(file_path),
 					"-out-dir", str(out_dir),
 					"-kmer-size", str(kmer_size),
-					"-abundance-min 0",
+					"-abundance-min", "1",
 					"-out-compress", str(out_compress),
 					"-nb-cores", str(nb_cores),
 					"-out-tmp", str(out_dir),
