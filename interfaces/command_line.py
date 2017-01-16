@@ -165,11 +165,11 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
-        parser.add_argument('--abundance-min', help='The minimum number of times a k-mer must be found in a read file '
-                                                    'in order to be considered. All k-mers that do not meet this '
-                                                    'threshold are discarded. This value should be chosen based on '
-                                                    'genome coverage (ex: 100x coverage -> you could use 10). '
-                                                    'The default is 1.', default=1)
+        parser.add_argument('--kmer-min-abundance', help='The minimum number of times a k-mer must be found in a read file '
+                                                         'in order to be considered. All k-mers that do not meet this '
+                                                         'threshold are discarded. This value should be chosen based on '
+                                                         'genome coverage (ex: 100x coverage -> you could use 10). '
+                                                         'The default is 1.', default=1)
         parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
                                                       'default.', default=False,
                             action='store_true')
@@ -207,7 +207,7 @@ class KoverDatasetCreationTool(object):
         from_reads(reads_folders_list_path=args.genomic_data,
                    output_path=args.output,
                    kmer_size=args.kmer_size,
-                   abundance_min=args.abundance_min,
+                   abundance_min=args.kmer_min_abundance,
                    filter_singleton=filter_option,
                    phenotype_name=args.phenotype_name,
                    phenotype_metadata_path=args.phenotype_metadata,
