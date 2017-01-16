@@ -27,12 +27,12 @@ from pkg_resources import get_distribution
 from sys import argv
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 class KoverDatasetCreationTool(object):
 
     def __init__(self):
-        self.available_data_sources = ['from-tsv', 'from-contigs']
+        self.available_data_sources = ['from-tsv', 'from-contigs', 'from-reads']
 
     def from_tsv(self):
         parser = argparse.ArgumentParser(prog="kover dataset create from-tsv",
@@ -96,7 +96,7 @@ class KoverDatasetCreationTool(object):
 
 
     def from_contigs(self):
-        parser = argparse.ArgumentParser(prog="kover dataset create from_contigs",
+        parser = argparse.ArgumentParser(prog="kover dataset create from-contigs",
                                          description='Creates a Kover dataset from genomic data and optionally '
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
@@ -107,9 +107,10 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
-        parser.add_argument('--singleton-kmers', help='Include k-mers that occur only once. Disabled by default.', default=False,
+        parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
+                                                      'default.', default=False,
                             action='store_true')
-        parser.add_argument('--n_cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
+        parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
                             default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
@@ -148,9 +149,73 @@ class KoverDatasetCreationTool(object):
                      phenotype_metadata_path=args.phenotype_metadata,
                      gzip=args.compression,
                      temp_dir=args.temp_dir,
-                     nb_cores=args.n_cores,
+                     nb_cores=args.n_cpu,
                      verbose=args.verbose,
                      progress=args.progress)
+                     
+    def from_reads(self):
+        parser = argparse.ArgumentParser(prog="kover dataset create from-reads",
+                                         description='Creates a Kover dataset from genomic data and optionally '
+                                                     'phenotypic metadata')
+        parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
+                                                   'GENOME_ID{tab}PATH, where the path refers to a directory '
+                                                   'containing the genome\'s reads in fastq(.gz) files.',
+                            required=True)
+        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+        parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
+        parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
+        parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
+        parser.add_argument('--kmer-min-abundance', help='The minimum number of times a k-mer must be found in a read file '
+                                                         'in order to be considered. All k-mers that do not meet this '
+                                                         'threshold are discarded. This value should be chosen based on '
+                                                         'genome coverage (ex: 100x coverage -> you could use 10). '
+                                                         'The default is 1.', default=1)
+        parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
+                                                      'default.', default=False,
+                            action='store_true')
+        parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
+                            default=0)
+        parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
+                                                            '. The default value is 4.', default=4)
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', default=gettempdir())
+        parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
+        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+
+        # If no argument has been specified, default to help
+        if len(argv) == 4:
+            argv.append("--help")
+
+        args = parser.parse_args(argv[4:])
+
+        # Input validation logic
+        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
+                        args.phenotype_name is None and args.phenotype_metadata is not None):
+            print "Error: The phenotype name and metadata file must be specified."
+            exit()
+
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s: %(message)s")
+
+        from kover.dataset.create import from_reads
+
+        if not args.singleton_kmers:
+            filter_option = "singleton"
+        else:
+            filter_option = "nothing"
+
+        from_reads(reads_folders_list_path=args.genomic_data,
+                   output_path=args.output,
+                   kmer_size=args.kmer_size,
+                   abundance_min=args.kmer_min_abundance,
+                   filter_singleton=filter_option,
+                   phenotype_name=args.phenotype_name,
+                   phenotype_metadata_path=args.phenotype_metadata,
+                   gzip=args.compression,
+                   temp_dir=args.temp_dir,
+                   nb_cores=args.n_cpu,
+                   verbose=args.verbose,
+                   progress=args.progress)
 
 
 class KoverDatasetTool(object):
@@ -164,7 +229,8 @@ class KoverDatasetTool(object):
 '''%(prog)s dataset create <data source> [<args>]
 The two available data sources are:
     from-tsv     Create a Kover dataset from genomic data in a tsv format
-    from-contigs      Create a Kover dataset from contigs''')
+    from-contigs      Create a Kover dataset from contigs
+    from-reads      Create a Kover dataset from reads''')
 
         parser.add_argument('datasource', help='The type of genomic data to be used.',
                             choices=creation_tool.available_data_sources)
@@ -489,7 +555,7 @@ The most commonly used commands are:
                                                                       'on the error rate. By default number of k-mers in the dataset is used.')
         parser.add_argument('--random-seed', type=int, help='The random seed used for any random operation. '
                                                             'Set this if only if you require that the same random choices are made between repeats.')
-        parser.add_argument('--n-cpu', type=int, help='The number of CPUs used to select the hyperparameter values. '
+        parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
                                                       'algorithm and that your storage device will not be a bottleneck (simultaneous reading).',
                             default=1)

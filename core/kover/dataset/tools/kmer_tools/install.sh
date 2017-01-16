@@ -11,7 +11,8 @@ mkdir  build
 cd build
 
 # Prepare the makefile
+
 cmake ..
 
-# Run the makefile to build dsk and kgb tools:
+# Run the makefile to build dsk, multidsk and dsk2kover tools:
 make -j8

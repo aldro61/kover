@@ -20,12 +20,28 @@
 from subprocess import call
 from os.path import abspath, dirname, join
 
-def contigs_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose, progress):
+def contigs_count_kmers(file_path, out_dir, kmer_size, out_compress, nb_cores, verbose, progress):
 
 	dir_path = dirname(abspath(__file__))
 	
 	# Calling MultiDSK tool
-	call([str(join(dir_path, "contigs_tools", "multidsk")),
+	call([str(join(dir_path, "kmer_tools", "multidsk")),
+					"-file", str(file_path),
+					"-out-dir", str(out_dir),
+					"-kmer-size", str(kmer_size),
+					"-abundance-min", "1",
+					"-out-compress", str(out_compress),
+					"-nb-cores", str(nb_cores),
+					"-out-tmp", str(out_dir),
+					"-verbose", str(verbose),
+					"-progress", str(progress)])
+
+
+def reads_count_kmers(file_path, out_dir, kmer_size, abundance_min, out_compress, nb_cores, verbose, progress):
+	dir_path = dirname(abspath(__file__))
+
+	# Calling MultiDSK tool
+	call([str(join(dir_path, "kmer_tools", "multidsk")),
 					"-file", str(file_path),
 					"-out-dir", str(out_dir),
 					"-kmer-size", str(kmer_size),
