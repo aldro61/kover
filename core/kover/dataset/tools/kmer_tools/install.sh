@@ -20,7 +20,7 @@ mkdir  build
 cd build
 
 # Prepare the makefile
-cmake ..
+cmake .. -Wno-dev
 
 # Run the makefile to build dsk, multidsk and dsk2kover tools:
 make -j8
