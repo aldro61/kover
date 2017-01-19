@@ -1,3 +1,0 @@
-[submodule "core/kover/dataset/tools/kmer_tools/thirdparty/gatb-core"]
-	path = core/kover/dataset/tools/kmer_tools/thirdparty/gatb-core
-	url = https://github.com/GATB/gatb-core.git
