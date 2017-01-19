@@ -3,17 +3,17 @@
 
 cat << EndOfMessage
 
-██╗  ██╗ ██╗██╗  ██╗   ██╗███████╗██████╗ 
+██╗  ██╗ ██╗██╗  ██╗   ██╗███████╗██████╗
 ██║ ██╔╝██╔╝╚██╗ ██║   ██║██╔════╝██╔══██╗
 █████╔╝██╔╝  ╚██╗██║   ██║█████╗  ██████╔╝
 ██╔═██╗╚██╗  ██╔╝╚██╗ ██╔╝██╔══╝  ██╔══██╗
 ██║  ██╗╚██╗██╔╝  ╚████╔╝ ███████╗██║  ██║
 ╚═╝  ╚═╝ ╚═╝╚═╝    ╚═══╝  ╚══════╝╚═╝  ╚═╝
-                                          
+
 By: Alexandre Drouin
 
 Contributors:
- * Gaël Letarte St-Pierre                                      
+ * Gaël Letarte St-Pierre
 
 
 
@@ -42,14 +42,15 @@ python setup.py install
 echo -e "\n\n"
 
 echo -e "Cleaning up..."
+rm -r build; rm -r dist; rm -r kover.egg-info
 cd kover/dataset/tools/kmer_tools
 rm -r build
 cd ${CORE}
 
 # Create executable
+cd ..
 mkdir bin
 cd ./bin
 (echo -e "Creating Kover executable"; ln -s ../interfaces/command_line.py kover; chmod u+x ./kover)
-cd ..
 
 echo -e Done.
