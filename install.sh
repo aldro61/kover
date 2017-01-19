@@ -1,26 +1,57 @@
 #! /bin/bash
 
-# Remove any prior installation
-rm -rf ./bin
 
-# Install the Kover python package and its dependencies
+cat << EndOfMessage
+
+
+##    ##    ## ##    ##     ## ######## ########  
+##   ##    ##   ##   ##     ## ##       ##     ## 
+##  ##    ##     ##  ##     ## ##       ##     ## 
+#####    ##       ## ##     ## ######   ########  
+##  ##    ##     ##   ##   ##  ##       ##   ##   
+##   ##    ##   ##     ## ##   ##       ##    ##  
+##    ##    ## ##       ###    ######## ##     ## 
+
+By: Alexandre Drouin
+
+Contributors:
+ * Gaël Letarte Saint-Pierre                                      
+
+
+
+
+EndOfMessage
+
+
+# Remove any prior installation
+rm -r ./bin 2>/dev/null
+
 cd ./core
-CORE=$(pwd)
-(echo "Installing setuptools."; python bootstrap_setuptools.py; rm setuptools-*.zip)
+CORE=$(pwd -P)
+
+echo -e "Installing GATB\n-----------------"
 cd kover/dataset/tools/kmer_tools
-(echo "Building GATB tools"; sh install.sh)
+sh install.sh
 cd ${CORE}
-(echo "Installing Kover and its dependencies."; python setup.py install)
-(echo "Cleaning up."; rm -r build; rm -r dist; rm -r kover.egg-info)
+echo -e "\n\n"
+
+echo -e "Installing setuptools\n-----------------"
+python bootstrap_setuptools.py; rm setuptools-*.zip
+echo -e "\n\n"
+
+echo -e "Installing Kover\n-----------------"
+python setup.py install
+echo -e "\n\n"
+
+echo -e "Cleaning up..."
 cd kover/dataset/tools/kmer_tools
 rm -r build
 cd ${CORE}
-cd ..
 
 # Create executable
 mkdir bin
 cd ./bin
-(echo "Creating Kover executable."; ln -s ../interfaces/command_line.py kover; chmod u+x ./kover)
+(echo -e "Creating Kover executable"; ln -s ../interfaces/command_line.py kover; chmod u+x ./kover)
 cd ..
 
-echo Done.
+echo -e Done.
