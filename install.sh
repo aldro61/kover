@@ -13,7 +13,7 @@ cat << EndOfMessage
 By: Alexandre Drouin
 
 Contributors:
- * Gaël Letarte Saint-Pierre                                      
+ * Gaël Letarte St-Pierre                                      
 
 
 
