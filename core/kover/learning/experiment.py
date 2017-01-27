@@ -190,7 +190,8 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
         progress_callback("Cross-validation", n_completed / n_hp_combinations)
         if (not np.allclose(score, best_hp_score) and score < best_hp_score) or \
            (np.allclose(score, best_hp_score) and hp[2] < best_hp["max_rules"]) or \
-           (np.allclose(score, best_hp_score) and hp[2] == best_hp["max_rules"] and abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
+           (np.allclose(score, best_hp_score) and hp[2] == best_hp["max_rules"] and not np.allclose(hp[1], best_hp["p"]) and \
+                                                                                    abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
             best_hp["model_type"] = hp[0]
             best_hp["p"] = hp[1]
             best_hp["max_rules"] = hp[2]
