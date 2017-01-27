@@ -338,7 +338,7 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
             result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.min())]
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
-            result = best_utility_idx[np.isclose(tie_rule_risks == tie_rule_risks.max())]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.max())]
         return result
 
     split = dataset.get_split(split_name)
