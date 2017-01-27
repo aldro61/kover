@@ -127,10 +127,10 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.min()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.min())]
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.max())]
         return result
 
     fold_score_by_model_length = np.zeros((len(folds), max_rules))
@@ -188,9 +188,10 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
     for hp, score in pool.imap_unordered(hp_eval_func, product(model_types, p_values)):
         n_completed += 1
         progress_callback("Cross-validation", n_completed / n_hp_combinations)
-        if (score < best_hp_score) or \
-           (score == best_hp_score and hp[2] < best_hp["max_rules"]) or \
-           (score == best_hp_score and hp[2] == best_hp["max_rules"] and abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
+        if (not np.allclose(score, best_hp_score) and score < best_hp_score) or \
+           (np.allclose(score, best_hp_score) and hp[2] < best_hp["max_rules"]) or \
+           (np.allclose(score, best_hp_score) and hp[2] == best_hp["max_rules"] and not np.allclose(hp[1], best_hp["p"]) and \
+                                                                                    abs(1.0 - hp[1]) < abs(1.0 - best_hp["p"])):
             best_hp["model_type"] = hp[0]
             best_hp["p"] = hp[1]
             best_hp["max_rules"] = hp[2]
@@ -226,10 +227,10 @@ def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, 
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.min()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.min())]
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.max())]
         return result
 
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
@@ -334,10 +335,10 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
         logging.debug("There are %d candidate rules." % len(best_utility_idx))
         tie_rule_risks = rule_risks[best_utility_idx]
         if model_type == "conjunction":
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.min()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.min())]
         else:
             # Use max instead of min, since in the disjunction case the risks = 1.0 - conjunction risks (inverted ys)
-            result = best_utility_idx[tie_rule_risks == tie_rule_risks.max()]
+            result = best_utility_idx[np.isclose(tie_rule_risks, tie_rule_risks.max())]
         return result
 
     split = dataset.get_split(split_name)
