@@ -64,7 +64,7 @@ optional arguments:
 
 ### From contigs
 
-Use this command if the genomic data consists of one FASTA file per genome (see [input data format](doc_input_formats.html)).
+Use this command if the genomic data consists of assembled genomes (one fasta file per genome) (see [input data format](doc_input_formats.html)).
 The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count the k-mers present in the genomes.
 
 ```

@@ -16,7 +16,7 @@ github_editme_path: #aldro61/kover/blob/gh-pages
 # variables
 
 sidebar_tagline: <img src="images/logo_sidebar.png">
-sidebar_version: v1.1.0
+sidebar_version: v1.2.1
 theme_file: theme-blue.css
 project_file_name: doc
 
