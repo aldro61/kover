@@ -37,14 +37,11 @@ For each dependency, a link to further installation instructions is provided.
 
 ## Linux and Mac
 
-Download the latest version of Kover from the GitHub repository:
+Download the latest version of Kover from the GitHub repository (see below) or download the [latest release](https://github.com/aldro61/kover/releases/latest).
 
 ```
 git clone https://github.com/aldro61/kover.git
 ```
-
-or download the [latest release](https://github.com/aldro61/kover/releases/latest).
-
 
 Then, in the *kover* directory, run the installer (you might have to run it as super user):
 
