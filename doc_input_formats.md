@@ -8,18 +8,37 @@ summary: "An overview of the file formats accepted by Kover."
 
 ## Genomic Data
 
-Kover currently accepts genomic data in two formats:
+Kover currently accepts genomic data in three formats:
+
+* reads: a set of FASTQ files containing genomic reads
 
 * contigs: a set of FASTA files containing assembled genomic sequences
 
 * k-mer matrix: a matrix giving the presence/absence of each k-mer in each genome
 
 
+### Reads
+
+In this case, the genomic data is available as a set of [FASTQ files](https://en.wikipedia.org/wiki/FASTQ_format).
+There can be more than one read file per genome.
+You must provide a tab-separated value (TSV) file relating each genome to a folder containing its reads files.
+It should have the following format:
+
+| | |
+| :-: | :-: | :-: | :-: | :-: |
+|GenomeID_1| Read_folder_1|
+|GenomeID_2| Read_folder_1|
+| ...      | ... |
+|GenomeID_m| Read_folder_m|
+
+**Please make sure that the genome identifiers in the TSV file match the ones in the metadata.*
+
+
 ### Contigs
 
 In this case, the genomic data is available as a set of [FASTA files](https://en.wikipedia.org/wiki/FASTA_format) (one per genome).
 Each file contains a set of contigs, which are assembled genomic sequences. 
-A tab-separated value (TSV) file relating each FASTA file to a genome is also required.
+You must provide a tab-separated value (TSV) file relating each FASTA file to a genome.
 It should have the following format:
 
 | | |
@@ -29,7 +48,7 @@ It should have the following format:
 | ...      | ... |
 |GenomeID_m| FASTA_Path_m|
 
-**Please make sure that the genome identifiers in the k-mer matrix match the ones in the metadata.*
+**Please make sure that the genome identifiers in the TSV file match the ones in the metadata.*
 
 
 ### K-mer matrix
