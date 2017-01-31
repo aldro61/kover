@@ -1,7 +1,7 @@
 ---
 title: Installation
 keywords: installation, install, kover, machine learning, genomics
-last_updated: May 21, 2016
+last_updated: January 31, 2017
 tags: [getting-started]
 summary: "This page will walk you through the installation of Kover."
 ---
@@ -40,8 +40,11 @@ For each dependency, a link to further installation instructions is provided.
 Download the latest version of Kover from the GitHub repository:
 
 ```
-git clone --recursive https://github.com/aldro61/kover.git
+git clone https://github.com/aldro61/kover.git
 ```
+
+or download the [latest release](https://github.com/aldro61/kover/releases/latest).
+
 
 Then, in the *kover* directory, run the installer (you might have to run it as super user):
 
