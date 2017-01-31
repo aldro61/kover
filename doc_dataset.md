@@ -10,19 +10,70 @@ summary: "Overview of the data manipulation utility"
 
 This command is used to combine genomic and phenotypic data into a Kover dataset.
 
+### From reads
+
+Use this command if the genomic data consists of unassembled genomic reads (see [input data format](doc_input_formats.html)).
+The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count the k-mers present in the genomes.
+
+```
+usage: kover dataset create from-reads [-h] --genomic-data GENOMIC_DATA
+                                       [--phenotype-name PHENOTYPE_NAME]
+                                       [--phenotype-metadata PHENOTYPE_METADATA]
+                                       --output OUTPUT [--kmer-size KMER_SIZE]
+                                       [--kmer-min-abundance KMER_MIN_ABUNDANCE]
+                                       [--singleton-kmers] [--n-cpu N_CPU]
+                                       [--compression COMPRESSION]
+                                       [--temp-dir TEMP_DIR] [-x] [-v]
+
+Creates a Kover dataset from genomic data and optionally phenotypic metadata
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --genomic-data GENOMIC_DATA
+                        A tab-separated file with one line per genome in the
+                        format GENOME_ID{tab}PATH, where the path refers to a
+                        directory containing the genome's reads in fastq(.gz)
+                        files.
+  --phenotype-name PHENOTYPE_NAME
+                        An informative name that is assigned to the phenotypic
+                        metadata.
+  --phenotype-metadata PHENOTYPE_METADATA
+                        A file containing the phenotypic metadata.
+  --output OUTPUT       The Kover dataset to be created.
+  --kmer-size KMER_SIZE
+                        The k-mer size (max is 128). The default is 31.
+  --kmer-min-abundance KMER_MIN_ABUNDANCE
+                        The minimum number of times a k-mer must be found in a
+                        read file in order to be considered. All k-mers that
+                        do not meet this threshold are discarded. This value
+                        should be chosen based on genome coverage (ex: 100x
+                        coverage -> you could use 10). The default is 1.
+  --singleton-kmers     Include k-mers that only occur in one genome. Disabled
+                        by default.
+  --n-cpu N_CPU, --n-cores N_CPU
+                        The number of cores used by DSK. The default value is
+                        0 (all cores).
+  --compression COMPRESSION
+                        The gzip compression level (0 - 9). 0 means no
+                        compression. The default value is 4.
+  --temp-dir TEMP_DIR   Output directory for temporary files. The default is
+                        the system's temp dir.
+  -x, --progress        Shows a progress bar for the execution.
+  -v, --verbose         Sets the verbosity level.
+```
+
 ### From contigs
 
 Use this command if the genomic data consists of one FASTA file per genome (see [input data format](doc_input_formats.html)).
 The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count the k-mers present in the genomes.
 
 ```
-usage: kover dataset create from_contigs [-h] --genomic-data GENOMIC_DATA
+usage: kover dataset create from-contigs [-h] --genomic-data GENOMIC_DATA
                                          [--phenotype-name PHENOTYPE_NAME]
                                          [--phenotype-metadata PHENOTYPE_METADATA]
                                          --output OUTPUT
                                          [--kmer-size KMER_SIZE]
-                                         [--singleton-kmers]
-                                         [--n_cores N_CORES]
+                                         [--singleton-kmers] [--n-cpu N_CPU]
                                          [--compression COMPRESSION]
                                          [--temp-dir TEMP_DIR] [-x] [-v]
 
@@ -42,9 +93,10 @@ optional arguments:
   --output OUTPUT       The Kover dataset to be created.
   --kmer-size KMER_SIZE
                         The k-mer size (max is 128). The default is 31.
-  --singleton-kmers     Include k-mers that occur only once. Disabled by
-                        default.
-  --n_cores N_CORES     The number of cores used by DSK. The default value is
+  --singleton-kmers     Include k-mers that only occur in one genome. Disabled
+                        by default.
+  --n-cpu N_CPU, --n-cores N_CPU
+                        The number of cores used by DSK. The default value is
                         0 (all cores).
   --compression COMPRESSION
                         The gzip compression level (0 - 9). 0 means no
