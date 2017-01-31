@@ -1,7 +1,7 @@
 ---
 title: Input Data Formats
-keywords: kover, machine learning, data, format, input
-last_updated: April 14, 2016
+keywords: kover, machine learning, data, format, input, reads, contigs, k-mer
+last_updated: January 31, 2017
 tags:
 summary: "An overview of the file formats accepted by Kover."
 ---
