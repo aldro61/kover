@@ -15,6 +15,7 @@ For each dependency, a link to further installation instructions is provided.
 
 ### Need to install yourself
 
+* [CMake](https://cmake.org/install/)
 * [GNU C++ compiler (g++)](https://gcc.gnu.org/)
 * [GNU Fortran (gfortran)](https://gcc.gnu.org/wiki/GFortran)
 * [The HDF5 library](https://www.hdfgroup.org/HDF5/release/obtain5.html)
