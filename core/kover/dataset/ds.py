@@ -50,7 +50,7 @@ class KoverDataset(object):
 	@property
 	def genome_source(self):
 		dataset = self.dataset_open()
-		return dataset.attrs["genome_source"]
+		return dataset.attrs["genomic_data"]
 
 	@property
 	def genome_source_type(self):
