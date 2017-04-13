@@ -10,6 +10,11 @@ Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bou
 
 > The identification of genomic biomarkers is a key step towards improving diagnostic tests and therapies. We present a new reference-free method for this task that relies on a k-mer representation of genomes and a machine learning algorithm that produces intelligible models. The method is computationally scalable and well-suited for whole genome sequencing studies. The method was validated by generating models that predict the antibiotic resistance of C. difficile, M. tuberculosis, P. aeruginosa and S. pneumoniae. We show that the obtained models are accurate and that they highlight biologically relevant biomarkers, while providing insight into the process of antibiotic resistance acquisition. Kover, an efficient implementation of our method, can readily scale to large genomic datasets. It is open-source and can be obtained from http://github.com/aldro61/kover.
 
+### Video lecture:
+Interpretable Models of Antibiotic Resistance with the Set Covering Machine Algorithm, Google, Cambridge, Massachusetts (February 2017) [ [slides](http://graal.ift.ulaval.ca/adrouin/talks/google_feb2017.pdf) ]
+
+[![Google tech talk](https://img.youtube.com/vi/uomMdBdEwnk/0.jpg)](https://www.youtube.com/watch?v=uomMdBdEwnk)
+
 ## Installation
 
 For installation instructions, see: http://aldro61.github.io/kover/doc_installation.html
