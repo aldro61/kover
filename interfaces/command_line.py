@@ -539,7 +539,7 @@ The most commonly used commands are:
                                  'more information.',
                             default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
         parser.add_argument('--kmer-blacklist', help='A file containing a list of kmers to blacklist from being used to create rules.'
-                                                        'File format : either a fasta file or a text file with one kmer per line', required=False)
+                                                        'File format: either a fasta file or a text file with one kmer per line', required=False)
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
                                                           'model.', default=10)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '

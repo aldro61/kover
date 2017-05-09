@@ -440,11 +440,11 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
     p = np.unique(p)
 
     dataset = KoverDataset(dataset_file)
-
+    
+    # Find all rules to blacklist
     rule_blacklist = []
     if kmer_blacklist_file is not None:
         kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file)
-        print(kmers_to_blacklist)
         if kmers_to_blacklist:
             kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
             kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
