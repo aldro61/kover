@@ -26,7 +26,12 @@ class KoverDataset(object):
 	def __init__(self, file):
 		self.path = file
 		self.dataset_open = partial(_hdf5_open_no_chunk_cache, file)
-
+	
+	@property
+	def classification(self):
+		dataset = self.dataset_open()
+		return dataset.attrs["classification"]
+		
 	@property
 	def compression(self):
 		dataset = self.dataset_open()
