@@ -345,12 +345,12 @@ The two available data sources are:
                                                              'training the learning algorithm (default is 0.5). Alternatively, you can specify which '
                                                              'genomes to use for training and testing by using --train-ids and --test-ids.',
                             default=0.5)
-        parser.add_argument('--train-ids', type=str, nargs='+', help='The identifiers of the genomes used to train the '
+        parser.add_argument('--train-ids', help='File containing the identifiers of the genomes used to train the '
                                                                      'learning algorithm. If you provide a value for this argument, you must also provide a '
-                                                                     'value for --test-ids.')
-        parser.add_argument('--test-ids', type=str, nargs='+', help='The identifiers of the genomes used to evaluate '
+                                                                     'value for --test-ids. File format: one id per line')
+        parser.add_argument('--test-ids',  help='File containing the identifiers of the genomes used to evaluate '
                                                                     'the accuracy of the model generated. If you provide a value for this argument, you must '
-                                                                    'also provide a value for --train-ids.')
+                                                                    'also provide a value for --train-ids. File format: one id per line')
         parser.add_argument('--folds', type=int,
                             help='The number of k-fold cross-validation folds to create (default is 0 for none, '
                                  'the minimum value is 2). Folds are required for using k-fold cross-validation '
@@ -408,8 +408,8 @@ The two available data sources are:
         if args.train_ids is not None and args.test_ids is not None:
             split_with_ids(input=args.dataset,
                            split_name=args.id,
-                           train_ids=args.train_ids,
-                           test_ids=args.test_ids,
+                           train_ids_file=args.train_ids,
+                           test_ids_file=args.test_ids,
                            random_seed=args.random_seed,
                            n_folds=args.folds,
                            progress_callback=progress)

@@ -28,7 +28,7 @@ from ..learning.set_covering_machine.rules import KmerRuleClassifications
 from ..utils import _hdf5_open_no_chunk_cache, _minimum_uint_size
 
 
-def split_with_ids(input, split_name, train_ids, test_ids, random_seed, n_folds, warning_callback=None,
+def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed, n_folds, warning_callback=None,
                    error_callback=None, progress_callback=None):
 
     # Execution callback functions
@@ -48,6 +48,8 @@ def split_with_ids(input, split_name, train_ids, test_ids, random_seed, n_folds,
 
     # Validate that the genome identifiers refer to genomes in the dataset
     not_in_ds = []
+    train_ids = (open(train_ids_file, 'r').read()).split('\n')
+    train_ids = [i for i in train_ids if i]
     for id in train_ids:
         if id not in idx_by_genome_id:
             not_in_ds.append(id)
@@ -55,6 +57,8 @@ def split_with_ids(input, split_name, train_ids, test_ids, random_seed, n_folds,
         error_callback(Exception("The training genome identifiers contain IDs that are not in the dataset: %s" %
                                  ", ".join(not_in_ds)))
     not_in_ds = []
+    test_ids = (open(test_ids_file, 'r').read()).split('\n')
+    test_ids = [i for i in test_ids if i]
     for id in test_ids:
         if id not in idx_by_genome_id:
             not_in_ds.append(id)
