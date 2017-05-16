@@ -271,6 +271,8 @@ The two available data sources are:
         parser.add_argument('--uuid', help='Prints the unique identifier of the dataset.', action='store_true')
         parser.add_argument('--compression', help='Print the data compression options of the dataset.',
                             action='store_true')
+        parser.add_argument('--classification', help='Print the dataset problem type.',
+                            action='store_true')
 
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -320,6 +322,9 @@ The two available data sources are:
             print
         if args.compression or args.all:
             print "Compression:", dataset.compression
+            print
+        if args.classification or args.all:
+            print "Classification:", dataset.classification
             print
         if args.splits or args.all:
             splits = dataset.splits
