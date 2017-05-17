@@ -21,11 +21,39 @@ import numpy as np
 
 conjunction = "conjunction"
 disjunction = "disjunction"
+scm = "scm"
+cart = "cart"
 
 class BaseModel(object):
     def __init__(self):
-        self.rules = []
+        self.rules = None
         super(BaseModel, self).__init__()
+        
+    def predict(self, X):
+        raise NotImplementedError()
+        
+    @property
+    def learner(self):
+        raise NotImplementedError()
+        
+    def _to_string(self, separator=" "):
+        raise NotImplementedError()
+        
+    def __str__(self):
+        return self._to_string()
+        
+class CART_Model(BaseModel):
+    def __init__(self):
+        super(CART_Model, self).__init__()
+    
+    @property
+    def learner(self):
+        return cart
+
+class SCM_Model(BaseModel):
+    def __init__(self):
+        super(SCM_Model, self).__init__()
+        self.rules = []
 
     def add(self, rule):
         self.rules.append(rule)
@@ -45,6 +73,10 @@ class BaseModel(object):
     @property
     def example_dependencies(self):
         return [d for ba in self.rules for d in ba.example_dependencies]
+    
+    @property
+    def learner(self):
+        return scm
 
     @property
     def type(self):
@@ -63,10 +95,7 @@ class BaseModel(object):
     def __len__(self):
         return len(self.rules)
 
-    def __str__(self):
-        return self._to_string()
-
-class ConjunctionModel(BaseModel):
+class ConjunctionModel(SCM_Model):
     def predict_proba(self, X):
         predictions = np.ones(X.shape[0], np.float32)
         for a in self.rules:
@@ -81,7 +110,7 @@ class ConjunctionModel(BaseModel):
         return self._to_string(separator=" and ")
 
 
-class DisjunctionModel(BaseModel):
+class DisjunctionModel(SCM_Model):
     def predict_proba(self, X):
         predictions = np.ones(X.shape[0], dtype=np.float32)
         for a in self.rules:
