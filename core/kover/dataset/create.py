@@ -67,9 +67,8 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 	"""
     logging.debug("Parsing metadata.")
     md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
-    md_genome_labels = [int(l) for l in md_genome_labels]
-    md_unique_labels = np.unique(md_genome_labels)
-    
+    md_unique_labels, indices = np.unique(md_genome_labels, return_inverse=True)
+
     if len(md_unique_labels) < 2:
         error_callback(Exception("The dataset must contain at least 2 different phenotypes"))
     
@@ -78,13 +77,15 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
         
     elif len(md_unique_labels) == 2:
         classification = "binary"
-        if not np.all(md_unique_labels == [0, 1]):
-            error_callback(Exception("The metadata associated to a genome must be a single binary value (0 or 1) for binary classification."))
+        
     else:
         classification = "multiclass"
-        if not np.all(md_unique_labels == [i for i in range(len(md_unique_labels))]):
-            error_callback(Exception("In multiclass classification, the labels set must contain every numerical value from 0 to the highest label value"))
-
+    logging.debug("The dataset problem type is " + classification + " classification.")
+    
+    # Converting lables to numerical ascending values
+    numerical_labels = np.arange(0, len(md_unique_labels))
+    md_genome_labels = numerical_labels[indices]
+    
     if len(md_genome_ids) > len(set(md_genome_ids)):
         error_callback(Exception("The metadata contains multiple values for the same genome."))
 
@@ -104,7 +105,7 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
         *((md_genome_ids[i], md_genome_labels[i]) for i in xrange(len(md_genome_ids)) if
           md_genome_ids[i] in matrix_genome_ids))
 
-    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), classification
+    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), md_unique_labels, classification
 
 
 def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzip, warning_callback=None,
@@ -171,7 +172,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
 
     # Extract/write the metadata
     if phenotype_name is not None:
-        genome_ids, labels, classification = _parse_metadata(phenotype_metadata_path, genome_ids, warning_callback, error_callback)
+        genome_ids, labels,labels_tags, classification = _parse_metadata(phenotype_metadata_path, genome_ids, warning_callback, error_callback)
         h5py_file.attrs["classification"] = classification
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
@@ -187,6 +188,13 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     logging.debug("Creating the genome identifier dataset.")
     h5py_file.create_dataset("genome_identifiers",
                              data=genome_ids,
+                             compression=compression,
+                             compression_opts=compression_opts)
+                             
+    # Write labels tags
+    logging.debug("Creating the phenotype tags dataset.")
+    h5py_file.create_dataset("phenotype_tags",
+                             data=labels_tags,
                              compression=compression,
                              compression_opts=compression_opts)
 
@@ -300,7 +308,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # Extract/write the metadata
     if phenotype_name is not None:
-        genome_ids, labels, classification = _parse_metadata(phenotype_metadata_path, contig_file_by_genome_id.keys(), warning_callback,
+        genome_ids, labels, labels_tags, classification = _parse_metadata(phenotype_metadata_path, contig_file_by_genome_id.keys(), warning_callback,
                                              error_callback)
         h5py_file.attrs["classification"] = classification
         
@@ -320,6 +328,14 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
                              data=genome_ids,
                              compression=compression,
                              compression_opts=compression_opts)
+                             
+    # Write labels tags
+    logging.debug("Creating the phenotype tags dataset.")
+    h5py_file.create_dataset("phenotype_tags",
+                             data=labels_tags,
+                             compression=compression,
+                             compression_opts=compression_opts)
+                             
     h5py_file.close()
 
     logging.debug("Initializing DSK.")
@@ -410,7 +426,7 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
 
     # Extract/write the metadata
     if phenotype_name is not None:
-        genome_ids, labels, classification = _parse_metadata(phenotype_metadata_path, reads_folder_by_genome_id.keys(), warning_callback,
+        genome_ids, labels, labels_tags, classification = _parse_metadata(phenotype_metadata_path, reads_folder_by_genome_id.keys(), warning_callback,
                                              error_callback)
         h5py_file.attrs["classification"] = classification
         # Sort the genomes by label for optimal better performance
@@ -429,6 +445,14 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
                              data=genome_ids,
                              compression=compression,
                              compression_opts=compression_opts)
+                             
+    # Write labels tags
+    logging.debug("Creating the phenotype tags dataset.")
+    h5py_file.create_dataset("phenotype_tags",
+                             data=labels_tags,
+                             compression=compression,
+                             compression_opts=compression_opts)
+                             
     h5py_file.close()
 
     logging.debug("Initializing DSK.")

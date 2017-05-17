@@ -86,6 +86,11 @@ class KoverDataset(object):
 	def kmer_sequences(self):
 		dataset = self.dataset_open()
 		return dataset["kmer_sequences"]
+		
+	@property
+	def phenotype_tags(self):
+		dataset = self.dataset_open()
+		return dataset["phenotype_tags"]
 
 	@property
 	def phenotype(self):
