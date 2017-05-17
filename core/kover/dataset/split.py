@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin
+	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ from h5py.h5f import ACC_RDWR
 from math import ceil
 
 from ..dataset import KoverDataset
-from ..learning.set_covering_machine.rules import KmerRuleClassifications
+from ..learning.common.rules import KmerRuleClassifications
 from ..utils import _hdf5_open_no_chunk_cache, _minimum_uint_size
 
 

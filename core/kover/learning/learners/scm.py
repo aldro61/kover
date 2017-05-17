@@ -22,7 +22,7 @@ import numpy as np
 
 from math import ceil
 
-from .models import conjunction, ConjunctionModel, disjunction, DisjunctionModel
+from ..common.models import conjunction, ConjunctionModel, disjunction, DisjunctionModel
 from ...utils import _class_to_string
 
 

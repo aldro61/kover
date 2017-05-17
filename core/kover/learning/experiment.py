@@ -29,9 +29,9 @@ from multiprocessing import Pool, cpu_count
 from scipy.misc import comb
 
 from ..dataset.ds import KoverDataset
-from .set_covering_machine.models import ConjunctionModel, DisjunctionModel
-from .set_covering_machine.rules import LazyKmerRuleList, KmerRuleClassifications
-from .set_covering_machine.scm import SetCoveringMachine
+from .common.models import ConjunctionModel, DisjunctionModel
+from .common.rules import LazyKmerRuleList, KmerRuleClassifications
+from .learners.scm import SetCoveringMachine
 from ..utils import _duplicate_last_element, _unpack_binary_bytes_from_ints
 
 def _get_metrics(predictions, answers):
