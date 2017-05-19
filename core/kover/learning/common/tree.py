@@ -20,11 +20,6 @@
 import logging 
 import numpy as np 
 
-from collections import defaultdict, deque 
-from math import ceil 
-
-UTIL_BLOCK_SIZE = 1000000
-
 class BreimanInfo(object):     
 	def __init__(self, node_n_examples_by_class, class_priors, total_n_examples_by_class):
 		# Eq. 2.2 Probability that an example is in class j and falls into node t         

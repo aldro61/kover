@@ -36,19 +36,34 @@ class BaseModel(object):
     def learner(self):
         raise NotImplementedError()
         
-    def _to_string(self, separator=" "):
-        raise NotImplementedError()
-        
     def __str__(self):
         return self._to_string()
         
 class CART_Model(BaseModel):
     def __init__(self):
         super(CART_Model, self).__init__()
-    
+        self.decision_tree = None
+        
+    def add_decision_tree(self, tree):
+        self.decision_tree = tree
+        
+    def predict(self, X):
+        if self.decision_tree is None:
+            raise RuntimeError("A decision tree must be fitted prior to calling predict.")
+        predictions = self.decision_tree.predict(X)
+        return np.asaary(predictions, dtype=np.uint8)
+        
     @property
     def learner(self):
         return cart
+        
+    def _to_string(self):
+        return str(self.decision_tree)
+        
+    def __len__(self):
+        return len(self.decision_tree)
+        
+    
 
 class SCM_Model(BaseModel):
     def __init__(self):
