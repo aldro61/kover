@@ -51,7 +51,12 @@ class CART_Model(BaseModel):
         if self.decision_tree is None:
             raise RuntimeError("A decision tree must be fitted prior to calling predict.")
         predictions = self.decision_tree.predict(X)
-        return np.asaary(predictions, dtype=np.uint8)
+        return np.asarray(predictions, dtype=np.uint8)
+        
+    def predict_proba(self, X):
+         if self.decision_tree is None:
+            raise RuntimeError("A decision tree must be fitted prior to calling predict.")
+        self.decision_tree.predict_proba(X)
         
     @property
     def learner(self):

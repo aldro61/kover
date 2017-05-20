@@ -23,8 +23,8 @@ import numpy as np
 class BreimanInfo(object):     
 	def __init__(self, node_n_examples_by_class, class_priors, total_n_examples_by_class):
 		# Eq. 2.2 Probability that an example is in class j and falls into node t         
-		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in zip(class_priors, node_n_examples_by_class, 
-																		  total_n_examples_by_class)] 
+		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in zip(class_priors.values(), node_n_examples_by_class, 
+																		  total_n_examples_by_class.values())] 
 		# Eq. 2.3 Probability that any example falls in node t         
 		self.p_t = sum(self.p_j_t)         
 		# Eq. 2.4 Probability that an example is in class j given that it falls in node t         
