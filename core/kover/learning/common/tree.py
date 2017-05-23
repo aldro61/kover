@@ -74,10 +74,14 @@ class TreeNode(object):
 	
 	@property     
 	def rules(self):        
-		return _get_tree_rules(self)
+		return self._get_tree_rules()
+		
+	@property     
+	def leaves(self):         
+		return self._get_tree_leaves()
 	
 	def __iter__(self):         
-		for r in _get_tree_rules(self):             
+		for r in _get_tree_rules():             
 			yield r
 	
 	def __len__(self):         
@@ -85,9 +89,12 @@ class TreeNode(object):
 		Returns the number of rules in the tree         
 		"""         
 		return len(_get_tree_rules(self))
-	
 		
-	def _get_tree_leaves(root):     
+	def __str__(self):
+		return "{0!s}".format(("Node({0!s}, {1!s}, {2!s})".format(self.rule, self.left_child, self.right_child) if not (self.left_child is None) else "Leaf()".format()))
+
+
+	def _get_tree_leaves(self):     
 		def _get_leaves(node):         
 			leaves = []         
 			if not node.is_leaf:             
@@ -96,9 +103,9 @@ class TreeNode(object):
 			else:             
 				leaves.append(node)         
 			return leaves     
-		return _get_leaves(root) 
+		return _get_leaves(self) 
 			
-	def _get_tree_rules(root):     
+	def _get_tree_rules(self):     
 		def _get_rules(node):         
 			rules = []         
 			if node.rule is not None:             
@@ -106,7 +113,7 @@ class TreeNode(object):
 				rules += _get_rules(node.left_child)             
 				rules += _get_rules(node.right_child)         
 			return rules     
-		return _get_rules(root)
+		return _get_rules(self)
 
 class ProbabilisticTreeNode(TreeNode):     
 	def predict(self, X):         

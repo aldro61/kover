@@ -21,7 +21,8 @@
 import logging
 import numpy as np
 from collections import defaultdict, deque 
-from math import ceil 
+from math import ceil
+from copy import deepcopy
 
 from ..common.models import cart, CART_Model
 from ..common.tree import ProbabilisticTreeNode
@@ -266,3 +267,111 @@ class DecisionTreeClassifier(object):
 
 	def _is_fitted(self):
 		return self.model is not None
+		
+def _prune_tree(tree):
+	"""
+	Prunes a decision tree
+	
+	"""
+	def _initial_pruning(root):
+		# Get all nodes that have two leaves as children
+		def _get_leaf_parents(root):
+			def __get_leaf_parents(node):
+				leaf_parents = []
+				if not node.is_leaf:
+					if node.left_child.is_leaf and node.right_child.is_leaf:
+						leaf_parents.append(node)
+					else:
+						leaf_parents += __get_leaf_parents(node.left_child)
+						leaf_parents += __get_leaf_parents(node.right_child)
+				return leaf_parents
+			return __get_leaf_parents(root)
+			
+		# Perform the initial pruning (Tmax -> T1)
+		def __initial_pruning(parents):
+			if len(parents) == 0:
+				return
+			node = parents.pop()
+			if np.allclose(node.breiman_info.R_t, node.left_child.breiman_info.R_t + node.right_child.breiman_info.R_t):
+				logging.debug("Converting node %s into a leaf" % node)
+				del node.rule
+				node.rule = None
+				del node.left_child
+				node.left_child = None
+				del node.right_child
+				node.right_child = None
+				if not node.is_root and node.parent.left_child.is_leaf and node.parent.right_child.is_leaf:
+					logging.debug("Adding the new leaf's parent to the list of leaf parents")
+					parents.append(node.parent)
+			__initial_pruning(parents)
+			
+		# Start the initial pruning
+		__initial_pruning(_get_leaf_parents(root))
+		
+	def _find_weakest_links(root):
+		def __find_weakest_links(node):
+			if node.is_leaf:
+				return np.inf, [node]
+			else:
+				RTt = sum(l.breiman_info.R_t for l in node.leaves)
+				current_gt = float(node.breiman_info.R_t - RTt) / (len(node.leaves) - 1)
+				left_min_gt, left_weakest_links = __find_weakest_links(node.left_child)
+				right_min_gt, right_weakest_links = __find_weakest_links(node.right_child)
+				
+				if np.allclose(current_gt, min(left_min_gt, right_min_gt)):
+					if np.allclose(left_min_gt, right_min_gt):
+						return current_gt, [node] + left_weakest_links + right_weakest_links
+					else:
+						return current_gt, [node] + (left_weakest_links if left_min_gt < right_min_gt else right_weakest_links)
+				elif current_gt < min(left_min_gt, right_min_gt):                         
+					return current_gt, [node]                     
+				elif np.allclose(left_min_gt, right_min_gt):                         
+					return left_min_gt, left_weakest_links + right_weakest_links                     
+				elif left_min_gt > right_min_gt:                         
+					return right_min_gt, right_weakest_links                     
+				elif left_min_gt < right_min_gt:                         
+					return left_min_gt, left_weakest_links                     
+				else:                         
+					raise Exception("Unhandled case detected!")
+						
+		return __find_weakest_links(root)
+			
+	def _sequential_prune(root):
+		Tmax = deepcopy(root)
+		logging.debug("Initial pruning (Tmax >> T1)")
+		_initial_pruning(Tmax)
+		T1 = Tmax
+		del Tmax
+		
+		def __sequential_prune(root):
+			root = deepcopy(root)
+
+			# Find the weakest link in the tree                 
+			logging.debug("Computing link strenghts for each node")             
+			min_gt, weakest_links = _find_weakest_links(root)
+			
+			# Prune the weakest link (and save alpha)
+			logging.debug("Pruning occurs at alpha %.9f" % min_gt)
+			# TODO: faire une fonction qui descend jusqu'aux feuilles et prune en remontant car perte de mémoire ici
+			
+			for n in weakest_links:                     
+				del n.rule                     
+				n.rule = None                     
+				del n.left_child                     
+				n.left_child = None                     
+				del n.right_child                     
+				n.right_child = None
+				
+			# Repeat until only the root node remains
+			return [(min_gt, root)] + (__sequential_prune(root) if not root.is_leaf else [])
+		
+		logging.debug("Pruning sequentially until only the root remains (T1 >> ... >> {root}")
+		return [(0, T1)] + __sequential_prune(T1)
+		
+	logging.debug("Copying model")
+	tree = deepcopy(tree) 
+	
+	logging.debug("Generating the sequence of pruned trees")
+	alphas, trees = zip(*_sequential_prune(tree))
+	
+	return alphas, trees
