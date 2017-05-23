@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
@@ -16,6 +17,9 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
+import logging
+import numpy as np
 from collections import defaultdict, deque 
 from math import ceil 
 
@@ -49,7 +53,7 @@ class DecisionTreeClassifier(object):
 		self.rule_importances = defaultdict(float)
 		self.model = CART_Model()
 		
-    def fit(self, rules, rule_classifications, example_idx, rule_blacklist=None,             
+	def fit(self, rules, rule_classifications, example_idx, rule_blacklist=None,             
 			tiebreaker=None, level_callback=None, split_callback=None):
 				
 		"""         
@@ -66,27 +70,29 @@ class DecisionTreeClassifier(object):
 			tiebreaker = lambda x: x 
 			
 		# Store important information about the training set
-		n_total_class_examples = {c:float(len(ids)) for c, ids in examples_idx.items()}
+		n_total_class_examples = {c:float(len(ids)) for c, ids in example_idx.items()}
 		n_total_examples = sum(n_total_class_examples.values())
 		
 		# Compute the class priors based on the importance of making errors on each class.
 		# See Section "4.4 Priors and Variable Misclassification Costs" in Breiman et al. 1984.
 		priors = [1.0 * n_examples/ n_total_examples for n_examples in n_total_class_examples.values()]
 		
-		denom = sum([importance * prior for importance, prior in zip(self.class_importance, priors)])
-		
-		altered_priors = {c: 1.0 * importance * prior /denom for c, importance, prior in \
-									zip(n_total_class_examples.keys(), self.class_importance, priors)}
-		del n_total_examples, priors, denum
-		
+		denum = sum([importance * prior for importance, prior in zip(self.class_importance.values(), priors)])
+
+		altered_priors = {c: 1.0 * importance * prior / denum for c, importance, prior in \
+									zip(n_total_class_examples.keys(), self.class_importance.values(), priors)}
+									
+		#del n_total_examples, priors, denum
+		del n_total_examples, priors
 		# Criteria for node impurity and splitting
 		def _gini_impurity(n_class_examples, multiply_by_node_proba=False):
 			p_class_node = {c: 1.0*self.class_importance[c]*n_class_examples[c]/n_total_class_examples[c] \
 											for c in n_class_examples.keys()}
-			
+											
 			node_resubstitution_estimate = sum(p_class_node.values())
-			p_class_given_node = {c: p_class_node[c]/ node_resubstitution_estimate for c in p_class_node.keys()}
-			del p_class_node
+			with np.errstate(divide='ignore', invalid='ignore'):
+				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
+			#del p_class_node
 			diversity_index = sum([p_class_given_node[i]*p_class_given_node[j] \
 									for i in p_class_given_node.keys() for j in p_class_given_node.keys() if i != j])
 			
@@ -103,9 +109,9 @@ class DecisionTreeClassifier(object):
 			last_presence_rule_idx = int(1.0 * len(rules) / 2)  # Just because sum_rows returns pres/abs rules
 
 			left_count = {c:np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx],dtype=np.float) \
-						for c in example_idx.keys()}
+						for c in example_idx.keys() if example_idx[c].size}
 			right_count = {c:np.asarray(example_idx[c].shape[0] - left_count[c], dtype=np.float) for c in left_count.keys()}
-			
+
 			# Left child:
 			gini = _gini_impurity(left_count, multiply_by_node_proba=True) / node.breiman_info.p_t
 			# Right child:
@@ -139,8 +145,8 @@ class DecisionTreeClassifier(object):
 				
 			# Tiebreaker to select a single rule in case of ties
 			candidate_rules_idx = np.where(rules_criterion == choice_func(rules_criterion))[0]
-            logging.debug("There are %d equivalent rules before the tiebreaker." % len(candidate_rules_idx))
-            best_rules_idx = tiebreaker(candidate_rules_idx)
+			logging.debug("There are %d equivalent rules before the tiebreaker." % len(candidate_rules_idx))
+			best_rules_idx = tiebreaker(candidate_rules_idx)
 			logging.debug("The are %d equivalent rules after the tiebreaker." % len(best_rules_idx))
 			selected_rule_idx = best_rules_idx[0]
 			
@@ -150,8 +156,7 @@ class DecisionTreeClassifier(object):
 			left_child_example_idx_by_class = {c:example_idx[c][rule_preds[example_idx[c]] == 1] for c in example_idx.keys()}
 			right_child_example_idx_by_class = {c:example_idx[c][rule_preds[example_idx[c]] == 0] for c in example_idx.keys()}
 			
-			return selected_rule_idx, best_rules_idx, left_child_example_idx_by_class, \                    
-						right_child_example_idx_by_class
+			return selected_rule_idx, best_rules_idx, left_child_example_idx_by_class, right_child_example_idx_by_class
 		
 		logging.debug("Training start.")
 		
@@ -183,7 +188,7 @@ class DecisionTreeClassifier(object):
 					break  # We have reached the nodes of the last level, which must remain leaves
 			
 			# Check if the node to split is a pure leaf
-            if 1.0 in node.class_proportions.values():
+			if 1.0 in node.class_proportions.values():
 				logging.debug("The leaf is pure. It will not be split.")
 				continue
 				
@@ -201,61 +206,63 @@ class DecisionTreeClassifier(object):
 			
 			# If we were incapable of splitting the node into two non-empty leafs
 			if selected_rule_idx is None:
-                logging.debug("Found no rule to split the node. The node will not be split.")
-                continue
-                
-            # Perform the split
-            node.rule = rules[selected_rule_idx]
-            
-            node.left_child = node_type(parent=node,
-                                        class_examples_idx=left_child_example_idx_by_class, depth=node.depth + 1,
-                                        criterion_value=get_criterion(left_child_example_idx_by_class),
-                                        class_priors=altered_priors,
-                                        total_n_examples_by_class=n_total_class_examples)
-                                        
+				logging.debug("Found no rule to split the node. The node will not be split.")
+				continue
+				
+			# Perform the split
+			node.rule = rules[selected_rule_idx]
+			left_child_n_class_example = {c:len(idx) for c, idx in left_child_example_idx_by_class.items()}
+			right_child_n_class_example = {c:len(idx) for c, idx in right_child_example_idx_by_class.items()}
+			
+			node.left_child = node_type(parent=node,
+										class_examples_idx=left_child_example_idx_by_class, depth=node.depth + 1,
+										criterion_value=get_criterion(left_child_n_class_example),
+										class_priors=altered_priors,
+										total_n_examples_by_class=n_total_class_examples)
+										
 			node.right_child = node_type(parent=node,
-                                        class_examples_idx=right_child_example_idx_by_class, depth=node.depth + 1,
-                                        criterion_value=get_criterion(right_child_example_idx_by_class),
-                                        class_priors=altered_priors,
-                                        total_n_examples_by_class=n_total_class_examples)
-                                        
+										class_examples_idx=right_child_example_idx_by_class, depth=node.depth + 1,
+										criterion_value=get_criterion(right_child_n_class_example),
+										class_priors=altered_priors,
+										total_n_examples_by_class=n_total_class_examples)
+										
 			# Update rule importances
-            # TODO: account for node probabilities (this is currently incorrect)
-            self.rule_importances[str(node.rule)] += node.criterion_value - \
-                                                     node.left_child.criterion_value - \
-                                                     node.right_child.criterion_value
-                                                     
+			# TODO: account for node probabilities (this is currently incorrect)
+			self.rule_importances[str(node.rule)] += node.criterion_value - \
+													 node.left_child.criterion_value - \
+													 node.right_child.criterion_value
+													 
 			logging.debug("Split with rule %s." % node.rule)
 			split_callback(node, equivalent_rule_idx)
-			
+
 			# Add the new child nodes to the splitting queue
-            nodes_to_split.append(node.left_child)
-            nodes_to_split.append(node.right_child)
-            
-            # Update the model in the runtime informations
-            runtime_infos["model"] = root
-            
+			nodes_to_split.append(node.left_child)
+			nodes_to_split.append(node.right_child)
+
+			# Update the model in the runtime informations
+			runtime_infos["model"] = root
+			
 		logging.debug("Done building the tree.")
 		
 		# Save the model
-        self.model.add_decision_tree(root)
-        
-        # Normalize the variable importances
-        logging.debug("Normalizing the variable importances.")
-        variable_importance_sum = sum(v for v in self.rule_importances.itervalues())
-        self.rule_importances = dict((r, i / variable_importance_sum) for r, i in self.rule_importances.iteritems())
+		self.model.add_decision_tree(root)
+		
+		# Normalize the variable importances
+		logging.debug("Normalizing the variable importances.")
+		variable_importance_sum = sum(v for v in self.rule_importances.itervalues())
+		self.rule_importances = dict((r, i / variable_importance_sum) for r, i in self.rule_importances.iteritems())
 
-        logging.debug("Training finished.")
-        
+		logging.debug("Training finished.")
+		
 	def predict(self, X):
-        if not self._is_fitted():
-            raise RuntimeError("The classifier must be fitted before predicting.")
-        return self.model.predict(X)
+		if not self._is_fitted():
+			raise RuntimeError("The classifier must be fitted before predicting.")
+		return self.model.predict(X)
 
-    def predict_proba(self, X):
-        if not self._is_fitted():
-            raise RuntimeError("The classifier must be fitted before predicting.")
-        return self.model.predict_proba(X)
+	def predict_proba(self, X):
+		if not self._is_fitted():
+			raise RuntimeError("The classifier must be fitted before predicting.")
+		return self.model.predict_proba(X)
 
-    def _is_fitted(self):
-        return self.model is not None
+	def _is_fitted(self):
+		return self.model is not None

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
@@ -54,7 +55,7 @@ class CART_Model(BaseModel):
         return np.asarray(predictions, dtype=np.uint8)
         
     def predict_proba(self, X):
-         if self.decision_tree is None:
+        if self.decision_tree is None:
             raise RuntimeError("A decision tree must be fitted prior to calling predict.")
         self.decision_tree.predict_proba(X)
         

@@ -25,7 +25,8 @@ class BreimanInfo(object):
 		# Eq. 2.2 Probability that an example is in class j and falls into node t         
 		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in zip(class_priors.values(), node_n_examples_by_class, 
 																		  total_n_examples_by_class.values())] 
-		# Eq. 2.3 Probability that any example falls in node t         
+
+		# Eq. 2.3 Probability that any example falls in node t       
 		self.p_t = sum(self.p_j_t)         
 		# Eq. 2.4 Probability that an example is in class j given that it falls in node t         
 		self.p_j_given_t = [p_j_t / self.p_t for p_j_t in self.p_j_t]         
@@ -44,7 +45,7 @@ class TreeNode(object):
 		self.right_child = right_child         
 		self.class_examples_idx = class_examples_idx         
 		self.depth = depth         
-		self.criterion_value = criterion_value         
+		self.criterion_value = criterion_value        
 		self.breiman_info = BreimanInfo([len(class_examples_idx[c]) for c in range(len(class_examples_idx))],                                         
 		class_priors, total_n_examples_by_class)
 		
