@@ -129,19 +129,34 @@ def _unpack_binary_bytes_from_ints(a):
 
     return b
     
-def _parse_blacklist(blacklist_path):
-    # Fasta file formar
+def _parse_blacklist(blacklist_path, expected_kmer_len):
+    data = []
+    
+    # Fasta file format
     if blacklist_path.endswith(".fasta"):
         with open(blacklist_path, "r") as fasta_file:
+            #Loading data
             data = fasta_file.read()
+            
+            # Splitting on description line
             data = data.split('>')
+            
+            # Filtering for empty strings
             data = [x for x in data if x]
-            data= [(x.split('\n', 1))[1].rstrip('\n') for x in data]
-            return data
+            
+            # Splitting after desccription line and removing empty lines under the k-mer
+            data = [(x.split('\n', 1))[1].rstrip('\n') for x in data]
+            
     # Other file format (one kmer per line)
     else:
+        # Loading data and splitting on every line
         data = [l.rstrip('\n') for l in open(blacklist_path, "r")]
+        
+        # Filtering for empty strings (empty lines)
         data = [x for x in data if x]
-        return data
+    
+    if not(all(len(kmer) == expected_kmer_len for kmer in data)):
+        raise ValueError("Extracted k-mers to blacklist do not have all the same length as the dataset k-mers")
+    return data
     
     

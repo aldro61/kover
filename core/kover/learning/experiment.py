@@ -415,6 +415,31 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
             best_rule_importances = rule_importances
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
+def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
+    dataset = KoverDataset(dataset_file)
+    
+    # Find all rules to blacklist
+    rule_blacklist = []
+    if kmer_blacklist_file is not None:
+        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file, dataset.kmer_length)
+        if kmers_to_blacklist:
+            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
+            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
+            
+            idx_to_blacklist = []
+            kmers_not_found = []
+            for k in kmers_to_blacklist:
+                try:
+                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
+                except ValueError:
+                    kmers_not_found.append(k)
+            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
+            
+            if(len(kmers_not_found) > 0):
+                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
+                
+    return rule_blacklist
+    
 
 def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rules, max_equiv_rules, parameter_selection, n_cpu, random_seed,
           bound_delta=None, bound_max_genome_size=None, progress_callback=None, warning_callback=None, error_callback=None):
@@ -439,27 +464,11 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
     model_type = np.unique(model_type)
     p = np.unique(p)
 
-    dataset = KoverDataset(dataset_file)
+    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file, 
+                                            kmer_blacklist_file=kmer_blacklist_file,
+                                            warning_callback=warning_callback)
     
-    # Find all rules to blacklist
-    rule_blacklist = []
-    if kmer_blacklist_file is not None:
-        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file)
-        if kmers_to_blacklist:
-            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
-            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
-            
-            idx_to_blacklist = []
-            kmers_not_found = []
-            for k in kmers_to_blacklist:
-                try:
-                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
-                except ValueError:
-                    kmers_not_found.append(k)
-            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
-            
-            if(len(kmers_not_found) > 0):
-                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
+    dataset = KoverDataset(dataset_file)
             
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
@@ -473,16 +482,20 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
         best_hp, \
         best_model, \
         best_rule_importances, \
-        best_predictor_equiv_rules = _bound_selection(dataset_file, split_name, model_type, p, max_rules,
-                                                      max_equiv_rules, rule_blacklist, bound_delta, bound_max_genome_size, 
-                                                      n_cpu, random_generator, progress_callback, warning_callback,
-                                                      error_callback)
+        best_predictor_equiv_rules = _bound_selection(dataset_file=dataset_file, split_name=split_name, model_type=model_type, 
+                                                        p_values=p, max_rules=max_rules, max_equiv_rules=max_equiv_rules, 
+                                                        rule_blacklist=rule_blacklist, bound_delta=bound_delta, 
+                                                        bound_max_genome_size=bound_max_genome_size, n_cpu=n_cpu, 
+                                                        random_generator=random_generator, progress_callback=progress_callback, 
+                                                        warning_callback=warning_callback, error_callback=error_callback)
     elif parameter_selection == "cv":
         n_folds = len(dataset.get_split(split_name).folds)
         if n_folds < 1:
             error_callback(Exception("Cross-validation cannot be performed on a split with no folds."))
-        best_hp_score, best_hp = _cross_validation(dataset_file, split_name, model_type, p, max_rules, rule_blacklist, n_cpu,
-                                                   progress_callback, warning_callback, error_callback)
+        best_hp_score, best_hp = _cross_validation(dataset_file=dataset_file, split_name=split_name, model_types=model_type,
+                                                    p_values=p, max_rules=max_rules, rule_blacklist=rule_blacklist, n_cpu=n_cpu, 
+                                                    progress_callback=progress_callback, warning_callback=warning_callback, 
+                                                    error_callback=error_callback)
     else:
         # Use the first value provided for each parameter
         best_hp = {"model_type": model_type[0], "p": p[0], "max_rules": max_rules}
@@ -496,9 +509,9 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
         rule_importances = best_rule_importances
     else:
         model, rule_importances, \
-        equivalent_rules = _full_train(dataset, split_name, best_hp["model_type"], best_hp["p"],
-                                                        best_hp["max_rules"], max_equiv_rules, rule_blacklist,
-                                                        random_generator, progress_callback)
+        equivalent_rules = _full_train(dataset=dataset, split_name=split_name, model_type=best_hp["model_type"], p=best_hp["p"], 
+                                        max_rules=best_hp["max_rules"], max_equiv_rules=max_equiv_rules, rule_blacklist=rule_blacklist, 
+                                        random_generator=random_generator, progress_callback=progress_callback)
 
     split = dataset.get_split(split_name)
     train_example_idx = split.train_genome_idx
