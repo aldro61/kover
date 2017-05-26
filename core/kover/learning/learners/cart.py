@@ -71,13 +71,14 @@ class DecisionTreeClassifier(object):
 			tiebreaker = lambda x: x 
 			
 		# Store important information about the training set
+
 		n_total_class_examples = {c:float(len(ids)) for c, ids in example_idx.items()}
 		n_total_examples = sum(n_total_class_examples.values())
 		
 		# Compute the class priors based on the importance of making errors on each class.
 		# See Section "4.4 Priors and Variable Misclassification Costs" in Breiman et al. 1984.
 		priors = [1.0 * n_examples/ n_total_examples for n_examples in n_total_class_examples.values()]
-		
+
 		denum = sum([importance * prior for importance, prior in zip(self.class_importance.values(), priors)])
 
 		altered_priors = {c: 1.0 * importance * prior / denum for c, importance, prior in \
@@ -87,13 +88,14 @@ class DecisionTreeClassifier(object):
 		del n_total_examples, priors
 		# Criteria for node impurity and splitting
 		def _gini_impurity(n_class_examples, multiply_by_node_proba=False):
-			p_class_node = {c: 1.0*self.class_importance[c]*n_class_examples[c]/n_total_class_examples[c] \
+			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
 											for c in n_class_examples.keys()}
-											
+
 			node_resubstitution_estimate = sum(p_class_node.values())
 			with np.errstate(divide='ignore', invalid='ignore'):
 				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
 			#del p_class_node
+
 			diversity_index = sum([p_class_given_node[i]*p_class_given_node[j] \
 									for i in p_class_given_node.keys() for j in p_class_given_node.keys() if i != j])
 			
@@ -165,7 +167,7 @@ class DecisionTreeClassifier(object):
 			criterion_value=get_criterion(n_total_class_examples),                          
 			class_priors=altered_priors,                          
 			total_n_examples_by_class=n_total_class_examples)
-		
+
 		nodes_to_split = deque([root])
 		runtime_infos = {}
 		current_depth = -1
@@ -179,7 +181,9 @@ class DecisionTreeClassifier(object):
 			# Check if we have reached a new depth
 			if node.depth != current_depth:
 				current_depth = node.depth
+
 				runtime_infos["depth"] = current_depth
+
 				logging.debug("The tree depth is %d" % current_depth)
 				if current_depth > 0:
 					# The level callback is called when all the nodes of a level have been created

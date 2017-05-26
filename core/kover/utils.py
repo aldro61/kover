@@ -58,6 +58,32 @@ def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     access_property_list.set_cache(*cache_properties)
     file_id = h.h5f.open(filename, access_type, fapl=access_property_list)
     return h.File(file_id)
+    
+def _init_callback_functions(warning_callback = None, error_callback = None, progress_callback = None):
+    """
+    Initialize the execution callback functions. If a function is provided, it is returned unchanged. Otherwise, a
+    default function is returned.
+
+    Returns:
+    --------
+    warning_callback: function
+        The callback function for displaying warnings to the user.
+    error_callback: function
+        The callback function for displaying errors to the user.
+    progress_callback: function
+        The callback for logging execution progress.
+
+    """
+    # Default callback functions
+    if warning_callback is None:
+        warning_callback = lambda w: logging.warning(w)
+    if error_callback is None:
+        def normal_raise(exception):
+            raise exception
+        error_callback = normal_raise
+    if progress_callback is None:
+        progress_callback = lambda t, p: None
+    return warning_callback, error_callback, progress_callback
 
 def _minimum_uint_size(max_value):
     """
