@@ -71,6 +71,10 @@ class TreeNode(object):
 		Returns the proportion of examples of each class in the node         
 		"""  
 		return {key:1.0 * len(value)/self.n_examples for key, value in self.class_examples_idx.items()}
+		
+	@property
+	def class_prediction(self):
+		return np.argmax(np.array(self.breiman_info.p_j_given_t))
 	
 	@property     
 	def rules(self):        
@@ -90,9 +94,23 @@ class TreeNode(object):
 		"""         
 		return len(_get_tree_rules(self))
 		
-	def __str__(self):
-		return "{0!s}".format(("Node({0!s}, {1!s}, {2!s})".format(self.rule, self.left_child, self.right_child) if not (self.left_child is None) else "Leaf()".format()))
+	def __str__(self, depth=0):
+		ret = ""
+		if self.right_child != None:
+			# Print right branch
+			ret += self.right_child.__str__(depth=depth + 1)
+			
+			# Print own value
+			ret += "\n" + ("    "*depth+ "   ") + str("/")
+			ret += "\n" + ("    "*depth) + str(self.rule)
+			ret += "\n" + ("    "*depth + "   ") + str("\\")
 
+			# Print left_child branch
+			ret += self.left_child.__str__(depth=depth + 1)
+		else:
+			ret += "\n" + ("    "*depth) + str(self.class_prediction)
+
+		return ret
 
 	def _get_tree_leaves(self):     
 		def _get_leaves(node):         

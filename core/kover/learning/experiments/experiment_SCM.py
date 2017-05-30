@@ -28,38 +28,12 @@ from math import exp, log as ln, pi
 from multiprocessing import Pool, cpu_count
 from scipy.misc import comb
 
-from ..dataset.ds import KoverDataset
-from .common.models import ConjunctionModel, DisjunctionModel
-from .common.rules import LazyKmerRuleList, KmerRuleClassifications
-from .learners.scm import SetCoveringMachine
-from ..utils import _duplicate_last_element, _unpack_binary_bytes_from_ints
-
-def _get_metrics(predictions, answers):
-    if len(predictions.shape) == 1:
-        predictions = predictions.reshape(1, -1)
-    metrics = defaultdict(list)
-    for i in xrange(predictions.shape[0]):
-        p = predictions[i]
-        risk = 1.0 * len(p[p != answers]) / len(answers)
-        tp = len(np.where(p[answers == 1] == 1)[0])
-        fp = len(np.where(p[answers == 0] == 1)[0])
-        tn = len(np.where(p[answers == 0] == 0)[0])
-        fn = len(np.where(p[answers == 1] == 0)[0])
-        precision = 1.0 * tp / (tp + fp) if (tp + fp) != 0 else -np.infty
-        sensitivity = recall = 1.0 * tp / (tp + fn) if (tp + fn) != 0 else -np.infty
-        specificity = 1.0 * tn / (fp + tn) if (fp + tn) != 0 else -np.infty
-        f1_score = 2.0 * precision * recall / (precision + recall) if (precision + recall) > 0.0 else -np.infty
-        metrics["risk"].append(risk)
-        metrics["tp"].append(tp)
-        metrics["fp"].append(fp)
-        metrics["tn"].append(tn)
-        metrics["fn"].append(fn)
-        metrics["precision"].append(precision)
-        metrics["sensitivity"].append(sensitivity)
-        metrics["recall"].append(recall)
-        metrics["specificity"].append(specificity)
-        metrics["f1_score"].append(f1_score)
-    return metrics
+from ...dataset.ds import KoverDataset
+from ..common.models import ConjunctionModel, DisjunctionModel
+from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
+from ..learners.scm import SetCoveringMachine
+from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints
+from ..experiments.metrics import _get_metrics
 
 
 def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progress_callback=None):
@@ -413,7 +387,7 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
 
-def learn(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection, n_cpu, random_seed,
+def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection, n_cpu, random_seed,
           bound_delta=None, bound_max_genome_size=None, progress_callback=None, warning_callback=None, error_callback=None):
     """
     parameter_selection: bound, cv, none (use first value of each if multiple)

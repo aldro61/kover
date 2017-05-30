@@ -52,7 +52,7 @@ class DecisionTreeClassifier(object):
 		self.class_importance = class_importance
 		
 		self.rule_importances = defaultdict(float)
-		self.model = CART_Model()
+		#self.model = CART_Model(class_tags=class_tags)
 		
 	def fit(self, rules, rule_classifications, example_idx, rule_blacklist=None,             
 			tiebreaker=None, level_callback=None, split_callback=None):
@@ -84,8 +84,8 @@ class DecisionTreeClassifier(object):
 		altered_priors = {c: 1.0 * importance * prior / denum for c, importance, prior in \
 									zip(n_total_class_examples.keys(), self.class_importance.values(), priors)}
 									
-		#del n_total_examples, priors, denum
 		del n_total_examples, priors
+		
 		# Criteria for node impurity and splitting
 		def _gini_impurity(n_class_examples, multiply_by_node_proba=False):
 			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
@@ -94,7 +94,6 @@ class DecisionTreeClassifier(object):
 			node_resubstitution_estimate = sum(p_class_node.values())
 			with np.errstate(divide='ignore', invalid='ignore'):
 				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
-			#del p_class_node
 
 			diversity_index = sum([p_class_given_node[i]*p_class_given_node[j] \
 									for i in p_class_given_node.keys() for j in p_class_given_node.keys() if i != j])
@@ -249,8 +248,8 @@ class DecisionTreeClassifier(object):
 			
 		logging.debug("Done building the tree.")
 		
-		# Save the model
-		self.model.add_decision_tree(root)
+		# Save the decision tree
+		self.decision_tree = root
 		
 		# Normalize the variable importances
 		logging.debug("Normalizing the variable importances.")
@@ -262,15 +261,15 @@ class DecisionTreeClassifier(object):
 	def predict(self, X):
 		if not self._is_fitted():
 			raise RuntimeError("The classifier must be fitted before predicting.")
-		return self.model.predict(X)
+		return self.decision_tree.predict(X)
 
 	def predict_proba(self, X):
 		if not self._is_fitted():
 			raise RuntimeError("The classifier must be fitted before predicting.")
-		return self.model.predict_proba(X)
+		return self.decision_tree.predict_proba(X)
 
 	def _is_fitted(self):
-		return self.model is not None
+		return self.decision_tree is not None
 		
 def _prune_tree(tree):
 	"""

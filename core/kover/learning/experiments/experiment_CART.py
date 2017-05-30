@@ -29,10 +29,12 @@ from math import ceil, exp, log as ln, pi, sqrt
 from multiprocessing import Pool, cpu_count
 from scipy.misc import comb
 
-from ..dataset.ds import KoverDataset
-from .learners.cart import DecisionTreeClassifier, _prune_tree
-from .common.rules import LazyKmerRuleList, KmerRuleClassifications
-from ..utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints
+from ...dataset.ds import KoverDataset
+from ..learners.cart import DecisionTreeClassifier, _prune_tree
+from ..common.models import CART_Model
+from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
+from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints
+from ..experiments.metrics import _get_metrics
 
 TIEBREAKER_RISK_BLOCK_SIZE = 100000
 
@@ -73,33 +75,6 @@ class BetweenDict(dict):
             return bool(self[key]) or True
         except KeyError:
             return False
-            
-def _get_metrics(predictions, answers):
-    if len(predictions.shape) == 1:
-        predictions = predictions.reshape(1, -1)
-    metrics = defaultdict(list)
-    for i in xrange(predictions.shape[0]):
-        p = predictions[i]
-        risk = 1.0 * len(p[p != answers]) / len(answers)
-        tp = len(np.where(p[answers == 1] == 1)[0])
-        fp = len(np.where(p[answers == 0] == 1)[0])
-        tn = len(np.where(p[answers == 0] == 0)[0])
-        fn = len(np.where(p[answers == 1] == 0)[0])
-        precision = 1.0 * tp / (tp + fp) if (tp + fp) != 0 else -np.infty
-        sensitivity = recall = 1.0 * tp / (tp + fn) if (tp + fn) != 0 else -np.infty
-        specificity = 1.0 * tn / (fp + tn) if (fp + tn) != 0 else -np.infty
-        f1_score = 2.0 * precision * recall / (precision + recall) if (precision + recall) > 0.0 else -np.infty
-        metrics["risk"].append(risk)
-        metrics["tp"].append(tp)
-        metrics["fp"].append(fp)
-        metrics["tn"].append(tn)
-        metrics["fn"].append(fn)
-        metrics["precision"].append(precision)
-        metrics["sensitivity"].append(sensitivity)
-        metrics["recall"].append(recall)
-        metrics["specificity"].append(specificity)
-        metrics["f1_score"].append(f1_score)
-    return metrics
     
 def _tiebreaker(best_score_idx, rule_risks):
     """
@@ -111,17 +86,17 @@ def _tiebreaker(best_score_idx, rule_risks):
     result = best_score_idx[tie_rule_risks == tie_rule_risks.min()]
     return result
     
-def _readdress_model(model, rule_new_idx_by_kmer_seq):
+def _readdress_tree(tree, rule_new_idx_by_kmer_seq):
     def _readdress(node, kmer_idx):
         if node.rule is not None:
             node.rule.kmer_index = kmer_idx[node.rule.kmer_sequence]
             _readdress(node.left_child, kmer_idx)
             _readdress(node.right_child, kmer_idx)
-    new_model = deepcopy(model)
-    _readdress(new_model, rule_new_idx_by_kmer_seq)
-    return new_model
+    new_tree = deepcopy(tree)
+    _readdress(new_tree, rule_new_idx_by_kmer_seq)
+    return new_tree
     
-def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progress_callback=None):
+def _predictions(decision_tree, kmer_matrix, train_example_idx, test_example_idx, progress_callback=None):
     """
     Makes predictions by loading only the columns of the kmer matrix that are targetted by the model.
     """
@@ -129,25 +104,25 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
     if progress_callback is None:
         progress_callback = lambda t, p: None
     progress_callback("Testing", 0.0)
-    if len(model.rules) > 0:
-        model_rules = model.rules
+    if len(decision_tree.rules) > 0:
+        model_rules = decision_tree.rules
         kmer_idx_by_rule = np.array([r.kmer_index for r in model_rules])
         kmer_sequence_by_rule = np.array([r.kmer_sequence for r in model_rules])
         sort_by_idx = np.argsort(kmer_idx_by_rule)
         kmer_idx_by_rule = kmer_idx_by_rule[sort_by_idx]
         kmer_sequence_by_rule = kmer_sequence_by_rule[sort_by_idx]
         readdressed_kmer_idx_by_rule = dict((s, i) for i, s in enumerate(kmer_sequence_by_rule))
-        readdressed_model = _readdress_model(model=model, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule)
+        readdressed_decision_tree = _readdress_tree(tree=decision_tree, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule)
         X = np.vstack((_unpack_binary_bytes_from_ints(kmer_matrix[:, idx]) for idx in kmer_idx_by_rule)).T
-        train_predictions = readdressed_model.predict(X[train_example_idx])
+        train_predictions = readdressed_decision_tree.predict(X[train_example_idx])
         progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
-        test_predictions = readdressed_model.predict(X[test_example_idx])
+        test_predictions = readdressed_decision_tree.predict(X[test_example_idx])
         progress_callback("Testing", 1.0)
     else:
         # The case where the model is just a leaf
-        train_predictions = model.predict(np.empty((len(train_example_idx), 1)))
+        train_predictions = decision_tree.predict(np.empty((len(train_example_idx), 1)))
         progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
-        test_predictions = model.predict(np.empty((len(test_example_idx), 1)))
+        test_predictions = decision_tree.predict(np.empty((len(test_example_idx), 1)))
         progress_callback("Testing", 1.0)
     return train_predictions, test_predictions
     
@@ -187,8 +162,7 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     split.train_genome_idx = split.train_genome_idx[...]
     split.test_genome_idx = split.test_genome_idx[...]
     nb_classes = dataset.phenotype_tags.shape[0]
-
-
+    
     # Load some dataset information into memory
     logging.debug("Loading dataset information into memory")
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
@@ -233,11 +207,11 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
                          split_callback=None)
 
     # Get the pruned master and cross-validation trees
-    master_alphas, master_pruned_trees = _prune_tree(master_predictor.model.decision_tree)
+    master_alphas, master_pruned_trees = _prune_tree(master_predictor.decision_tree)
     fold_alphas = []
     fold_pruned_trees = []
     for i in xrange(len(split.folds)):
-		alphas, trees = _prune_tree(fold_predictors[i].model.decision_tree)
+		alphas, trees = _prune_tree(fold_predictors[i].decision_tree)
 		fold_alphas.append(alphas)
 		fold_pruned_trees.append(trees)
 	
@@ -275,7 +249,7 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     # Return the best tree and its error estimate
     return hps, min_score, min_score_tree
     
-def learn(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance, no_tiebreaker,
+def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance, no_tiebreaker,
           parameter_selection, n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
     """
 
@@ -318,6 +292,7 @@ def learn(dataset_file, split_name, criterion, max_depth, min_samples_split, cla
     split.train_genome_idx = split.train_genome_idx[...]
     split.test_genome_idx = split.test_genome_idx[...]
     example_labels = dataset.phenotype.metadata[...]
+    phenotype_tags = dataset.phenotype_tags
 
     # Using the best hyperparameters, compute predictions and metrics
     train_predictions, test_predictions = _predictions(best_tree, dataset.kmer_matrix, split.train_genome_idx,
@@ -339,6 +314,9 @@ def learn(dataset_file, split_name, criterion, max_depth, min_samples_split, cla
     if len(split.test_genome_idx) > 0:
         classifications["test_correct"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions == test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
         classifications["test_errors"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions != test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
-
-    return best_hps, best_score, train_metrics, test_metrics, best_tree, dict((str(r), 1.0) for r in best_tree.rules), classifications
+    
+    best_model = CART_Model(class_tags=phenotype_tags)
+    best_model.add_decision_tree(best_tree)
+    
+    return best_hps, best_score, train_metrics, test_metrics, best_model, dict((str(r), 1.0) for r in best_tree.rules), classifications
     # TODO: missing model_equivalent_rules, rule importances

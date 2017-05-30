@@ -41,9 +41,10 @@ class BaseModel(object):
         return self._to_string()
         
 class CART_Model(BaseModel):
-    def __init__(self):
+    def __init__(self, class_tags=None):
         super(CART_Model, self).__init__()
         self.decision_tree = None
+        self.class_tags = class_tags
         
     def add_decision_tree(self, tree):
         self.decision_tree = tree
@@ -63,8 +64,28 @@ class CART_Model(BaseModel):
     def learner(self):
         return cart
         
-    def _to_string(self):
-        return str(self.decision_tree)
+    def _to_string(self, node=None,depth=0):
+        if node is None:
+            if self.decision_tree is None:
+                print("No tree has been added to the model")
+            node = self.decision_tree
+            
+        ret = ""
+        if node.right_child != None:
+            # Print right branch
+            ret += self._to_string(node=node.right_child, depth=depth + 1)
+
+            # Print own value
+            ret += "\n" + ("    "*depth+ "   ") + str("/")
+            ret += "\n" + ("    "*depth) + str(node.rule)
+            ret += "\n" + ("    "*depth + "   ") + str("\\")
+
+            # Print left_child branch
+            ret += self._to_string(node=node.left_child, depth=depth + 1)
+        else:
+			ret += "\n" + ("    "*depth) + str(self.class_tags[node.class_prediction])
+
+        return ret
         
     def __len__(self):
         return len(self.decision_tree)
