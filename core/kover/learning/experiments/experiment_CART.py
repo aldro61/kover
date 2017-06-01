@@ -249,8 +249,8 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     # Return the best tree and its error estimate
     return hps, min_score, min_score_tree
     
-def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance, no_tiebreaker,
-          parameter_selection, n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
+def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance,
+                n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
     """
 
 
