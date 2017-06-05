@@ -250,7 +250,7 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     return hps, min_score, min_score_tree
     
 def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance,
-                n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
+                parameter_selection, n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
     """
 
 
@@ -265,6 +265,13 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     class_importance = np.unique(class_importance)
     max_depth = np.unique(max_depth)
     min_samples_split = np.unique(min_samples_split)
+    
+    # Case no parameter selection => using the first value provided for each parameter
+    if parameter_selection == "none":
+        criterion = [criterion[0]]
+        class_importance = [class_importance[0]]
+        max_depth = [max_depth[0]]
+        min_samples_split = [min_samples_split[0]]
 
     # Find the best combination of hyperparameters
     pool = Pool(n_cpu)

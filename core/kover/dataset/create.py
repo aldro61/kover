@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
@@ -67,7 +68,15 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 	"""
     logging.debug("Parsing metadata.")
     md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
-    md_unique_labels, indices = np.unique(md_genome_labels, return_inverse=True)
+    md_unique_labels, indexes, indices = np.unique(md_genome_labels, return_index=True, return_inverse=True)
+    
+    # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
+    if not(len(md_unique_labels) == 2 and '0' in md_unique_labels and '1' in md_unique_labels):
+        # Keeping order of appearance
+        md_unique_labels = [md_genome_labels[index] for index in sorted(indexes)]
+        label_to_indice = {md_unique_labels[l]:l for l in range(len(md_unique_labels))}
+        indices = np.array([label_to_indice[l] for l in md_genome_labels])
+
 
     if len(md_unique_labels) < 2:
         error_callback(Exception("The dataset must contain at least 2 different phenotypes"))
@@ -82,7 +91,7 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
         classification = "multiclass"
     logging.debug("The dataset problem type is " + classification + " classification.")
     
-    # Converting lables to numerical ascending values
+    # Converting labels to numerical ascending values
     numerical_labels = np.arange(0, len(md_unique_labels))
     md_genome_labels = numerical_labels[indices]
     

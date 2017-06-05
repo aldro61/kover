@@ -688,6 +688,8 @@ class KoverLearningTool(object):
                             'as a proportion of the total number of genomes. (default: 0.)', default=0., required=False)
         parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.',
                             default=None, required=False)
+        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', 
+                            default='cv', required=False)
         parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
                                                       'algorithm and that your storage device will not be a bottleneck (simultaneous reading).',
@@ -697,7 +699,6 @@ class KoverLearningTool(object):
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
-        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', default='cv', required=False)
         
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -833,6 +834,7 @@ class KoverLearningTool(object):
                                 max_depth=args.max_depth,
                                 min_samples_split=args.min_samples_split,
                                 class_importance=class_importance,
+                                parameter_selection=args.hp_choice,
                                 n_cpu=args.n_cpu,
                                 progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
