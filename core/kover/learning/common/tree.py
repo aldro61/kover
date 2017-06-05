@@ -85,14 +85,14 @@ class TreeNode(object):
 		return self._get_tree_leaves()
 	
 	def __iter__(self):         
-		for r in _get_tree_rules():             
+		for r in self._get_tree_rules():             
 			yield r
 	
 	def __len__(self):         
 		"""         
 		Returns the number of rules in the tree         
 		"""         
-		return len(_get_tree_rules(self))
+		return len(self._get_tree_rules())
 		
 	def __str__(self, depth=0):
 		ret = ""

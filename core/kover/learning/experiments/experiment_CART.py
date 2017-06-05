@@ -34,7 +34,7 @@ from ..learners.cart import DecisionTreeClassifier, _prune_tree
 from ..common.models import CART_Model
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
 from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints
-from ..experiments.metrics import _get_metrics
+from ..experiments.metrics import _get_binary_metrics, _get_multiclass_metrics
 
 TIEBREAKER_RISK_BLOCK_SIZE = 100000
 
@@ -223,7 +223,7 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
         fold_test_risks = []
         bro = BetweenDict()
         for j, t in enumerate(fold_pruned_trees[i]):
-            fold_test_risk = _get_metrics(_predictions(t, dataset.kmer_matrix, [], fold_test_example_idx)[1],
+            fold_test_risk = _get_binary_metrics(_predictions(t, dataset.kmer_matrix, [], fold_test_example_idx)[1],
                                                 fold_example_labels)["risk"][0]
             fold_test_risks.append(fold_test_risk)
             if j < len(fold_alphas[i]) - 1:
@@ -300,10 +300,16 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
 
     train_answers = example_labels[split.train_genome_idx]
     test_answers = example_labels[split.test_genome_idx]
-
-    train_metrics = _get_metrics(train_predictions, train_answers)
+    
+    if dataset.classification == "binary":
+        train_metrics = _get_binary_metrics(train_predictions, train_answers)
+    else:
+        train_metrics = _get_multiclass_metrics(train_predictions, train_answers, len(phenotype_tags))
     if len(split.test_genome_idx) > 0:
-        test_metrics = _get_metrics(test_predictions, test_answers)
+        if dataset.classification == "binary":
+            test_metrics = _get_binary_metrics(test_predictions, test_answers)
+        else:
+            test_metrics = _get_multiclass_metrics(test_predictions, test_answers, len(phenotype_tags))
     else:
         test_metrics = None
 

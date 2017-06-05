@@ -33,7 +33,7 @@ from ..common.models import ConjunctionModel, DisjunctionModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
 from ..learners.scm import SetCoveringMachine
 from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints
-from ..experiments.metrics import _get_metrics
+from ..experiments.metrics import _get_binary_metrics
 
 
 def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progress_callback=None):
@@ -132,7 +132,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
                       tiebreaker=tiebreaker,
                       iteration_callback=iteration_callback)
         test_predictions_by_model_length = np.array(_duplicate_last_element(test_predictions_by_model_length, max_rules))
-        fold_score_by_model_length[i] = _get_metrics(test_predictions_by_model_length,
+        fold_score_by_model_length[i] = _get_binary_metrics(test_predictions_by_model_length,
                                                        dataset.phenotype.metadata[test_example_idx])["risk"]
 
     score_by_model_length = np.mean(fold_score_by_model_length, axis=0)
@@ -458,7 +458,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
     train_predictions, test_predictions = _predictions(model, dataset.kmer_matrix, train_example_idx,
                                                        test_example_idx, progress_callback)
     train_answers = dataset.phenotype.metadata[train_example_idx]
-    train_metrics = _get_metrics(train_predictions, train_answers)
+    train_metrics = _get_binary_metrics(train_predictions, train_answers)
 
     # No need to recompute the bound if bound selection was used
     if parameter_selection == "bound":
@@ -471,7 +471,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
     # Test metrics are computed only if there is a testing set
     if len(test_example_idx) > 0:
         test_answers = dataset.phenotype.metadata[test_example_idx]
-        test_metrics = _get_metrics(test_predictions, test_answers)
+        test_metrics = _get_binary_metrics(test_predictions, test_answers)
     else:
         test_metrics = None
 

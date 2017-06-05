@@ -489,6 +489,21 @@ class KoverLearningTool(object):
         # Input validation
         dataset = KoverDataset(args.dataset)
         dataset_kmer_count = dataset.kmer_count
+        
+        # Check if the dataset is compatible
+        tags = None
+        try:
+            classification = dataset.classification
+            tags = True
+        except:
+            tags = False
+        
+        if tags:
+            phenotype_tags = dataset.phenotype_tags[...]
+            if classification != "binary":
+                    print "Error: The SCM cannot learn a multi-class classifier"
+                    exit()
+                
         # - Check that the split exists
         try:
             dataset.get_split(args.split)
@@ -682,6 +697,7 @@ class KoverLearningTool(object):
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', default='cv', required=False)
         
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -701,21 +717,33 @@ class KoverLearningTool(object):
         from itertools import permutations, product
 
         # Input validation
-        dataset = KoverDataset(args.dataset)
+        pre_dataset = KoverDataset(args.dataset)
+        
+        # Check if the dataset is compatible
+        try:
+            pre_dataset.classification
+        except:
+            print "Error: the dataset is not compatible with tree learning."
+            exit()
+            
         # - Check that the split exists
         try:
-            dataset.get_split(args.split)
+            pre_dataset.get_split(args.split)
         except:
             print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
             exit()
+            
+            
         # - Must have at least 2 folds to perform cross-validation
-        if len(dataset.get_split(args.split).folds) < 2:
+        if args.hp_choice == "cv" and len(pre_dataset.get_split(args.split).folds) < 2:
             print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
                   "Use 'kover dataset split' to create folds."
             exit()
         
         
-        phenotype_tags = dataset.phenotype_tags[...]
+        phenotype_tags = pre_dataset.phenotype_tags[...]
+        classification = pre_dataset.classification
+
         if args.class_importance:
             def isfloat(value):
                 try:
@@ -775,7 +803,7 @@ class KoverLearningTool(object):
         # Every class have an importance of 1.0
         else:
             class_importance = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
-        del dataset
+        del pre_dataset
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
@@ -813,10 +841,34 @@ class KoverLearningTool(object):
             progress_vars["pbar"].finish()
 
         # Write a report (user friendly)
-        metric_aliases = [("risk", "Error Rate"), ("sensitivity", "Sensitivity"), ("specificity", "Specificity"),
-                          ("precision", "Precision"), ("recall", "Recall"), ("f1_score", "F1 Score"),
-                          ("tp", "True Positives"), ("tn", "True Negatives"),
-                          ("fp", "False Positives"), ("fn", "False Negatives")]
+        if classification == "binary":
+            metric_aliases = [("risk", "Error Rate"), ("sensitivity", "Sensitivity"), ("specificity", "Specificity"),
+                              ("precision", "Precision"), ("recall", "Recall"), ("f1_score", "F1 Score"),
+                              ("tp", "True Positives"), ("tn", "True Negatives"),
+                              ("fp", "False Positives"), ("fn", "False Negatives")]
+        elif classification == "multiclass":
+            metric_aliases = [("risk", "Error rate"), ("confusion_matrix", "Confusion Matrix")]
+            
+        def confusion_matrix2str(confusion_matrix):
+            matrix_str = ""
+            size_header = len(max(phenotype_tags)) + 5
+            col_width = 5
+            horizontal_bar = "+-" + "-"*size_header + "+" + "+".join(["-"*col_width for c in range(len(phenotype_tags))]) + "+\n"
+
+            matrix_str += horizontal_bar
+            matrix_str += "| " + " "*size_header + "|"
+            matrix_str += "|".join([str(c).center(col_width) for c in range(len(phenotype_tags))])
+            matrix_str += "|\n"
+            matrix_str += horizontal_bar.replace('-', '=')
+            for c in range(len(phenotype_tags)):
+                matrix_str += "| " + phenotype_tags[c].ljust(size_header - 5) + ("(" + str(c) + ")").center(5) + "|"
+                matrix_str += "|".join([str(score).center(col_width) for score in confusion_matrix[c]])  + "|\n"
+                matrix_str += horizontal_bar
+            
+            return matrix_str
+            
+            
+            
         dataset = KoverDataset(args.dataset)
         report = ""
         report += "Kover Learning Report\n" + "="*21 + "\n"
@@ -832,31 +884,43 @@ class KoverLearningTool(object):
         report += "Dataset UUID: %s\n" % dataset.uuid
         report += "Phenotype: %s\n" % dataset.phenotype.name.title()
         report += "Split: %s\n" % args.split
-        report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).train_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 1).sum(), (dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == 0).sum())
-        report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (len(dataset.get_split(args.split).test_genome_idx), (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 1).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0, (dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == 0).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0)
+        report += "Number of genomes used for training: %d " % (len(dataset.get_split(args.split).train_genome_idx))
+        nb_genome_training = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == c).sum() for c in range(len(phenotype_tags))}
+        training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
+        report += "(%s)\n" % ", ".join(training_groups)
+        
+        report += "Number of genomes used for testing: %d " % (len(dataset.get_split(args.split).test_genome_idx))
+        nb_genome_testing = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == c).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
+        testing_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_testing[c]) for c in range(len(phenotype_tags))]
+        report += "(%s)\n" % ", ".join(testing_groups)
+        
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
             report += "Selection strategy: %d-fold cross-validation (score = %.5f)\n" % (len(dataset.get_split(args.split).folds), best_hp_score)
-        elif args.hp_choice == "bound":
-            report += "Selection strategy: bound selection (score = %.5f)\n" % best_hp_score
         else:
             report += "Selection strategy: No selection\n"
         report += "Criterion: %s\n" % best_hp["criterion"]
-        report += "Class importance ratio: %.3f\n" % best_hp["class_importance_ratio"]
+        report += "Class importance: %s\n" % ", ".join(["class %s: %.3f" % (phenotype_tags[c], best_hp["class_importance"][c]) for c in range(len(phenotype_tags))])
         report += "Maximum tree depth: %d\n" % best_hp["max_depth"]
-        report += "Minimum samples to split a node (proportion): %.3f" % best_hp["min_samples_split"]
+        report += "Minimum samples to split a node (proportion): %.3f\n" % best_hp["min_samples_split"]
         report += "\n"
         # Print the training set metrics
         report += "Metrics (training data)\n" + "-"*23 + "\n"
         for key, alias in metric_aliases:
-            report += "%s: %s\n" % (str(alias), str(round(train_metrics[key][0], 5)))
+            if key == "confusion_matrix":
+                report += "%s :\n%s\n" % (str(alias), confusion_matrix2str(train_metrics[key][0]))
+            else:
+                report += "%s: %s\n" % (str(alias), str(round(train_metrics[key][0], 5)))
         report += "\n"
         # Print the testing set metrics
         if test_metrics is not None:
             report += "Metrics (testing data)\n" + "-"*22 + "\n"
             for key, alias in metric_aliases:
-                report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
+                if key == "confusion_matrix":
+                    report += "%s :\n%s\n" % (str(alias), confusion_matrix2str(test_metrics[key][0]))
+                else:
+                    report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
         report += "Model (%d rules):\n" % len(model)
         report += str(model) + "\n"
@@ -883,8 +947,8 @@ class KoverLearningTool(object):
                    "metrics": {"train": train_metrics,
                                "test": test_metrics},
                    "model": {"n_rules": len(model),
-                             "rules": [str(r) for r in model],
-                             "rule_importances": [rule_importances[str(r)] for r in model]},
+                             "rules": [str(r) for r in model.decision_tree],
+                             "rule_importances": [rule_importances[str(r)] for r in model.decision_tree]},
                    "classifications": classifications,
                    "running_time": running_time.seconds}
         with open(join(args.output_dir, 'results.json'), 'w') as f:
@@ -898,7 +962,7 @@ class KoverLearningTool(object):
 
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
-            for i, rule in enumerate(model):
+            for i, rule in enumerate(model.decision_tree):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, rule_importances[str(rule)], rule.kmer_sequence))
         #TODO: save equivalent rules
 
