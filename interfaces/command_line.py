@@ -265,6 +265,8 @@ The two available data sources are:
         parser.add_argument('--phenotype-metadata',
                             help='Prints the path of the file from which the phenotypic metadata'
                                  ' was acquired.', action='store_true')
+        parser.add_argument('--phenotype-tags', help='Prints the phenotype tags associated to the dataset', 
+                            action='store_true')
         parser.add_argument('--splits',
                             help='Prints the lists of splits of the dataset that are available for learning.',
                             action='store_true')
@@ -285,6 +287,7 @@ The two available data sources are:
 
         dataset = args.dataset
         dataset = KoverDataset(dataset)
+        #TODO check dataset version for new info types
         if args.genome_type or args.all:
             print "Genome type:", dataset.genome_source_type
             print
@@ -319,6 +322,9 @@ The two available data sources are:
                 print "Phenotype metadata source:", dataset.phenotype.metadata_source
             else:
                 print "No phenotype metadata."
+            print
+        if args.phenotype_tags or args.all:
+            print "Phenotype tags: ", ", ".join(dataset.phenotype_tags[...])
             print
         if args.compression or args.all:
             print "Compression:", dataset.compression
