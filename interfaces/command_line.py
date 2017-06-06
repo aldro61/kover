@@ -686,8 +686,8 @@ class KoverLearningTool(object):
         parser.add_argument('--min-samples-split', type=float, nargs='+', 
                             help='The minimum number of genomes that a tree node must contain to be split, '
                             'as a proportion of the total number of genomes. (default: 0.)', default=0., required=False)
-        parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.',
-                            default=None, required=False)
+        parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.'
+                            'See documentation for examples.',default=None, required=False)
         parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', 
                             default='cv', required=False)
         parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
@@ -746,6 +746,7 @@ class KoverLearningTool(object):
         classification = pre_dataset.classification
 
         if args.class_importance:
+            
             def isfloat(value):
                 try:
                     float(value)
@@ -757,29 +758,36 @@ class KoverLearningTool(object):
                 if all([isfloat(value) for value in list_values]):
                     if all([float(value) >= 0.0 for value in list_values]):
                         return [float(value) for value in list_values]
-                print("Error: The class importance values are wrong")
+                print("Error: The class importance values are not all positive floats")
                 exit()
                     
             class_importance = []
             
             # Specific grid for each class
             if args.class_importance[0] in phenotype_tags:
-                print("By class")
                 class_positions = {}
                 class_importance_grid = {}
+                
+                # Find class names position
                 for c, phenotype in enumerate(phenotype_tags):
                     try:
                         class_positions[c] = args.class_importance.index(phenotype)
                     except ValueError:
                         class_importance_grid[c] = [1.0]
+                        
+                # Sort in order of appearance
                 sorted_class_apparitions = sorted(class_positions, key=class_positions.get)
                 start = sorted_class_apparitions[0]
+                
+                # Parse the importance for each class
                 for end in sorted_class_apparitions[1:]:
                     importance_list = str2importance(args.class_importance[class_positions[start]+1:class_positions[end]])
                     class_importance_grid[start] = importance_list
                     start=end
                 importance_list = str2importance(args.class_importance[class_positions[start]+1:])
                 class_importance_grid[start] = importance_list
+                
+                # Create the importance grid
                 class_importance_grid = [class_importance_grid[key] for key in sorted(class_importance_grid.keys())]
                 importance_grid = product(*class_importance_grid)
                 for grid in importance_grid:
@@ -787,18 +795,21 @@ class KoverLearningTool(object):
             
             # Importance overall grid
             elif isfloat(args.class_importance[0]):
-
+                
+                # Parse the importance list
                 importance_list = str2importance(args.class_importance)
                 if (len(importance_list) != phenotype_tags.shape[0]):
                     print("Error: The importance grid must have the dimension as the number of classes")
                     exit()
+                    
+                # Create the importance grid
                 importance_grid = list(permutations(importance_list, len(importance_list)))
                 for grid in importance_grid:
                     class_importance.append({c:importance for c, importance in enumerate(grid)})
             
             # Undefined syntax
             else:
-                print("Error: The class importance syntax is wrong")
+                print("Error: The class importance syntax is not recognized")
                 exit()
                 
         # Every class have an importance of 1.0
@@ -850,7 +861,8 @@ class KoverLearningTool(object):
                               ("fp", "False Positives"), ("fn", "False Negatives")]
         elif classification == "multiclass":
             metric_aliases = [("risk", "Error rate"), ("confusion_matrix", "Confusion Matrix")]
-            
+        
+        # Convert confusion matrix to a nice text output
         def confusion_matrix2str(confusion_matrix):
             matrix_str = ""
             size_header = len(max(phenotype_tags)) + 5
@@ -869,8 +881,6 @@ class KoverLearningTool(object):
             
             return matrix_str
             
-            
-            
         dataset = KoverDataset(args.dataset)
         report = ""
         report += "Kover Learning Report\n" + "="*21 + "\n"
@@ -886,13 +896,16 @@ class KoverLearningTool(object):
         report += "Dataset UUID: %s\n" % dataset.uuid
         report += "Phenotype: %s\n" % dataset.phenotype.name.title()
         report += "Split: %s\n" % args.split
+        
         report += "Number of genomes used for training: %d " % (len(dataset.get_split(args.split).train_genome_idx))
-        nb_genome_training = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == c).sum() for c in range(len(phenotype_tags))}
+        nb_genome_training = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == c).sum()\
+                                for c in range(len(phenotype_tags))}
         training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(training_groups)
         
         report += "Number of genomes used for testing: %d " % (len(dataset.get_split(args.split).test_genome_idx))
-        nb_genome_testing = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == c).sum() if len(dataset.get_split(args.split).test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
+        nb_genome_testing = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == c).sum() if \
+                            len(dataset.get_split(args.split).test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
         testing_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_testing[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(testing_groups)
         
