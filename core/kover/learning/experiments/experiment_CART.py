@@ -274,11 +274,18 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
         min_samples_split = [min_samples_split[0]]
 
     # Find the best combination of hyperparameters
+    n_hp_combinations = len(criterion) * len(class_importance) * len(max_depth) * len(min_samples_split)
+    logging.debug("There are %d hyperparameter combinations to try." % n_hp_combinations)
+
+    logging.debug("Using %d CPUs." % n_cpu)
     pool = Pool(n_cpu)
     _hp_eval_func = partial(_learn_pruned_tree, dataset_file=dataset_file, split_name=split_name)
     best_hps = None
     best_score = np.infty
     best_tree = None
+    
+    n_completed = 0.0
+    progress_callback("Cross-validation", 0.0)
     for hps, score, tree in pool.imap_unordered(_hp_eval_func,
                                                 ({"criterion": hps[0],
                                                   "class_importance": hps[1],
@@ -287,6 +294,8 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
                                                   for hps in product(criterion, class_importance, max_depth,
                                                                      min_samples_split))):
         # TODO: Add more logic, like prefering balanced class importances, etc.
+        n_completed += 1
+        progress_callback("Cross-validation", n_completed / n_hp_combinations)
         if score < best_score:
             best_hps = hps
             best_score = score
