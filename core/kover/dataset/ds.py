@@ -28,9 +28,9 @@ class KoverDataset(object):
 		self.dataset_open = partial(_hdf5_open_no_chunk_cache, file)
 	
 	@property
-	def classification(self):
+	def classification_type(self):
 		dataset = self.dataset_open()
-		return dataset.attrs["classification"]
+		return dataset.attrs["classification_type"]
 		
 	@property
 	def compression(self):
@@ -86,18 +86,14 @@ class KoverDataset(object):
 	def kmer_sequences(self):
 		dataset = self.dataset_open()
 		return dataset["kmer_sequences"]
-		
-	@property
-	def phenotype_tags(self):
-		dataset = self.dataset_open()
-		return dataset["phenotype_tags"]
 
 	@property
 	def phenotype(self):
 		dataset = self.dataset_open()
-		return KoverDatasetPhenotype(dataset.attrs["phenotype_name"],
-									 dataset["phenotype"],
-									 dataset.attrs["phenotype_metadata_source"])
+		return KoverDatasetPhenotype(description=dataset.attrs["phenotype_description"],
+									 tags=dataset["phenotype_tags"]
+									 metadata=dataset["phenotype"],
+									 metadata_source=dataset.attrs["phenotype_metadata_source"])
 
 	@property
 	def splits(self):
@@ -135,8 +131,9 @@ class KoverDataset(object):
 								 split.attrs["random_seed"])
 
 class KoverDatasetPhenotype(object):
-	def __init__(self, name, metadata, metadata_source):
-		self.name = name
+	def __init__(self, description, tags, metadata, metadata_source):
+		self.description = description
+		self.tags = tags
 		self.metadata = metadata
 		self.metadata_source = metadata_source
 

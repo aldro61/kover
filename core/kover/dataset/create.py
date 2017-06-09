@@ -68,12 +68,13 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 	"""
     logging.debug("Parsing metadata.")
     md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
-    md_unique_labels, indexes, indices = np.unique(md_genome_labels, return_index=True, return_inverse=True)
+    md_unique_labels, label_first_apperance_indices, indices = np.unique(md_genome_labels, return_index=True,\
+                                                                            return_inverse=True)
     
     # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
     if not(len(md_unique_labels) == 2 and '0' in md_unique_labels and '1' in md_unique_labels):
         # Keeping order of appearance
-        md_unique_labels = [md_genome_labels[index] for index in sorted(indexes)]
+        md_unique_labels = [md_genome_labels[idx] for idx in sorted(label_first_apperance_indices)]
         label_to_indice = {md_unique_labels[l]:l for l in range(len(md_unique_labels))}
         indices = np.array([label_to_indice[l] for l in md_genome_labels])
 
@@ -85,11 +86,11 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
         error_callback(Exception("The dataset can contain at most 255 different phenotypes"))
         
     elif len(md_unique_labels) == 2:
-        classification = "binary"
+        classification_type = "binary"
         
     else:
-        classification = "multiclass"
-    logging.debug("The dataset problem type is " + classification + " classification.")
+        classification_type = "multiclass"
+    logging.debug("The dataset problem type is " + classification_type + " classification.")
     
     # Converting labels to numerical ascending values
     numerical_labels = np.arange(0, len(md_unique_labels))
@@ -114,10 +115,10 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
         *((md_genome_ids[i], md_genome_labels[i]) for i in xrange(len(md_genome_ids)) if
           md_genome_ids[i] in matrix_genome_ids))
 
-    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), md_unique_labels, classification
+    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), md_unique_labels, classification_type
 
 
-def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzip, warning_callback=None,
+def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_path, gzip, warning_callback=None,
              error_callback=None, progress_callback=None):
     def get_kmer_length(tsv_path):
         with open(tsv_path, "r") as f:
@@ -148,9 +149,9 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     if progress_callback is None:
         progress_callback = lambda t, p: None
 
-    if (phenotype_name is None and phenotype_metadata_path is not None) or (
-                    phenotype_name is not None and phenotype_metadata_path is None):
-        raise ValueError("If a phenotype is specified, it must have a name and a metadata file.")
+    if (phenotype_description is None and phenotype_metadata_path is not None) or (
+                    phenotype_description is not None and phenotype_metadata_path is None):
+        raise ValueError("If a phenotype is specified, it must have a description and a metadata file.")
 
     kmer_len = get_kmer_length(tsv_path)
     kmer_count = get_kmer_count(tsv_path)
@@ -166,7 +167,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     h5py_file.attrs["uuid"] = str(uuid1())
     h5py_file.attrs["genome_source_type"] = "tsv"
     h5py_file.attrs["genomic_data"] = tsv_path
-    h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
+    h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
     h5py_file.attrs[
         "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
@@ -180,9 +181,14 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
         error_callback(Exception("The genomic data contains genomes with the same identifier."))
 
     # Extract/write the metadata
-    if phenotype_name is not None:
-        genome_ids, labels,labels_tags, classification = _parse_metadata(phenotype_metadata_path, genome_ids, warning_callback, error_callback)
-        h5py_file.attrs["classification"] = classification
+    if phenotype_description is not None:
+        genome_ids, labels,\
+        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
+                                                           matrix_genome_ids=genome_ids, 
+                                                           warning_callback=warning_callback, 
+                                                           error_callback=error_callback)
+                                                           
+        h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
         sorter = np.argsort(labels)
@@ -190,7 +196,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
         labels = labels[sorter]
         logging.debug("Creating the phenotype metadata dataset.")
         phenotype = h5py_file.create_dataset("phenotype", data=labels, dtype=PHENOTYPE_LABEL_DTYPE)
-        phenotype.attrs["name"] = phenotype_name
+        phenotype.attrs["description"] = phenotype_description
         del phenotype, labels
 
     # Write genome ids
@@ -271,7 +277,7 @@ def from_tsv(tsv_path, output_path, phenotype_name, phenotype_metadata_path, gzi
     logging.debug("Dataset creation completed.")
 
 
-def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phenotype_name, phenotype_metadata_path,
+def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phenotype_description, phenotype_metadata_path,
                  gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
                  error_callback=None):
     compression = "gzip" if gzip > 0 else None
@@ -290,9 +296,9 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     if not exists(temp_dir):
         mkdir(temp_dir)
 
-    if (phenotype_name is None and phenotype_metadata_path is not None) or (
-                    phenotype_name is not None and phenotype_metadata_path is None):
-        error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
+    if (phenotype_description is None and phenotype_metadata_path is not None) or (
+                    phenotype_description is not None and phenotype_metadata_path is None):
+        error_callback(ValueError("If a phenotype is specified, it must have a description and a metadata file."))
 
     # Find the contig file for each genome and verify that it exists
     contig_file_by_genome_id = dict(l.split() for l in open(contig_list_path, "r"))
@@ -309,17 +315,21 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     h5py_file.attrs["uuid"] = str(uuid1())
     h5py_file.attrs["genome_source_type"] = "contigs"
     h5py_file.attrs["genomic_data"] = contig_list_path
-    h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
+    h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
     h5py_file.attrs[
         "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
     h5py_file.attrs["filter"] = filter_singleton
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Extract/write the metadata
-    if phenotype_name is not None:
-        genome_ids, labels, labels_tags, classification = _parse_metadata(phenotype_metadata_path, contig_file_by_genome_id.keys(), warning_callback,
-                                             error_callback)
-        h5py_file.attrs["classification"] = classification
+    if phenotype_description is not None:
+        genome_ids, labels,\
+        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
+                                                           matrix_genome_ids=contig_file_by_genome_id.keys(), 
+                                                           warning_callback=warning_callback, 
+                                                           error_callback=error_callback)
+
+        h5py_file.attrs["classification_type"] = classification_type
         
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
@@ -328,7 +338,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
         labels = labels[sorter]
         logging.debug("Creating the phenotype metadata dataset.")
         phenotype = h5py_file.create_dataset("phenotype", data=labels, dtype=PHENOTYPE_LABEL_DTYPE)
-        phenotype.attrs["name"] = phenotype_name
+        phenotype.attrs["description"] = phenotype_description
         del phenotype, labels
 
     # Write genome ids
@@ -388,7 +398,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     logging.debug("Dataset creation completed.")
 
 
-def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_name,
+def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_description,
                phenotype_metadata_path, gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
                  error_callback=None):
     supported_extensions = ['.fastq','.fastq.gz']
@@ -408,9 +418,9 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     if not exists(temp_dir):
         mkdir(temp_dir)
 
-    if (phenotype_name is None and phenotype_metadata_path is not None) or (
-                    phenotype_name is not None and phenotype_metadata_path is None):
-        error_callback(ValueError("If a phenotype is specified, it must have a name and a metadata file."))
+    if (phenotype_description is None and phenotype_metadata_path is not None) or (
+                    phenotype_description is not None and phenotype_metadata_path is None):
+        error_callback(ValueError("If a phenotype is specified, it must have a description and a metadata file."))
 
     # Find the read folder for each genome and verify that it exists
     reads_folder_by_genome_id = dict(l.split() for l in open(reads_folders_list_path, "r"))
@@ -427,17 +437,21 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     h5py_file.attrs["uuid"] = str(uuid1())
     h5py_file.attrs["genome_source_type"] = "reads"
     h5py_file.attrs["genomic_data"] = reads_folders_list_path
-    h5py_file.attrs["phenotype_name"] = phenotype_name if phenotype_name is not None else "NA"
+    h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
     h5py_file.attrs[
         "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
     h5py_file.attrs["filter"] = filter_singleton
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Extract/write the metadata
-    if phenotype_name is not None:
-        genome_ids, labels, labels_tags, classification = _parse_metadata(phenotype_metadata_path, reads_folder_by_genome_id.keys(), warning_callback,
-                                             error_callback)
-        h5py_file.attrs["classification"] = classification
+    if phenotype_description is not None:
+        genome_ids, labels,\
+        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
+                                                           matrix_genome_ids=reads_folder_by_genome_id.keys(), 
+                                                           warning_callback=warning_callback, 
+                                                           error_callback=error_callback)
+   
+        h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
         sorter = np.argsort(labels)
@@ -445,7 +459,7 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
         labels = labels[sorter]
         logging.debug("Creating the phenotype metadata dataset.")
         phenotype = h5py_file.create_dataset("phenotype", data=labels, dtype=PHENOTYPE_LABEL_DTYPE)
-        phenotype.attrs["name"] = phenotype_name
+        phenotype.attrs["description"] = phenotype_description
         del phenotype, labels
 
     # Write genome ids

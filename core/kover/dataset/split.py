@@ -47,32 +47,39 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
     idx_by_genome_id = dict(zip(dataset.genome_identifiers[...], range(dataset.genome_count)))
 
     # Validate that the genome identifiers refer to genomes in the dataset
-    not_in_ds = []
-    train_ids = (open(train_ids_file, 'r').read()).split('\n')
-    train_ids = [i for i in train_ids if i]
-    for id in train_ids:
-        if id not in idx_by_genome_id:
-            not_in_ds.append(id)
-    if len(not_in_ds) > 0:
-        error_callback(Exception("The training genome identifiers contain IDs that are not in the dataset: %s" %
-                                 ", ".join(not_in_ds)))
-    not_in_ds = []
-    test_ids = (open(test_ids_file, 'r').read()).split('\n')
-    test_ids = [i for i in test_ids if i]
-    for id in test_ids:
-        if id not in idx_by_genome_id:
-            not_in_ds.append(id)
-    if len(not_in_ds) > 0:
-        error_callback(Exception("The testing genome identifiers contain IDs that are not in the dataset: %s" %
-                                 ", ".join(not_in_ds)))
+    def _parse_ids(ids_file, learning_step):
+        ids_not_in_ds = []
+        ids = (open(ids_file, 'r').read()).split('\n')
+        ids = [i.strip() for i in train_ids if i]
+        for id in ids:
+            if id not in idx_by_genome_id:
+                ids_not_in_ds.append(id)
+        if len(ids_not_in_ds) > 0:
+            error_callback(Exception("The %s genome identifiers contain IDs that are not in the dataset: %s" %
+                                     (learning_sep, ", ".join(idsnot_in_ds))))
+    
+    # Parse and validate training and testing ids
+    train_ids = _parse_ids(ids_file=train_ids_file,
+                             learning_step="training")
+                             
+    test_ids = _parse_ids(ids_file=test_ids_file,
+                             learning_step="testing")
 
     # Get the idx of the genome ids
     train_idx = [idx_by_genome_id[id] for id in train_ids]
     test_idx = [idx_by_genome_id[id] for id in test_ids]
 
-    _split(dataset=dataset, split_name=split_name, train_idx=train_idx, test_idx=test_idx,
-           random_generator=random_generator, random_seed=random_seed, n_folds=n_folds,
-           warning_callback=warning_callback, error_callback=error_callback, progress_callback=progress_callback)
+    # Splitting the dataset
+    _split(dataset=dataset, 
+           split_name=split_name, 
+           train_idx=train_idx, 
+           test_idx=test_idx,
+           random_generator=random_generator, 
+           random_seed=random_seed, 
+           n_folds=n_folds,
+           warning_callback=warning_callback, 
+           error_callback=error_callback, 
+           progress_callback=progress_callback)
 
 
 def split_with_proportion(input, split_name, train_prop, random_seed, n_folds, warning_callback=None, error_callback=None,
@@ -99,10 +106,18 @@ def split_with_proportion(input, split_name, train_prop, random_seed, n_folds, w
     random_generator.shuffle(idx)
     train_idx = idx[:n_train]
     test_idx = idx[n_train:]
-
-    _split(dataset=dataset, split_name=split_name, train_idx=train_idx, test_idx=test_idx,
-           random_generator=random_generator, random_seed=random_seed, n_folds=n_folds,
-           warning_callback=warning_callback, error_callback=error_callback, progress_callback=progress_callback)
+    
+    # Splitting the dataset
+    _split(dataset=dataset, 
+           split_name=split_name, 
+           train_idx=train_idx, 
+           test_idx=test_idx,
+           random_generator=random_generator, 
+           random_seed=random_seed, 
+           n_folds=n_folds,
+           warning_callback=warning_callback, 
+           error_callback=error_callback, 
+           progress_callback=progress_callback)
 
 
 def _split(dataset, split_name, random_generator, random_seed, train_idx, test_idx, warning_callback,
@@ -117,7 +132,13 @@ def _split(dataset, split_name, random_generator, random_seed, train_idx, test_i
     if progress_callback is None:
         progress_callback = lambda p, m: None
 
-    _validate_split(dataset, split_name, train_idx, test_idx, n_folds, warning_callback, error_callback)
+    _validate_split(dataset=dataset,
+                    split_name=split_name,
+                    train_idx=train_idx,
+                    test_idx=test_idx, 
+                    n_folds=n_folds, 
+                    warning_callback=warning_callback, 
+                    error_callback=error_callback)
 
     train_idx = np.array(train_idx)
     test_idx = np.array(test_idx)
