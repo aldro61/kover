@@ -24,7 +24,7 @@ from collections import defaultdict, deque
 from math import ceil
 from copy import deepcopy
 
-from ..common.models import cart, CART_Model
+from ..common.models import cart, CARTModel
 from ..common.tree import ProbabilisticTreeNode
 
 UTIL_BLOCK_SIZE = 1000000
@@ -43,16 +43,12 @@ class DecisionTreeClassifier(object):
 		self.max_depth = max_depth
 		
 		# Validate the minimum number of examples required to split a node         
-		# (This is a proportion of the number of training examples)
-		
-		if min_samples_split < 0.0 or min_samples_split > 1.0:
-			raise ValueError( "The minimum number of examples (proportion) used to split a node must be between 0 and 1.")
-		self.min_samples_split = float(min_samples_split)
+		if min_samples_split < 2.0:
+			raise ValueError( "The minimum number of examples used to split a node must be 2 or greater.")
+		self.min_samples_split = int(min_samples_split)
 		
 		self.class_importance = class_importance
-		
 		self.rule_importances = defaultdict(float)
-		#self.model = CART_Model(class_tags=class_tags)
 		
 	def fit(self, rules, rule_classifications, example_idx, rule_blacklist=None,             
 			tiebreaker=None, level_callback=None, split_callback=None):
@@ -71,7 +67,6 @@ class DecisionTreeClassifier(object):
 			tiebreaker = lambda x: x 
 			
 		# Store important information about the training set
-
 		n_total_class_examples = {c:float(len(ids)) for c, ids in example_idx.items()}
 		n_total_examples = sum(n_total_class_examples.values())
 		
@@ -80,13 +75,17 @@ class DecisionTreeClassifier(object):
 		priors = [1.0 * n_examples/ n_total_examples for n_examples in n_total_class_examples.values()]
 
 		denum = sum([importance * prior for importance, prior in zip(self.class_importance.values(), priors)])
-
 		altered_priors = {c: 1.0 * importance * prior / denum for c, importance, prior in \
 									zip(n_total_class_examples.keys(), self.class_importance.values(), priors)}
 									
 		del n_total_examples, priors
 		
 		# Criteria for node impurity and splitting
+		
+		#############################################
+		#				GINI IMPURITY				#		
+		#############################################
+		
 		def _gini_impurity(n_class_examples, multiply_by_node_proba=False):
 			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
 											for c in n_class_examples.keys()}
@@ -139,10 +138,12 @@ class DecisionTreeClassifier(object):
 			example_idx = node.class_examples_idx
 			
 			# Score all the rules according to the criterion
-			rules_criterion = score_rules(example_idx, node)
+			rules_criterion = score_rules(example_idx=example_idx, 
+										  node=node)
 			
 			# Check if we find a split
-			if (choice_func == min and min(rules_criterion) == np.infty) or (choice_func == max and max(rules_criterion) == -np.infty):
+			if (choice_func == min and min(rules_criterion) == np.infty) or \ 
+				(choice_func == max and max(rules_criterion) == -np.infty):
 				return None, None, None, None
 				
 			# Tiebreaker to select a single rule in case of ties
@@ -162,15 +163,16 @@ class DecisionTreeClassifier(object):
 		
 		logging.debug("Training start.")
 		
-		root = node_type(class_examples_idx=example_idx, depth=0,                          
-			criterion_value=get_criterion(n_total_class_examples),                          
-			class_priors=altered_priors,                          
-			total_n_examples_by_class=n_total_class_examples)
+		root = node_type(class_examples_idx=example_idx, 
+						 depth=0,                          
+						 criterion_value=get_criterion(n_total_class_examples),                          
+						 class_priors=altered_priors,                          
+						 total_n_examples_by_class=n_total_class_examples)
 
 		nodes_to_split = deque([root])
 		runtime_infos = {}
 		current_depth = -1
-		min_samples_split = int(ceil(self.min_samples_split * sum(n_total_class_examples.values())))
+		min_samples_split = self.min_samples_split
 		if min_samples_split < 2:
 			min_samples_split = 2
 		
@@ -219,13 +221,15 @@ class DecisionTreeClassifier(object):
 			right_child_n_class_example = {c:len(idx) for c, idx in right_child_example_idx_by_class.items()}
 			
 			node.left_child = node_type(parent=node,
-										class_examples_idx=left_child_example_idx_by_class, depth=node.depth + 1,
+										class_examples_idx=left_child_example_idx_by_class, 
+										depth=node.depth + 1,
 										criterion_value=get_criterion(left_child_n_class_example),
 										class_priors=altered_priors,
 										total_n_examples_by_class=n_total_class_examples)
 										
 			node.right_child = node_type(parent=node,
-										class_examples_idx=right_child_example_idx_by_class, depth=node.depth + 1,
+										class_examples_idx=right_child_example_idx_by_class, 
+										depth=node.depth + 1,
 										criterion_value=get_criterion(right_child_n_class_example),
 										class_priors=altered_priors,
 										total_n_examples_by_class=n_total_class_examples)
