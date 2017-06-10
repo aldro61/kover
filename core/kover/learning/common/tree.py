@@ -22,40 +22,52 @@ import numpy as np
 
 class BreimanInfo(object):     
 	def __init__(self, node_n_examples_by_class, class_priors, total_n_examples_by_class):
+		
 		# Eq. 2.2 Probability that an example is in class j and falls into node t         
 		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in zip(class_priors.values(), node_n_examples_by_class, 
 																		  total_n_examples_by_class.values())] 
 
 		# Eq. 2.3 Probability that any example falls in node t       
-		self.p_t = sum(self.p_j_t)         
+		self.p_t = sum(self.p_j_t)     
+		    
 		# Eq. 2.4 Probability that an example is in class j given that it falls in node t         
-		self.p_j_given_t = [p_j_t / self.p_t for p_j_t in self.p_j_t]         
+		self.p_j_given_t = [p_j_t / self.p_t for p_j_t in self.p_j_t]  
+		       
 		# Def. 2.10 Probability of misclassification given that an example falls into node t         
 		self.r_t = 1.0 - max(self.p_j_given_t)         
+		
 		# Contribution of the node to the tree's overall missclassification rate         
 		self.R_t = self.r_t * self.p_t
 		
 class TreeNode(object):
 	# TODO: implement memoizing for attributes that require longer computation     
-	def __init__(self, depth, class_examples_idx, total_n_examples_by_class, class_priors, rule=None, parent=None, left_child=None,                  
-				right_child=None, criterion_value=-1):         
+	def __init__(self, depth, class_examples_idx, total_n_examples_by_class, class_priors, rule=None, parent=None,
+				 left_child=None, right_child=None, criterion_value=-1):         
 		self.rule = rule         
 		self.parent = parent         
 		self.left_child = left_child         
 		self.right_child = right_child         
 		self.class_examples_idx = class_examples_idx         
 		self.depth = depth         
-		self.criterion_value = criterion_value        
-		self.breiman_info = BreimanInfo([len(class_examples_idx[c]) for c in range(len(class_examples_idx))],                                         
-		class_priors, total_n_examples_by_class)
+		self.criterion_value = criterion_value
 		
+		n_examples_by_class = [len(class_examples_idx[c]) for c in range(len(class_examples_idx))]
+		self.breiman_info = BreimanInfo(node_n_examples_by_class=n_examples_by_class,                                         
+										class_priors=class_priors, 
+										total_n_examples_by_class=total_n_examples_by_class)
 		
 	@property     
-	def is_leaf(self):         
+	def is_leaf(self):
+		"""         
+		Returns true if current node is a leaf      
+		"""            
 		return self.left_child is None and self.right_child is None     
 		
 	@property     
-	def is_root(self):         
+	def is_root(self):   
+		"""         
+		Returns true if current node is the tree root      
+		"""       
 		return self.parent is None and self.left_child is not None and self.right_child is not None
 		
 	@property     
@@ -74,17 +86,29 @@ class TreeNode(object):
 		
 	@property
 	def class_prediction(self):
+		"""         
+		Returns the class predicted by this node as a leaf       
+		"""   
 		return np.argmax(np.array(self.breiman_info.p_j_given_t))
 	
 	@property     
-	def rules(self):        
+	def rules(self): 
+		"""         
+		Returns all the rules of the tree         
+		"""          
 		return self._get_tree_rules()
 		
 	@property     
-	def leaves(self):         
+	def leaves(self):
+		"""         
+		Returns all the leaves of the tree         
+		"""         
 		return self._get_tree_leaves()
 	
-	def __iter__(self):         
+	def __iter__(self):
+		"""         
+		Yields all the rules of the tree         
+		"""       
 		for r in self._get_tree_rules():             
 			yield r
 	
@@ -95,22 +119,29 @@ class TreeNode(object):
 		return len(self._get_tree_rules())
 		
 	def __str__(self, depth=0):
+		"""         
+		Convert the tree to a text representation        
+		""" 
 		ret = ""
-		if self.right_child != None:
+		
+		# Case : node is a leaf
+		if self.is_leaf:
+			tree_str += "\n" + ("    "*depth) + str(self.class_prediction)
+			
+		# Case : node has two children
+		else:
 			# Print right branch
-			ret += self.right_child.__str__(depth=depth + 1)
+			tree_str += self.right_child.__str__(depth=depth + 1)
 			
 			# Print own value
-			ret += "\n" + ("    "*depth+ "   ") + str("/")
-			ret += "\n" + ("    "*depth) + str(self.rule)
-			ret += "\n" + ("    "*depth + "   ") + str("\\")
+			tree_str += "\n" + ("    "*depth + "   ") + str("/")
+			tree_str += "\n" + ("    "*depth) + str(self.rule)
+			tree_str += "\n" + ("    "*depth + "   ") + str("\\")
 
 			# Print left_child branch
-			ret += self.left_child.__str__(depth=depth + 1)
-		else:
-			ret += "\n" + ("    "*depth) + str(self.class_prediction)
-
-		return ret
+			tree_str += self.left_child.__str__(depth=depth + 1)
+		
+		return tree_str
 
 	def _get_tree_leaves(self):     
 		def _get_leaves(node):         

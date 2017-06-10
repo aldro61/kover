@@ -252,4 +252,4 @@ def _validate_split(dataset, split_name, train_idx, test_idx, n_folds, warning_c
 
     # Verify that there is no overlap between the training and testing ids
     if len(set(train_idx).union(test_idx)) < len(train_idx) + len(test_idx):
-        error_callback(Exception("The training and testing set overlap."))
+        error_callback(Exception("The training and testing sets overlap."))

@@ -27,7 +27,6 @@ cart = "cart"
 
 class BaseModel(object):
     def __init__(self):
-        self.rules = None
         super(BaseModel, self).__init__()
         
     def predict(self, X):
@@ -40,14 +39,11 @@ class BaseModel(object):
     def __str__(self):
         return self._to_string()
         
-class CART_Model(BaseModel):
+class CARTModel(BaseModel):
     def __init__(self, class_tags=None):
         super(CART_Model, self).__init__()
         self.decision_tree = None
         self.class_tags = class_tags
-        
-    def add_decision_tree(self, tree):
-        self.decision_tree = tree
         
     def predict(self, X):
         if self.decision_tree is None:
@@ -70,29 +66,36 @@ class CART_Model(BaseModel):
                 print("No tree has been added to the model")
             node = self.decision_tree
             
-        ret = ""
-        if node.right_child != None:
+        if self.class_tags is None:
+            return str(self.decision_tree)
+            
+        tree_str = ""
+        
+        # Case : node is a leaf
+        if node.is_leaf:
+			tree_str += "\n" + ("    "*depth) + str(self.class_tags[node.class_prediction])
+        
+        # Case : node has two children
+        else:
             # Print right branch
-            ret += self._to_string(node=node.right_child, depth=depth + 1)
+            tree_str += self._to_string(node=node.right_child, depth=depth + 1)
 
             # Print own value
-            ret += "\n" + ("    "*depth+ "   ") + str("/")
-            ret += "\n" + ("    "*depth) + str(node.rule)
-            ret += "\n" + ("    "*depth + "   ") + str("\\")
+            tree_str += "\n" + ("    "*depth + "   ") + str("/")
+            tree_str += "\n" + ("    "*depth) + str(node.rule)
+            tree_str += "\n" + ("    "*depth + "   ") + str("\\")
 
             # Print left_child branch
-            ret += self._to_string(node=node.left_child, depth=depth + 1)
-        else:
-			ret += "\n" + ("    "*depth) + str(self.class_tags[node.class_prediction])
-
-        return ret
+            tree_str += self._to_string(node=node.left_child, depth=depth + 1)
+        
+        return tree_str
         
     def __len__(self):
+        if self.decision_tree is None:
+            return 0
         return len(self.decision_tree)
         
-    
-
-class SCM_Model(BaseModel):
+class SCMModel(BaseModel):
     def __init__(self):
         super(SCM_Model, self).__init__()
         self.rules = []
@@ -137,7 +140,7 @@ class SCM_Model(BaseModel):
     def __len__(self):
         return len(self.rules)
 
-class ConjunctionModel(SCM_Model):
+class ConjunctionModel(SCMModel):
     def predict_proba(self, X):
         predictions = np.ones(X.shape[0], np.float32)
         for a in self.rules:
@@ -152,7 +155,7 @@ class ConjunctionModel(SCM_Model):
         return self._to_string(separator=" and ")
 
 
-class DisjunctionModel(SCM_Model):
+class DisjunctionModel(SCMModel):
     def predict_proba(self, X):
         predictions = np.ones(X.shape[0], dtype=np.float32)
         for a in self.rules:
