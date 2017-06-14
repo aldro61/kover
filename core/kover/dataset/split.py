@@ -50,13 +50,14 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
     def _parse_ids(ids_file, learning_step):
         ids_not_in_ds = []
         ids = (open(ids_file, 'r').read()).split('\n')
-        ids = [i.strip() for i in train_ids if i]
+        ids = [i.strip() for i in ids if i]
         for id in ids:
             if id not in idx_by_genome_id:
                 ids_not_in_ds.append(id)
         if len(ids_not_in_ds) > 0:
             error_callback(Exception("The %s genome identifiers contain IDs that are not in the dataset: %s" %
                                      (learning_sep, ", ".join(idsnot_in_ds))))
+        return ids
     
     # Parse and validate training and testing ids
     train_ids = _parse_ids(ids_file=train_ids_file,
@@ -231,7 +232,7 @@ def _split(dataset, split_name, random_generator, random_seed, train_idx, test_i
 
 
 def _validate_split(dataset, split_name, train_idx, test_idx, n_folds, warning_callback, error_callback):
-    if dataset.phenotype.name == "NA":
+    if dataset.phenotype.description == "NA":
         error_callback(Exception("A dataset must contain phenotypic metadata to be split."))
 
     if split_name in (split.name for split in dataset.splits):

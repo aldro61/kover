@@ -31,7 +31,7 @@ from scipy.misc import comb
 
 from ...dataset.ds import KoverDataset
 from ..learners.cart import DecisionTreeClassifier, _prune_tree
-from ..common.models import CART_Model
+from ..common.models import CARTModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
 from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints
 from ..experiments.metrics import _get_binary_metrics, _get_multiclass_metrics
@@ -104,6 +104,8 @@ def _predictions(decision_tree, kmer_matrix, train_example_idx, test_example_idx
     if progress_callback is None:
         progress_callback = lambda t, p: None
     progress_callback("Testing", 0.0)
+    
+    # Case: Standart tree
     if len(decision_tree.rules) > 0:
         model_rules = decision_tree.rules
         kmer_idx_by_rule = np.array([r.kmer_index for r in model_rules])
@@ -118,8 +120,9 @@ def _predictions(decision_tree, kmer_matrix, train_example_idx, test_example_idx
         progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
         test_predictions = readdressed_decision_tree.predict(X[test_example_idx])
         progress_callback("Testing", 1.0)
+    
+    # Case: the model is just a leaf
     else:
-        # The case where the model is just a leaf
         train_predictions = decision_tree.predict(np.empty((len(train_example_idx), 1)))
         progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
         test_predictions = decision_tree.predict(np.empty((len(test_example_idx), 1)))
@@ -161,7 +164,7 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     split = dataset.get_split(split_name)
     split.train_genome_idx = split.train_genome_idx[...]
     split.test_genome_idx = split.test_genome_idx[...]
-    nb_classes = dataset.phenotype_tags.shape[0]
+    nb_classes = dataset.phenotype.tags.shape[0]
     
     # Load some dataset information into memory
     logging.debug("Loading dataset information into memory")
@@ -171,11 +174,14 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
 
     # Initialize the trees to be grown
     logging.debug("Planting seeds")
-    fold_predictors = [DecisionTreeClassifier(criterion=hps["criterion"], max_depth=hps["max_depth"],
+    fold_predictors = [DecisionTreeClassifier(criterion=hps["criterion"], 
+                                              max_depth=hps["max_depth"],
                                               min_samples_split=hps["min_samples_split"],
                                               class_importance=hps["class_importance"])
-                       for _ in xrange(len(split.folds))]
-    master_predictor = DecisionTreeClassifier(criterion=hps["criterion"], max_depth=hps["max_depth"],
+                                              for _ in xrange(len(split.folds))]
+                                              
+    master_predictor = DecisionTreeClassifier(criterion=hps["criterion"], 
+                                              max_depth=hps["max_depth"],
                                               min_samples_split=hps["min_samples_split"],
                                               class_importance=hps["class_importance"])
 
@@ -190,7 +196,8 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
         # Fit the decision tree
         fold_predictors[i].fit(rules=rules,
                                rule_classifications=rule_classifications,
-                               example_idx = {c:fold.train_genome_idx[example_labels[fold.train_genome_idx] == c] for c in range(nb_classes)},
+                               example_idx = {c:fold.train_genome_idx[example_labels[fold.train_genome_idx] == c]\
+                                                                                            for c in range(nb_classes)},
                                rule_blacklist=None,  # TODO: blacklist not implemented
                                tiebreaker=None,
                                level_callback=None,
@@ -200,7 +207,8 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
     logging.debug("Growing the master tree")
     master_predictor.fit(rules=rules,
                          rule_classifications=rule_classifications,
-                         example_idx = {c:split.train_genome_idx[example_labels[split.train_genome_idx] == c] for c in range(nb_classes)},
+                         example_idx = {c:split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
+                                                                                            for c in range(nb_classes)},
                          rule_blacklist=None,  # TODO: blacklist not implemented
                          tiebreaker=None,
                          level_callback=None,
@@ -223,8 +231,12 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
         fold_test_risks = []
         bro = BetweenDict()
         for j, t in enumerate(fold_pruned_trees[i]):
-            fold_test_risk = _get_binary_metrics(_predictions(t, dataset.kmer_matrix, [], fold_test_example_idx)[1],
-                                                fold_example_labels)["risk"][0]
+            fold_test_risk = _get_binary_metrics(predictions=_predictions(decision_tree=t, 
+                                                                          kmer_matrix=dataset.kmer_matrix, 
+                                                                          train_example_idx=[], 
+                                                                          test_example_idx=fold_test_example_idx)[1],
+                                                 answers=fold_example_labels)["risk"][0]
+                                                
             fold_test_risks.append(fold_test_risk)
             if j < len(fold_alphas[i]) - 1:
                 key = (fold_alphas[i][j], fold_alphas[i][j + 1])
@@ -252,7 +264,8 @@ def _learn_pruned_tree(hps, dataset_file, split_name):
 def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split, class_importance,
                 parameter_selection, n_cpu, progress_callback=None, warning_callback=None, error_callback=None):
     """
-
+    Cross-validate the best hyper-parameters (criterion, max_depth, min_samples_split and class_importance)
+    to grow a pruned decision tree.
 
     """
     # Initialize callback functions
@@ -308,21 +321,24 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     split.train_genome_idx = split.train_genome_idx[...]
     split.test_genome_idx = split.test_genome_idx[...]
     example_labels = dataset.phenotype.metadata[...]
-    phenotype_tags = dataset.phenotype_tags
+    phenotype_tags = dataset.phenotype.tags[...]
 
     # Using the best hyperparameters, compute predictions and metrics
-    train_predictions, test_predictions = _predictions(best_tree, dataset.kmer_matrix, split.train_genome_idx,
-                                                       split.test_genome_idx, progress_callback)
+    train_predictions, test_predictions = _predictions(decision_tree=best_tree, 
+                                                       kmer_matrix=dataset.kmer_matrix, 
+                                                       train_example_idx=split.train_genome_idx,
+                                                       test_example_idx=split.test_genome_idx, 
+                                                       progress_callback=progress_callback)
 
     train_answers = example_labels[split.train_genome_idx]
     test_answers = example_labels[split.test_genome_idx]
     
-    if dataset.classification == "binary":
+    if dataset.classification_type == "binary":
         train_metrics = _get_binary_metrics(train_predictions, train_answers)
     else:
         train_metrics = _get_multiclass_metrics(train_predictions, train_answers, len(phenotype_tags))
     if len(split.test_genome_idx) > 0:
-        if dataset.classification == "binary":
+        if dataset.classification_type == "binary":
             test_metrics = _get_binary_metrics(test_predictions, test_answers)
         else:
             test_metrics = _get_multiclass_metrics(test_predictions, test_answers, len(phenotype_tags))
@@ -331,14 +347,19 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
 
     # Get the idx of the training/testing examples that are correctly/incorrectly classified by the model
     classifications = defaultdict(list)
-    classifications["train_correct"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions == train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
-    classifications["train_errors"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions != train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
+    classifications["train_correct"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions == \
+                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
+    classifications["train_errors"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions != \
+                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
     if len(split.test_genome_idx) > 0:
-        classifications["test_correct"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions == test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
-        classifications["test_errors"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions != test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
+        classifications["test_correct"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions == \
+                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
+        classifications["test_errors"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions != \
+                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
     
-    best_model = CART_Model(class_tags=phenotype_tags)
-    best_model.add_decision_tree(best_tree)
+    best_model = CARTModel(class_tags=phenotype_tags)
+    best_model.decision_tree = best_tree
     
-    return best_hps, best_score, train_metrics, test_metrics, best_model, dict((str(r), 1.0) for r in best_tree.rules), classifications
+    return best_hps, best_score, train_metrics, test_metrics, best_model,\
+                    dict((str(r), 1.0) for r in best_tree.rules), classifications
     # TODO: missing model_equivalent_rules, rule importances

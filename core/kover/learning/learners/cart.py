@@ -142,8 +142,7 @@ class DecisionTreeClassifier(object):
 										  node=node)
 			
 			# Check if we find a split
-			if (choice_func == min and min(rules_criterion) == np.infty) or \ 
-				(choice_func == max and max(rules_criterion) == -np.infty):
+			if (choice_func == min and min(rules_criterion) == np.infty) or (choice_func == max and max(rules_criterion) == -np.infty):
 				return None, None, None, None
 				
 			# Tiebreaker to select a single rule in case of ties

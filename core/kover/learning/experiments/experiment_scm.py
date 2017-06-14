@@ -120,7 +120,8 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
         tiebreaker = partial(_tiebreaker, rule_risks=rule_risks, model_type=model_type)
         test_predictions_by_model_length = []
         tmp_model = ConjunctionModel() if model_type == "conjunction" else DisjunctionModel()
-        iteration_callback = partial(_iteration_callback, tmp_model=tmp_model,
+        iteration_callback = partial(_iteration_callback, 
+                                     tmp_model=tmp_model,
                                      test_predictions_by_model_length=test_predictions_by_model_length,
                                      test_example_idx=test_example_idx)
 
@@ -131,9 +132,10 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
                       negative_example_idx=negative_example_idx,
                       tiebreaker=tiebreaker,
                       iteration_callback=iteration_callback)
+                      
         test_predictions_by_model_length = np.array(_duplicate_last_element(test_predictions_by_model_length, max_rules))
-        fold_score_by_model_length[i] = _get_binary_metrics(test_predictions_by_model_length,
-                                                       dataset.phenotype.metadata[test_example_idx])["risk"]
+        fold_score_by_model_length[i] = _get_binary_metrics(predictions=test_predictions_by_model_length,
+                                                            answers=dataset.phenotype.metadata[test_example_idx])["risk"]
 
     score_by_model_length = np.mean(fold_score_by_model_length, axis=0)
     best_score_idx = np.argmin(score_by_model_length)
@@ -153,7 +155,10 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
 
     logging.debug("Using %d CPUs." % n_cpu)
     pool = Pool(processes=n_cpu)
-    hp_eval_func = partial(_cv_score_hp, dataset_file=dataset_file, split_name=split_name, max_rules=max_rules)
+    hp_eval_func = partial(_cv_score_hp, 
+                           dataset_file=dataset_file, 
+                           split_name=split_name, 
+                           max_rules=max_rules)
 
     best_hp_score = 1.0
     best_hp = {"model_type": None, "p": None, "max_rules": None}
@@ -330,11 +335,16 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
     model_by_length = []
     equivalent_rules = []
     rule_importances = []
-    iteration_callback = partial(_iteration_callback, tmp_model=tmp_model, train_example_idx=train_example_idx,
-                                 train_answers=train_answers, score_by_length=score_by_length,
-                                 model_by_length=model_by_length, equivalent_rules=equivalent_rules,
+    iteration_callback = partial(_iteration_callback, 
+                                 tmp_model=tmp_model, 
+                                 train_example_idx=train_example_idx,
+                                 train_answers=train_answers, 
+                                 score_by_length=score_by_length,
+                                 model_by_length=model_by_length, 
+                                 equivalent_rules=equivalent_rules,
                                  rule_importances=rule_importances,
                                  rule_classifications=rule_classifications)
+                                 
     predictor = SetCoveringMachine(model_type=model_type, p=p, max_rules=max_rules)
     predictor.fit(rules=rules,
                   rule_classifications=rule_classifications,
@@ -362,9 +372,14 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
 
     logging.debug("Using %d CPUs." % n_cpu)
     pool = Pool(processes=n_cpu)
-    hp_eval_func = partial(_bound_score_hp, dataset_file=dataset_file, split_name=split_name, max_rules=max_rules,
-                           max_equiv_rules=max_equiv_rules, bound_delta=bound_delta,
-                           bound_max_genome_size=bound_max_genome_size, random_generator=random_generator)
+    hp_eval_func = partial(_bound_score_hp, 
+                           dataset_file=dataset_file, 
+                           split_name=split_name, 
+                           max_rules=max_rules,
+                           max_equiv_rules=max_equiv_rules, 
+                           bound_delta=bound_delta,
+                           bound_max_genome_size=bound_max_genome_size, 
+                           random_generator=random_generator)
 
     best_hp_score = 1.0
     best_hp = {"model_type": None, "p": None, "max_rules": None}
@@ -384,6 +399,7 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
             best_model = model
             best_equiv_rules = equiv_rules
             best_rule_importances = rule_importances
+            
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
 
@@ -424,16 +440,34 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
         best_hp, \
         best_model, \
         best_rule_importances, \
-        best_predictor_equiv_rules = _bound_selection(dataset_file, split_name, model_type, p, max_rules,
-                                                      max_equiv_rules, bound_delta, bound_max_genome_size, n_cpu,
-                                                      random_generator, progress_callback, warning_callback,
-                                                      error_callback)
+        best_predictor_equiv_rules = _bound_selection(dataset_file=dataset_file, 
+                                                      split_name=split_name, 
+                                                      model_types=model_type, 
+                                                      p_values=p, 
+                                                      max_rules=max_rules,
+                                                      max_equiv_rules=max_equiv_rules, 
+                                                      bound_delta=bound_delta, 
+                                                      bound_max_genome_size=bound_max_genome_size, 
+                                                      n_cpu=n_cpu,
+                                                      random_generator=random_generator, 
+                                                      progress_callback=progress_callback, 
+                                                      warning_callback=warning_callback,
+                                                      error_callback =error_callback)
+                                                                  
     elif parameter_selection == "cv":
         n_folds = len(dataset.get_split(split_name).folds)
         if n_folds < 1:
             error_callback(Exception("Cross-validation cannot be performed on a split with no folds."))
-        best_hp_score, best_hp = _cross_validation(dataset_file, split_name, model_type, p, max_rules, n_cpu,
-                                                   progress_callback, warning_callback, error_callback)
+        best_hp_score, best_hp = _cross_validation(dataset_file=dataset_file, 
+                                                   split_name=split_name, 
+                                                   model_types=model_type, 
+                                                   p_values=p, 
+                                                   max_rules=max_rules, 
+                                                   n_cpu=n_cpu,
+                                                   progress_callback=progress_callback, 
+                                                   warning_callback=warning_callback, 
+                                                   error_callback=error_callback)
+                                                   
     else:
         # Use the first value provided for each parameter
         best_hp = {"model_type": model_type[0], "p": p[0], "max_rules": max_rules}
@@ -447,16 +481,25 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
         rule_importances = best_rule_importances
     else:
         model, rule_importances, \
-        equivalent_rules = _full_train(dataset, split_name, best_hp["model_type"], best_hp["p"],
-                                                        best_hp["max_rules"], max_equiv_rules, random_generator,
-                                                        progress_callback)
-
+        equivalent_rules = _full_train(dataset=dataset, 
+                                       split_name=split_name, 
+                                       model_type=best_hp["model_type"], 
+                                       p=best_hp["p"],
+                                       max_rules=best_hp["max_rules"], 
+                                       max_equiv_rules=max_equiv_rules, 
+                                       random_generator=random_generator,
+                                       progress_callback=progress_callback)
+                                                        
     split = dataset.get_split(split_name)
     train_example_idx = split.train_genome_idx
     test_example_idx = split.test_genome_idx
 
-    train_predictions, test_predictions = _predictions(model, dataset.kmer_matrix, train_example_idx,
-                                                       test_example_idx, progress_callback)
+    train_predictions, test_predictions = _predictions(model=model, 
+                                                       kmer_matrix=dataset.kmer_matrix, 
+                                                       train_example_idx=train_example_idx,
+                                                       test_example_idx=test_example_idx, 
+                                                       progress_callback=progress_callback)
+
     train_answers = dataset.phenotype.metadata[train_example_idx]
     train_metrics = _get_binary_metrics(train_predictions, train_answers)
 
@@ -464,9 +507,15 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
     if parameter_selection == "bound":
         train_metrics["bound"] = best_hp_score
     else:
-        train_metrics["bound"] = _bound(train_predictions, train_answers, train_example_idx, model, bound_delta,
-                                        bound_max_genome_size, KmerRuleClassifications(dataset.kmer_matrix,
-                                                                                       dataset.genome_count))
+        train_metrics["bound"] = _bound(train_predictions=train_predictions, 
+                                        train_answers=train_answers, 
+                                        train_example_idx=train_example_idx, 
+                                        model=model, 
+                                        delta=bound_delta,
+                                        max_genome_size=bound_max_genome_size, 
+                                        rule_classifications=KmerRuleClassifications(dataset.kmer_matrix,
+                                                                                     dataset.genome_count))
+
 
     # Test metrics are computed only if there is a testing set
     if len(test_example_idx) > 0:
@@ -477,11 +526,15 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
 
     # Get the idx of the training/testing examples that are correctly/incorrectly classified by the model
     classifications = defaultdict(list)
-    classifications["train_correct"] = dataset.genome_identifiers[train_example_idx[train_predictions == train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
-    classifications["train_errors"] = dataset.genome_identifiers[train_example_idx[train_predictions != train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
+    classifications["train_correct"] = dataset.genome_identifiers[train_example_idx[train_predictions == \
+                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
+    classifications["train_errors"] = dataset.genome_identifiers[train_example_idx[train_predictions != \
+                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
     if len(test_example_idx) > 0:
-        classifications["test_correct"] = dataset.genome_identifiers[test_example_idx[test_predictions == test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
-        classifications["test_errors"] = dataset.genome_identifiers[test_example_idx[test_predictions != test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
+        classifications["test_correct"] = dataset.genome_identifiers[test_example_idx[test_predictions == \
+                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
+        classifications["test_errors"] = dataset.genome_identifiers[test_example_idx[test_predictions != \
+                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
 
     # Convert the equivalent rule indexes to rule objects
     rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)

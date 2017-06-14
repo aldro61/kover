@@ -104,6 +104,13 @@ class TreeNode(object):
 		Returns all the leaves of the tree         
 		"""         
 		return self._get_tree_leaves()
+		
+	@property
+	def tree_depth(self):
+		"""         
+		Returns the tree depth
+		"""
+		return self._get_tree_depth()
 	
 	def __iter__(self):
 		"""         
@@ -163,6 +170,17 @@ class TreeNode(object):
 				rules += _get_rules(node.right_child)         
 			return rules     
 		return _get_rules(self)
+		
+	def _get_tree_depth(self):
+		def _get_depth(node):
+			depth = 0
+			if not node.is_leaf:
+				depth = max(_get_depth(node.left_child), _get_depth(node.right_child))
+			else:
+				depth = node.depth
+			return depth
+		return _get_depth(self)
+			
 
 class ProbabilisticTreeNode(TreeNode):     
 	def predict(self, X):         

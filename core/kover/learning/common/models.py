@@ -41,7 +41,7 @@ class BaseModel(object):
         
 class CARTModel(BaseModel):
     def __init__(self, class_tags=None):
-        super(CART_Model, self).__init__()
+        super(CARTModel, self).__init__()
         self.decision_tree = None
         self.class_tags = class_tags
         
@@ -94,10 +94,16 @@ class CARTModel(BaseModel):
         if self.decision_tree is None:
             return 0
         return len(self.decision_tree)
+    
+    @property
+    def depth(self):
+        if self.decision_tree is None:
+            return 0
+        return self.decision_tree.tree_depth
         
 class SCMModel(BaseModel):
     def __init__(self):
-        super(SCM_Model, self).__init__()
+        super(SCMModel, self).__init__()
         self.rules = []
 
     def add(self, rule):
