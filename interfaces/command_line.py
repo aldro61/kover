@@ -3,7 +3,7 @@
 
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin
+	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -40,7 +40,8 @@ class KoverDatasetCreationTool(object):
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file containing the k-mer matrix.',
                             required=True)
-        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+        parser.add_argument('--phenotype-description', help='An informative description that is assigned to the'
+                                                            ' phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
@@ -55,9 +56,9 @@ class KoverDatasetCreationTool(object):
         args = parser.parse_args(argv[4:])
 
         # Input validation logic
-        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
-                        args.phenotype_name is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype name and metadata file must be specified."
+        if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
+                        args.phenotype_description is None and args.phenotype_metadata is not None):
+            print "Error: The phenotype description and metadata file must be specified."
             exit()
 
         # Package imports
@@ -86,7 +87,7 @@ class KoverDatasetCreationTool(object):
         from kover.dataset.create import from_tsv
         from_tsv(tsv_path=args.genomic_data,
                  output_path=args.output,
-                 phenotype_name=args.phenotype_name,
+                 phenotype_description=args.phenotype_description,
                  phenotype_metadata_path=args.phenotype_metadata,
                  gzip=args.compression,
                  progress_callback=progress)
@@ -101,20 +102,20 @@ class KoverDatasetCreationTool(object):
                                                      'phenotypic metadata')
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
                                                    'GENOME_ID{tab}PATH, where the path refers to a fasta file '
-                                                   'containing the genome\'s contigs.',
-                            required=True)
-        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+                                                   'containing the genome\'s contigs.', required=True)
+        parser.add_argument('--phenotype-description', help='An informative description that is assigned to the'
+                                                            ' phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
         parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
-                                                      'default.', default=False,
-                            action='store_true')
+                                                      'default.', default=False, action='store_true')
         parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
-                            default=0)
+                                                         default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
-        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', default=gettempdir())
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', 
+                                                default=gettempdir())
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
 
@@ -125,9 +126,9 @@ class KoverDatasetCreationTool(object):
         args = parser.parse_args(argv[4:])
 
         # Input validation logic
-        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
-                        args.phenotype_name is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype name and metadata file must be specified."
+        if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
+                        args.phenotype_description is None and args.phenotype_metadata is not None):
+            print "Error: The phenotype description and metadata file must be specified."
             exit()
 
         if args.verbose:
@@ -145,7 +146,7 @@ class KoverDatasetCreationTool(object):
                      output_path=args.output,
                      kmer_size=args.kmer_size,
                      filter_singleton=filter_option,
-                     phenotype_name=args.phenotype_name,
+                     phenotype_description=args.phenotype_description,
                      phenotype_metadata_path=args.phenotype_metadata,
                      gzip=args.compression,
                      temp_dir=args.temp_dir,
@@ -160,8 +161,9 @@ class KoverDatasetCreationTool(object):
         parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format '
                                                    'GENOME_ID{tab}PATH, where the path refers to a directory '
                                                    'containing the genome\'s reads in fastq(.gz) files.',
-                            required=True)
-        parser.add_argument('--phenotype-name', help='An informative name that is assigned to the phenotypic metadata.')
+                                                    required=True)
+        parser.add_argument('--phenotype-description', help='An informative description that is assigned to the'
+                                                            ' phenotypic metadata.')
         parser.add_argument('--phenotype-metadata', help='A file containing the phenotypic metadata.')
         parser.add_argument('--output', help='The Kover dataset to be created.', required=True)
         parser.add_argument('--kmer-size', help='The k-mer size (max is 128). The default is 31.', default=31)
@@ -171,13 +173,13 @@ class KoverDatasetCreationTool(object):
                                                          'genome coverage (ex: 100x coverage -> you could use 10). '
                                                          'The default is 1.', default=1)
         parser.add_argument('--singleton-kmers', help='Include k-mers that only occur in one genome. Disabled by '
-                                                      'default.', default=False,
-                            action='store_true')
+                                                      'default.', default=False, action='store_true')
         parser.add_argument('--n-cpu', '--n-cores', help='The number of cores used by DSK. The default value is 0 (all cores).',
-                            default=0)
+                                                         default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
-        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', default=gettempdir())
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', 
+                                                default=gettempdir())
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
 
@@ -188,9 +190,9 @@ class KoverDatasetCreationTool(object):
         args = parser.parse_args(argv[4:])
 
         # Input validation logic
-        if (args.phenotype_name is not None and args.phenotype_metadata is None) or (
-                        args.phenotype_name is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype name and metadata file must be specified."
+        if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
+                        args.phenotype_description is None and args.phenotype_metadata is not None):
+            print "Error: The phenotype description and metadata file must be specified."
             exit()
 
         if args.verbose:
@@ -209,7 +211,7 @@ class KoverDatasetCreationTool(object):
                    kmer_size=args.kmer_size,
                    abundance_min=args.kmer_min_abundance,
                    filter_singleton=filter_option,
-                   phenotype_name=args.phenotype_name,
+                   phenotype_description=args.phenotype_description,
                    phenotype_metadata_path=args.phenotype_metadata,
                    gzip=args.compression,
                    temp_dir=args.temp_dir,
@@ -260,7 +262,7 @@ The two available data sources are:
                             action='store_true')
         parser.add_argument('--kmer-len', help='Prints the length of the k-mers in the dataset.', action='store_true')
         parser.add_argument('--kmer-count', help='Prints the number of k-mers in the dataset.', action='store_true')
-        parser.add_argument('--phenotype-name', help='Prints the identifier that was assigned to the phenotype.',
+        parser.add_argument('--phenotype-description', help='Prints the description that was assigned to the phenotype.',
                             action='store_true')
         parser.add_argument('--phenotype-metadata',
                             help='Prints the path of the file from which the phenotypic metadata'
@@ -273,7 +275,7 @@ The two available data sources are:
         parser.add_argument('--uuid', help='Prints the unique identifier of the dataset.', action='store_true')
         parser.add_argument('--compression', help='Print the data compression options of the dataset.',
                             action='store_true')
-        parser.add_argument('--classification', help='Print the dataset problem type.',
+        parser.add_argument('--classification-type', help='Print the dataset classification type.',
                             action='store_true')
 
         # If no argument has been specified, default to help
@@ -314,23 +316,23 @@ The two available data sources are:
         if args.kmer_count or args.all:
             print "K-mer count:", dataset.kmer_count
             print
-        if args.phenotype_name or args.all:
-            print "Phenotype name:", dataset.phenotype.name
+        if args.phenotype_description or args.all:
+            print "Phenotype description:", dataset.phenotype.description
             print
         if args.phenotype_metadata or args.all:
-            if dataset.phenotype.name != "NA":
+            if dataset.phenotype.description != "NA":
                 print "Phenotype metadata source:", dataset.phenotype.metadata_source
             else:
                 print "No phenotype metadata."
             print
         if args.phenotype_tags or args.all:
-            print "Phenotype tags: ", ", ".join(dataset.phenotype_tags[...])
+            print "Phenotype tags: ", ", ".join(dataset.phenotype.tags)
             print
         if args.compression or args.all:
             print "Compression:", dataset.compression
             print
-        if args.classification or args.all:
-            print "Classification:", dataset.classification
+        if args.classification_type or args.all:
+            print "Classification type:", dataset.classification_type
             print
         if args.splits or args.all:
             splits = dataset.splits
@@ -348,21 +350,24 @@ The two available data sources are:
         parser.add_argument('--dataset', help='The Kover dataset to be split.', required=True)
         parser.add_argument('--id', help='A unique identifier that will be assigned to the split.', required=True)
         parser.add_argument('--train-size', type=float, help='The proportion of the data that will be reserved for '
-                                                             'training the learning algorithm (default is 0.5). Alternatively, you can specify which '
-                                                             'genomes to use for training and testing by using --train-ids and --test-ids.',
+                                                             'training the learning algorithm (default is 0.5). '
+                                                             ' Alternatively, you can specify which genomes to use '
+                                                             'for training and testing by using --train-ids and --test-ids.',
                             default=0.5)
         parser.add_argument('--train-ids', help='File containing the identifiers of the genomes used to train the '
-                                                                     'learning algorithm. If you provide a value for this argument, you must also provide a '
-                                                                     'value for --test-ids. File format: one id per line')
+                                                 'learning algorithm. If you provide a value for this argument, you must '
+                                                 'also provide a value for --test-ids. File format: one id per line')
         parser.add_argument('--test-ids',  help='File containing the identifiers of the genomes used to evaluate '
-                                                                    'the accuracy of the model generated. If you provide a value for this argument, you must '
-                                                                    'also provide a value for --train-ids. File format: one id per line')
+                                                'the accuracy of the model generated. If you provide a value for this '
+                                                'argument, you must also provide a value for --train-ids. File format: '
+                                                'one id per line')
         parser.add_argument('--folds', type=int,
                             help='The number of k-fold cross-validation folds to create (default is 0 for none, '
                                  'the minimum value is 2). Folds are required for using k-fold cross-validation '
                                  'in \'kover learn\'.', default=0)
         parser.add_argument('--random-seed', type=int, help='A random seed used for randomly splitting the data. A '
-                                                            'specific seed will always lead to the same split. If not provided, it is set randomly.')
+                                                            'specific seed will always lead to the same split. '
+                                                            'If not provided, it is set randomly.')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
 
@@ -486,42 +491,35 @@ class KoverLearningTool(object):
         from datetime import timedelta
         from json import dump as json_dump
         from kover.dataset import KoverDataset
-        from kover.learning.experiments.experiment_SCM import learn_SCM
+        from kover.learning.experiments.experiment_scm import learn_SCM
         from os import mkdir
         from os.path import abspath, exists, join
         from progressbar import Bar, Percentage, ProgressBar, Timer
         from time import time
 
         # Input validation
-        dataset = KoverDataset(args.dataset)
-        dataset_kmer_count = dataset.kmer_count
+        pre_dataset = KoverDataset(args.dataset)
+        dataset_kmer_count = pre_dataset.kmer_count
+        classification_type = pre_dataset.classification_type
+        phenotype_tags = pre_dataset.phenotype.tags[...]
         
         # Check if the dataset is compatible
-        tags = None
-        try:
-            classification = dataset.classification
-            tags = True
-        except:
-            tags = False
-        
-        if tags:
-            phenotype_tags = dataset.phenotype_tags[...]
-            if classification != "binary":
-                    print "Error: The SCM cannot learn a multi-class classifier"
-                    exit()
+        if classification_type != "binary":
+                print "Error: The SCM cannot learn a multi-class classifier"
+                exit()
                 
         # - Check that the split exists
         try:
-            dataset.get_split(args.split)
+            pre_dataset.get_split(args.split)
         except:
             print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
             exit()
         # - Must have at least 2 folds to perform cross-validation
-        if args.hp_choice == "cv" and len(dataset.get_split(args.split).folds) < 2:
+        if args.hp_choice == "cv" and len(pre_dataset.get_split(args.split).folds) < 2:
             print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
                   "Use 'kover dataset split' to create folds."
             exit()
-        del dataset
+        del pre_dataset
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
@@ -586,17 +584,22 @@ class KoverLearningTool(object):
         report += "Data summary:\n" + "-" * 13 + "\n"
         report += "Dataset file: %s\n" % abspath(args.dataset)
         report += "Dataset UUID: %s\n" % dataset.uuid
-        report += "Phenotype: %s\n" % dataset.phenotype.name.title()
+        report += "Phenotype: %s\n" % dataset.phenotype.description.title()
         report += "Genomic data type: %s\n" % dataset.genome_source_type
         report += "Split: %s\n" % args.split
-        report += "Number of genomes used for training: %d (Group 1: %d, Group 0: %d)\n" % (
-            len(split.train_genome_idx),
-            (dataset.phenotype.metadata[split.train_genome_idx] == 1).sum(),
-            (dataset.phenotype.metadata[split.train_genome_idx] == 0).sum())
-        report += "Number of genomes used for testing: %d (Group 1: %d, Group 0: %d)\n" % (
-            len(split.test_genome_idx),
-            (dataset.phenotype.metadata[split.test_genome_idx] == 1).sum() if len(split.test_genome_idx) > 0 else 0,
-            (dataset.phenotype.metadata[split.test_genome_idx] == 0).sum() if len(split.test_genome_idx) > 0 else 0)
+        
+        report += "Number of genomes used for training: %d " % (len(split.train_genome_idx))
+        nb_genome_training = {c:(dataset.phenotype.metadata[split.train_genome_idx] == c).sum()\
+                                for c in range(len(phenotype_tags))}
+        training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
+        report += "(%s)\n" % ", ".join(training_groups)
+        
+        report += "Number of genomes used for testing: %d " % (len(split.test_genome_idx))
+        nb_genome_testing = {c:(dataset.phenotype.metadata[split.test_genome_idx] == c).sum() if \
+                            len(split.test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
+        testing_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_testing[c]) for c in range(len(phenotype_tags))]
+        report += "(%s)\n" % ", ".join(testing_groups)
+
         report += "Number of k-mers: %d\n" % dataset.kmer_count
         if dataset.genome_source_type == "contigs":
             report += "K-mer size : %s\n" % dataset.kmer_length
@@ -685,13 +688,13 @@ class KoverLearningTool(object):
         parser.add_argument('--dataset', help='The Kover dataset to learn from.', required=True)
         parser.add_argument('--split', help='The identifier of the split of the dataset that must be learnt from.', 
                             required=True)
-        parser.add_argument('--criterion', type=str, help='The criterion used to split the leaves of the decision tree.'
-                                '[Choices: gini] (default: gini)', default="gini", required=False)
+        parser.add_argument('--criterion', type=str, nargs='+', help='The criterion used to split the leaves of the decision tree.'
+                                '[Choices: gini, cross-entropy] (default: gini)', default="gini", required=False)
         parser.add_argument('--max-depth', type=int, nargs='+', help='The maximum depth of the decision tree. (default: 10)',
                             default=10, required=False)
-        parser.add_argument('--min-samples-split', type=float, nargs='+', 
-                            help='The minimum number of genomes that a tree node must contain to be split, '
-                            'as a proportion of the total number of genomes. (default: 0.)', default=0., required=False)
+        parser.add_argument('--min-samples-split', type=int, nargs='+', 
+                            help='The minimum number of genomes that a tree node must contain to be split. '
+                            ' default: 2)', default=2, required=False)
         parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.'
                             'See documentation for examples.',default=None, required=False)
         parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', 
@@ -716,7 +719,7 @@ class KoverLearningTool(object):
         from datetime import timedelta
         from json import dump as json_dump
         from kover.dataset import KoverDataset
-        from kover.learning.experiments.experiment_CART import learn_CART
+        from kover.learning.experiments.experiment_cart import learn_CART
         from os import mkdir
         from os.path import abspath, exists, join
         from progressbar import Bar, Percentage, ProgressBar, Timer
@@ -725,13 +728,6 @@ class KoverLearningTool(object):
 
         # Input validation
         pre_dataset = KoverDataset(args.dataset)
-        
-        # Check if the dataset is compatible
-        try:
-            pre_dataset.classification
-        except:
-            print "Error: the dataset is not compatible with tree learning."
-            exit()
             
         # - Check that the split exists
         try:
@@ -748,8 +744,8 @@ class KoverLearningTool(object):
             exit()
         
         
-        phenotype_tags = pre_dataset.phenotype_tags[...]
-        classification = pre_dataset.classification
+        phenotype_tags = pre_dataset.phenotype.tags[...]
+        classification_type = pre_dataset.classification_type
 
         if args.class_importance:
             
@@ -760,7 +756,7 @@ class KoverLearningTool(object):
                 except ValueError:
                     return False
                     
-            def str2importance(list_values):
+            def str_to_importance(list_values):
                 if all([isfloat(value) for value in list_values]):
                     if all([float(value) >= 0.0 for value in list_values]):
                         return [float(value) for value in list_values]
@@ -787,10 +783,10 @@ class KoverLearningTool(object):
                 
                 # Parse the importance for each class
                 for end in sorted_class_apparitions[1:]:
-                    importance_list = str2importance(args.class_importance[class_positions[start]+1:class_positions[end]])
+                    importance_list = str_to_importance(args.class_importance[class_positions[start]+1:class_positions[end]])
                     class_importance_grid[start] = importance_list
                     start=end
-                importance_list = str2importance(args.class_importance[class_positions[start]+1:])
+                importance_list = str_to_importance(args.class_importance[class_positions[start]+1:])
                 class_importance_grid[start] = importance_list
                 
                 # Create the importance grid
@@ -803,7 +799,7 @@ class KoverLearningTool(object):
             elif isfloat(args.class_importance[0]):
                 
                 # Parse the importance list
-                importance_list = str2importance(args.class_importance)
+                importance_list = str_to_importance(args.class_importance)
                 if (len(importance_list) != phenotype_tags.shape[0]):
                     print("Error: The importance grid must have the dimension as the number of classes")
                     exit()
@@ -860,16 +856,16 @@ class KoverLearningTool(object):
             progress_vars["pbar"].finish()
 
         # Write a report (user friendly)
-        if classification == "binary":
+        if classification_type == "binary":
             metric_aliases = [("risk", "Error Rate"), ("sensitivity", "Sensitivity"), ("specificity", "Specificity"),
                               ("precision", "Precision"), ("recall", "Recall"), ("f1_score", "F1 Score"),
                               ("tp", "True Positives"), ("tn", "True Negatives"),
                               ("fp", "False Positives"), ("fn", "False Negatives")]
-        elif classification == "multiclass":
+        elif classification_type == "multiclass":
             metric_aliases = [("risk", "Error rate"), ("confusion_matrix", "Confusion Matrix")]
         
         # Convert confusion matrix to a nice text output
-        def confusion_matrix2str(confusion_matrix):
+        def confusion_matrix_to_str(confusion_matrix):
             matrix_str = ""
             size_header = len(max(phenotype_tags)) + 5
             col_width = 5
@@ -888,6 +884,8 @@ class KoverLearningTool(object):
             return matrix_str
             
         dataset = KoverDataset(args.dataset)
+        split = dataset.get_split(args.split)
+        
         report = ""
         report += "Kover Learning Report\n" + "="*21 + "\n"
         report += "\n"
@@ -900,37 +898,37 @@ class KoverLearningTool(object):
         report += "Data summary:\n" + "-"*13 + "\n"
         report += "Dataset file: %s\n" % abspath(args.dataset)
         report += "Dataset UUID: %s\n" % dataset.uuid
-        report += "Phenotype: %s\n" % dataset.phenotype.name.title()
+        report += "Phenotype: %s\n" % dataset.phenotype.description.title()
         report += "Split: %s\n" % args.split
         
-        report += "Number of genomes used for training: %d " % (len(dataset.get_split(args.split).train_genome_idx))
-        nb_genome_training = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).train_genome_idx] == c).sum()\
+        report += "Number of genomes used for training: %d " % (len(split.train_genome_idx))
+        nb_genome_training = {c:(dataset.phenotype.metadata[split.train_genome_idx] == c).sum()\
                                 for c in range(len(phenotype_tags))}
         training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(training_groups)
         
-        report += "Number of genomes used for testing: %d " % (len(dataset.get_split(args.split).test_genome_idx))
-        nb_genome_testing = {c:(dataset.phenotype.metadata[dataset.get_split(args.split).test_genome_idx] == c).sum() if \
-                            len(dataset.get_split(args.split).test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
+        report += "Number of genomes used for testing: %d " % (len(split.test_genome_idx))
+        nb_genome_testing = {c:(dataset.phenotype.metadata[split.test_genome_idx] == c).sum() if \
+                            len(split.test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
         testing_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_testing[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(testing_groups)
         
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
-            report += "Selection strategy: %d-fold cross-validation (score = %.5f)\n" % (len(dataset.get_split(args.split).folds), best_hp_score)
+            report += "Selection strategy: %d-fold cross-validation (score = %.5f)\n" % (len(split.folds), best_hp_score)
         else:
             report += "Selection strategy: No selection\n"
         report += "Criterion: %s\n" % best_hp["criterion"]
         report += "Class importance: %s\n" % ", ".join(["class %s: %.3f" % (phenotype_tags[c], best_hp["class_importance"][c]) for c in range(len(phenotype_tags))])
         report += "Maximum tree depth: %d\n" % best_hp["max_depth"]
-        report += "Minimum samples to split a node (proportion): %.3f\n" % best_hp["min_samples_split"]
+        report += "Minimum samples to split a node (examples): %.3f\n" % best_hp["min_samples_split"]
         report += "\n"
         # Print the training set metrics
         report += "Metrics (training data)\n" + "-"*23 + "\n"
         for key, alias in metric_aliases:
             if key == "confusion_matrix":
-                report += "%s :\n%s\n" % (str(alias), confusion_matrix2str(train_metrics[key][0]))
+                report += "%s :\n%s\n" % (str(alias), confusion_matrix_to_str(train_metrics[key][0]))
             else:
                 report += "%s: %s\n" % (str(alias), str(round(train_metrics[key][0], 5)))
         report += "\n"
@@ -939,11 +937,11 @@ class KoverLearningTool(object):
             report += "Metrics (testing data)\n" + "-"*22 + "\n"
             for key, alias in metric_aliases:
                 if key == "confusion_matrix":
-                    report += "%s :\n%s\n" % (str(alias), confusion_matrix2str(test_metrics[key][0]))
+                    report += "%s :\n%s\n" % (str(alias), confusion_matrix_to_str(test_metrics[key][0]))
                 else:
                     report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        report += "Model (%d rules):\n" % len(model)
+        report += "Model (%d rules, depth = %d):\n" % (len(model), model.depth)
         report += str(model) + "\n"
         report += "\n"
 
@@ -968,6 +966,7 @@ class KoverLearningTool(object):
                    "metrics": {"train": train_metrics,
                                "test": test_metrics},
                    "model": {"n_rules": len(model),
+                             "depth": model.depth,
                              "rules": [str(r) for r in model.decision_tree],
                              "rule_importances": [rule_importances[str(r)] for r in model.decision_tree]},
                    "classifications": classifications,

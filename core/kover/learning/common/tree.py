@@ -129,7 +129,7 @@ class TreeNode(object):
 		"""         
 		Convert the tree to a text representation        
 		""" 
-		ret = ""
+		tree_str = ""
 		
 		# Case : node is a leaf
 		if self.is_leaf:

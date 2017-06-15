@@ -32,7 +32,7 @@ UTIL_BLOCK_SIZE = 1000000
 class DecisionTreeClassifier(object):
 	def __init__(self, criterion, max_depth, min_samples_split, class_importance):
 		# Validate the node splitting criterion
-		supported_criteria = ["gini"]
+		supported_criteria = ["gini", "cross-entropy"]
 		if criterion not in supported_criteria:
 			raise ValueError("The supporting splitting criteria are: %s." % str(supported_criteria))
 		self.criterion = criterion	            
@@ -89,7 +89,7 @@ class DecisionTreeClassifier(object):
 		def _gini_impurity(n_class_examples, multiply_by_node_proba=False):
 			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
 											for c in n_class_examples.keys()}
-
+			
 			node_resubstitution_estimate = sum(p_class_node.values())
 			with np.errstate(divide='ignore', invalid='ignore'):
 				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
@@ -121,14 +121,58 @@ class DecisionTreeClassifier(object):
 			# Don't consider rules that lead to empty nodes
 			gini[sum(left_count.values()) == 0] = np.infty
 			gini[sum(right_count.values())  == 0] = np.infty
-			
+
 			return gini
+			
+		#############################################
+		#				CROSS-ENTROPY				#		
+		#############################################
+		
+		def _cross_entropy(n_class_examples, multiply_by_node_proba=False):
+			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
+											for c in n_class_examples.keys()}
+
+			node_resubstitution_estimate = sum(p_class_node.values())
+			with np.errstate(divide='ignore', invalid='ignore'):
+				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
+				diversity_index = -1.0 * sum([np.nan_to_num(p_class_given_node[c]*np.log(p_class_given_node[c])) \
+																						for c in p_class_given_node.keys()])
+			return diversity_index * (node_resubstitution_estimate if multiply_by_node_proba else 1.0)
+		
+		def _cross_entropy_rule_score(example_idx, node):
+			logging.debug("Scoring rules with the gini impurity strategy")             
+			# A k-mer rule splits the examples in two groups: those that don't have the k-mer in their             
+			# genome (left child) and those that have the k-mer in their genome (right child).             
+			# XXX: We keep only the first half of the rule list and classifications, since sum_rows returns the counts             
+			# XXX: for presence and absence rules, which we don't need here.             
+			# TODO: We could have a parameter called return_absence=True, which avoid using twice the RAM.
+			
+			last_presence_rule_idx = int(1.0 * len(rules) / 2)  # Just because sum_rows returns pres/abs rules
+
+			left_count = {c:np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx],dtype=np.float) \
+						for c in example_idx.keys() if example_idx[c].size}
+			right_count = {c:np.asarray(example_idx[c].shape[0] - left_count[c], dtype=np.float) for c in left_count.keys()}
+
+			# Left child:
+			cross_entropy = _cross_entropy(left_count, multiply_by_node_proba=True) / node.breiman_info.p_t
+			# Right child:
+			cross_entropy += _cross_entropy(right_count, multiply_by_node_proba=True) / node.breiman_info.p_t
+			
+			# Don't consider rules that lead to empty nodes
+			cross_entropy[sum(left_count.values()) == 0] = np.infty
+			cross_entropy[sum(right_count.values())  == 0] = np.infty
+
+			return cross_entropy
 		
 		if self.criterion == "gini":             
 			get_criterion = _gini_impurity             
-			score_rules = _gini_rule_score             
+			score_rules = _gini_rule_score
+			choice_func = min 
+		elif self.criterion == "cross-entropy":
+			get_criterion = _cross_entropy
+			score_rules = _cross_entropy_rule_score
 			choice_func = min             
-			node_type = ProbabilisticTreeNode
+		node_type = ProbabilisticTreeNode
 			
 		def _find_best_split(node):
 			"""
