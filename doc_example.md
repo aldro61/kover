@@ -19,9 +19,9 @@ The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) and
 
 The raw data were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
 
-![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:** Kover also work on reads and contigs (BAM, FASTA, FASTQ, etc.) ([see here for details](doc_input_formats.html)).
+![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:** Kover also work on reads and contigs (BAM, FASTA, FASTQ, etc.) ([see here for details](doc_input_formats.html)).
 
-![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Additional links:** [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial)
+![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Additional links:** [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial)
 
 
 ## Creating a dataset
@@ -113,7 +113,7 @@ False Positives: 0.0
 False Negatives: 0.0
 ```
 
-![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:**  The randomness used to split the dataset can vary based on the computer and operating system. This could explain
+![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:**  The randomness used to split the dataset can vary based on the computer and operating system. This could explain
 why this example gives slightly different results on your computer. The number of rules in the model, the k-mer sequences
 and the accuracy could be slightly different.
 
@@ -122,7 +122,7 @@ and the accuracy could be slightly different.
 
 We can now further analyse our model and try to elucidate the nature of the k-mers used by the model. To achieve this, we can use [Nucleotide BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch).
 
-![#c5f015](https://placehold.it/15/c5f015/000000?text=+) **Example:** Use BLAST to search for the following k-mer, which is of high importance in our model:
+![#c5f015](https://placehold.it/10/c5f015/000000?text=+) **Example:** Use BLAST to search for the following k-mer, which is of high importance in our model:
 
 ```
 GCGCCGACAGTCGGCGCTTGTGGGTCAACCC
@@ -131,7 +131,7 @@ GCGCCGACAGTCGGCGCTTGTGGGTCAACCC
 You should find that the sequence maps to the *rpoB* gene, which encodes the RNA polymerase
 beta subunit ([see here](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106)). Interestingly, this k-mer is in the rifampicin resistance determining region of the gene, so it seems like we have successfully identified a resistance determinant, using only sequence data and machine learning.
 
-![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
+![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
 
 ## Predicting with the obtained model
 
