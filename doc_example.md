@@ -2,7 +2,7 @@
 title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
 keywords: start, introduction, example, kover, genomics, k-mer, machine learning
-last_updated: May 31, 2016
+last_updated: June 21, 2017
 summary: "This page will walk you through an example application of Kover."
 ---
 
@@ -19,33 +19,41 @@ The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) and
 
 The raw data were obtained from: Merker, Matthias, et al. "Evolutionary history and global spread of the Mycobacterium tuberculosis Beijing lineage." *Nature genetics* 47.3 (2015): 242-249.
 
-Additional links: [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial), [Input file format](doc_input_formats.html).
+![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:** Kover also work on reads and contigs (BAM, FASTA, FASTQ, etc.) ([see here for details](doc_input_formats.html)).
+
+![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Additional links:** [Ray Surveyor Tutorial](https://github.com/zorino/RaySurveyor-Tutorial)
+
 
 ## Creating a dataset
 
-Before learning a model from these data, we must package the genomic and phenotypic data into a [Kover dataset](doc_dataset.html#creating-a-dataset).
-To create such a dataset, use the following command:
+Before using Kover to learn a model, we must package the genomic and phenotypic data into a [Kover dataset](doc_dataset.html#creating-a-dataset), which relies on the HDF5 library to store a compressed representation of the data ([details here](https://github.com/aldro61/kover/wiki/Kover-Dataset-Format)).
+
+To create a dataset, use the following command:
 
 ```
 kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
 ```
 
-This produces a Kover dataset called "example.kover". From now on, you no longer need the original data files.
+This produces a dataset file called "example.kover". From now on, you no longer need the original data files.
 
-You can now use the [kover dataset info](doc_dataset.html#listing-information-about-a-dataset) command to print information about the dataset. For example, to list the identifiers
+
+## Exploring the dataset
+
+You can use the [kover dataset info](doc_dataset.html#listing-information-about-a-dataset) command to print information about the dataset. For example, to list the identifiers
 of the genomes contained in the dataset, use:
 
 ```
 kover dataset info --dataset example.kover --genome-ids
 ```
 
-and to print the number of k-mers in the dataset, use:
+To print the number of genomes and k-mers in the dataset, use:
 
 ```
-kover dataset info --dataset example.kover --kmer-count
+kover dataset info --dataset example.kover --genome-count --kmer-count
 ```
 
-Your dataset contains 9 701 935 k-mers!
+Your dataset contains **141 genomes vs 9 701 935 k-mers**! This is know as the *fat data* setting, which is very different from the *big data* setting in which the number of examples (genomes) is greater than the number of features (k-mers).
+
 
 ## Splitting the dataset
 
@@ -105,19 +113,27 @@ False Positives: 0.0
 False Negatives: 0.0
 ```
 
-*Note: The randomness used to split the dataset can vary based on the computer and operating system. This could explain
+![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:**  The randomness used to split the dataset can vary based on the computer and operating system. This could explain
 why this example gives slightly different results on your computer. The number of rules in the model, the k-mer sequences
 and the accuracy could be slightly different.
 
+
 ## Subsequent analysis of the model
 
-You can use [Nucleotide BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch) to identify the genomic loci corresponding to the sequences targeted by the model.
-For example, the sequence [GCGCCGACAGTCGGCGCTTGTGGGTCAACCC](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106) maps to the *rpoB* gene, which encodes the RNA polymerase
-beta subunit. Interestingly, this k-mer is in the rifampicin resistance determining region of the gene. Moreover, the rules in the model capture
-the absence of the wild-type sequence, indicating that many variants are present at this locus. To maximize the conciseness of the model,
-a single absence rule is used instead of a presence rule for each variant.
+We can now further analyse our model and try to elucidate the nature of the k-mers used by the model. To achieve this, we can use [Nucleotide BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch).
+
+![#c5f015](https://placehold.it/15/c5f015/000000?text=+) **Example:** Use BLAST to search for the following k-mer, which is of high importance in our model:
+
+```
+GCGCCGACAGTCGGCGCTTGTGGGTCAACCC
+```
+
+You should find that the sequence maps to the *rpoB* gene, which encodes the RNA polymerase
+beta subunit ([see here](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106)). Interestingly, this k-mer is in the rifampicin resistance determining region of the gene, so it seems like we have successfully identified a resistance determinant, using only sequence data and machine learning.
+
+![#1589F0](https://placehold.it/15/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
 
 ## Predicting with the obtained model
 
-You could use any k-mer counting tool, such as [Jellyfish](https://github.com/gmarcais/Jellyfish), to extract the k-mers present in a FASTA file and then, easily apply the model.
+You could use any k-mer counting tool, such as [Jellyfish](https://github.com/gmarcais/Jellyfish), to extract the k-mers present in a contig or read file and then, easily apply the model to new isolates.
 This feature is currently not included in Kover, but will be added in future releases.
