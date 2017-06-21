@@ -131,7 +131,7 @@ GCGCCGACAGTCGGCGCTTGTGGGTCAACCC
 You should find that the sequence maps to the *rpoB* gene, which encodes the RNA polymerase
 beta subunit ([see here](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=76&to=106)). Interestingly, this k-mer is in the rifampicin resistance determining region of the gene, so it seems like we have successfully identified a resistance determinant, using only sequence data and machine learning.
 
-![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
+<img src="https://placehold.it/10/1589F0/000000?text=+" /> **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
 
 ## Predicting with the obtained model
 
