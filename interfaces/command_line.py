@@ -867,7 +867,7 @@ class KoverLearningTool(object):
         # Convert confusion matrix to a nice text output
         def confusion_matrix_to_str(confusion_matrix):
             matrix_str = ""
-            size_header = len(max(phenotype_tags)) + 5
+            size_header = len(max(phenotype_tags, key=len)) + 5
             col_width = 5
             horizontal_bar = "+-" + "-"*size_header + "+" + "+".join(["-"*col_width for c in range(len(phenotype_tags))]) + "+\n"
 
