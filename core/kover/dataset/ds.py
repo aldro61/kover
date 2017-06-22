@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin
+	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import numpy as np
 from functools import partial
 
 from ..utils import _hdf5_open_no_chunk_cache
@@ -26,7 +27,17 @@ class KoverDataset(object):
 	def __init__(self, file):
 		self.path = file
 		self.dataset_open = partial(_hdf5_open_no_chunk_cache, file)
-
+	
+	@property
+	def classification_type(self):
+		dataset = self.dataset_open()
+		# Backwards compatibilty with pre-2.0.0 Kover datasets
+		try:
+			classification_type = dataset.attrs["classification_type"]
+		except:
+			classification_type = "binary"
+		return classification_type
+		
 	@property
 	def compression(self):
 		dataset = self.dataset_open()
@@ -85,9 +96,21 @@ class KoverDataset(object):
 	@property
 	def phenotype(self):
 		dataset = self.dataset_open()
-		return KoverDatasetPhenotype(dataset.attrs["phenotype_name"],
-									 dataset["phenotype"],
-									 dataset.attrs["phenotype_metadata_source"])
+		# Backwards compatibilty with pre-2.0.0 Kover datasets
+		try:
+			description = dataset.attrs["phenotype_description"]
+		except:
+			description = dataset.attrs["phenotype_name"]
+			
+		try:
+			tags = dataset["phenotype_tags"]
+		except:
+			tags = np.array(['0', '1'])
+		
+		return KoverDatasetPhenotype(description=description,
+									 tags=tags,
+									 metadata=dataset["phenotype"],
+									 metadata_source=dataset.attrs["phenotype_metadata_source"])
 
 	@property
 	def splits(self):
@@ -125,8 +148,9 @@ class KoverDataset(object):
 								 split.attrs["random_seed"])
 
 class KoverDatasetPhenotype(object):
-	def __init__(self, name, metadata, metadata_source):
-		self.name = name
+	def __init__(self, description, tags, metadata, metadata_source):
+		self.description = description
+		self.tags = tags
 		self.metadata = metadata
 		self.metadata_source = metadata_source
 
