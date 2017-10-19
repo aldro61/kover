@@ -22,9 +22,10 @@
 import argparse
 import logging
 
-from tempfile import gettempdir
+from os.path import abspath
 from pkg_resources import get_distribution
 from sys import argv
+from tempfile import gettempdir
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
 VERSION = "1.2.0"
@@ -629,7 +630,7 @@ The most commonly used commands are:
                                 split_name=args.split,
                                 model_type=args.model_type,
                                 p=args.p,
-                                kmer_blacklist_file=args.kmer_blacklist,
+                                kmer_blacklist_file=None if args.kmer_blacklist is None else abspath(args.kmer_blacklist),
                                 max_rules=args.max_rules,
                                 max_equiv_rules=args.max_equiv_rules,
                                 bound_delta=0.05,  # We use a fixed 5% delta to simplify the user experience
