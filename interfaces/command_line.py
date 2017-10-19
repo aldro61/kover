@@ -28,7 +28,7 @@ from sys import argv
 from tempfile import gettempdir
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 class KoverDatasetCreationTool(object):
 
