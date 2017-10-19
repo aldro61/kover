@@ -65,7 +65,7 @@ def _fasta_to_sequences(path):
     for l in open(path, "r"):
         if l.startswith(">"):
             if buffer is not None:
-                contigs.append(buffer.lower())
+                contigs.append(buffer.upper())
                 buffer = ""
         else:
             if buffer is None:
@@ -73,7 +73,7 @@ def _fasta_to_sequences(path):
             else:
                 buffer += l.strip()
     if buffer is not None and buffer != "":
-        contigs.append(buffer.lower())
+        contigs.append(buffer.upper())
     return contigs
 
 
