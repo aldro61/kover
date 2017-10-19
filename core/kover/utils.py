@@ -165,7 +165,7 @@ def _unpack_binary_bytes_from_ints(a):
     return b
 
     
-def _parse_blacklist(blacklist_path, expected_kmer_len):
+def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
     data = []
     
     # Fasta file format
