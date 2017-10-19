@@ -181,6 +181,12 @@ def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
         # Filtering for empty strings (empty lines)
         data = [x for x in data if x]
     
+    def is_valid_kmer(k):
+        return len(set(k).difference(["A", "C", "G", "T"])) == 0
+    for kmer in data:
+        if not is_valid_kmer(kmer):
+            raise ValueError("{} is not a valid DNA sequence".format(kmer))
+
     if not(all(len(kmer) == expected_kmer_len for kmer in data)):
         raise ValueError("Extracted k-mers to blacklist do not have all the same length as the dataset k-mers")
 	
