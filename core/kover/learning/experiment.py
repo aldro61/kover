@@ -469,8 +469,8 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
     p = np.unique(p)
 
     rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file, 
-                                            kmer_blacklist_file=kmer_blacklist_file,
-                                            warning_callback=warning_callback)
+                                          kmer_blacklist_file=kmer_blacklist_file,
+                                          warning_callback=warning_callback)
     
     dataset = KoverDataset(dataset_file)
             
