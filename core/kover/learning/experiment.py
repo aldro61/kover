@@ -487,19 +487,19 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
         best_model, \
         best_rule_importances, \
         best_predictor_equiv_rules = _bound_selection(dataset_file=dataset_file, split_name=split_name, model_type=model_type, 
-                                                        p_values=p, max_rules=max_rules, max_equiv_rules=max_equiv_rules, 
-                                                        rule_blacklist=rule_blacklist, bound_delta=bound_delta, 
-                                                        bound_max_genome_size=bound_max_genome_size, n_cpu=n_cpu, 
-                                                        random_generator=random_generator, progress_callback=progress_callback, 
-                                                        warning_callback=warning_callback, error_callback=error_callback)
+                                                      p_values=p, max_rules=max_rules, max_equiv_rules=max_equiv_rules, 
+                                                      rule_blacklist=rule_blacklist, bound_delta=bound_delta, 
+                                                      bound_max_genome_size=bound_max_genome_size, n_cpu=n_cpu, 
+                                                      random_generator=random_generator, progress_callback=progress_callback, 
+                                                      warning_callback=warning_callback, error_callback=error_callback)
     elif parameter_selection == "cv":
         n_folds = len(dataset.get_split(split_name).folds)
         if n_folds < 1:
             error_callback(Exception("Cross-validation cannot be performed on a split with no folds."))
         best_hp_score, best_hp = _cross_validation(dataset_file=dataset_file, split_name=split_name, model_types=model_type,
-                                                    p_values=p, max_rules=max_rules, rule_blacklist=rule_blacklist, n_cpu=n_cpu, 
-                                                    progress_callback=progress_callback, warning_callback=warning_callback, 
-                                                    error_callback=error_callback)
+                                                   p_values=p, max_rules=max_rules, rule_blacklist=rule_blacklist, n_cpu=n_cpu, 
+                                                   progress_callback=progress_callback, warning_callback=warning_callback, 
+                                                   error_callback=error_callback)
     else:
         # Use the first value provided for each parameter
         best_hp = {"model_type": model_type[0], "p": p[0], "max_rules": max_rules}
@@ -514,8 +514,8 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
     else:
         model, rule_importances, \
         equivalent_rules = _full_train(dataset=dataset, split_name=split_name, model_type=best_hp["model_type"], p=best_hp["p"], 
-                                        max_rules=best_hp["max_rules"], max_equiv_rules=max_equiv_rules, rule_blacklist=rule_blacklist, 
-                                        random_generator=random_generator, progress_callback=progress_callback)
+                                       max_rules=best_hp["max_rules"], max_equiv_rules=max_equiv_rules, rule_blacklist=rule_blacklist, 
+                                       random_generator=random_generator, progress_callback=progress_callback)
 
     split = dataset.get_split(split_name)
     train_example_idx = split.train_genome_idx
