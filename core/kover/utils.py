@@ -182,7 +182,7 @@ def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
         data = [x for x in data if x]
     
     def is_valid_kmer(k):
-        return len(set(k).difference(["A", "C", "G", "T"])) == 0
+        return len(set(k).difference(["A", "C", "G", "T", "a", "c", "g", "t"])) == 0
     for kmer in data:
         if not is_valid_kmer(kmer):
             raise ValueError("{} is not a valid DNA sequence".format(kmer))
