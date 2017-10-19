@@ -26,27 +26,56 @@ from math import ceil
 def _class_to_string(instance):
     """
     Returns a string representation of the public attributes of a class.
+    
     Parameters:
     -----------
     instance: object
         An instance of any class.
+	
     Returns:
     --------
     string_rep: string
         A string representation of the class and its public attributes.
+	
     Notes:
     -----
     Private attributes must be marked with a leading underscore.
+    
     """
     return instance.__class__.__name__ + "(" + ",".join(
         [str(k) + "=" + str(v) for k, v in instance.__dict__.iteritems() if str(k[0]) != "_"]) + ")"
 
+
 def _duplicate_last_element(l, length):
     """
     Duplicates the last element of a list until a given length is reached. (In-place)
+    
     """
     l += [l[-1]] * (length - len(l))
     return l
+
+
+def _fasta_to_sequences(path):
+    """
+    Reads a FASTA file extracts all the sequences (contigs) that it contains.
+    
+    """
+    contigs = []
+    buffer = None
+    for l in open(path, "r"):
+        if l.startswith(">"):
+            if buffer is not None:
+                contigs.append(buffer.upper())
+                buffer = ""
+        else:
+            if buffer is None:
+                buffer = l.strip()
+            else:
+                buffer += l.strip()
+    if buffer is not None and buffer != "":
+        contigs.append(buffer.upper())
+    return contigs
+
 
 def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     fid = h.h5f.open(filename, access_type)
@@ -59,9 +88,11 @@ def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     file_id = h.h5f.open(filename, access_type, fapl=access_property_list)
     return h.File(file_id)
 
+
 def _minimum_uint_size(max_value):
     """
     Find the minimum size unsigned integer type that can store values of at most max_value
+    
     """
     if max_value <= np.iinfo(np.uint8).max:
         return np.uint8
@@ -74,9 +105,11 @@ def _minimum_uint_size(max_value):
     else:
         return np.uint128
 
+
 def _pack_binary_bytes_to_ints(a, pack_size):
     """
     Packs binary values stored in bytes into ints
+    
     """
     if pack_size == 64:
         type = np.uint64
@@ -99,9 +132,11 @@ def _pack_binary_bytes_to_ints(a, pack_size):
 
     return b
 
+
 def _unpack_binary_bytes_from_ints(a):
     """
     Unpacks binary values stored in bytes into ints
+    
     """
     type = a.dtype
 
@@ -128,3 +163,32 @@ def _unpack_binary_bytes_from_ints(a):
         packed_rows += 1
 
     return b
+
+    
+def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
+    data = []
+    
+    # Fasta file format
+    fasta_extensions = [".fasta", ".fa", ".fas", ".fna"]
+    if any(blacklist_path.endswith(extension) for extension in fasta_extensions):
+        data = _fasta_to_sequences(blacklist_path)
+            
+    # Other file format (text file with one kmer per line)
+    else:
+        # Loading data and splitting on every line
+        data = [l.rstrip('\n') for l in open(blacklist_path, "r")]
+        
+        # Filtering for empty strings (empty lines)
+        data = [x for x in data if x]
+    
+    def is_valid_kmer(k):
+        return len(set(k).difference(["A", "C", "G", "T", "a", "c", "g", "t"])) == 0
+    for kmer in data:
+        if not is_valid_kmer(kmer):
+            raise ValueError("{} is not a valid DNA sequence".format(kmer))
+
+    if not(all(len(kmer) == expected_kmer_len for kmer in data)):
+        raise ValueError("Extracted k-mers to blacklist do not have all the same length as the dataset k-mers")
+	
+    return data
+    

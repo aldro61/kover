@@ -22,12 +22,13 @@
 import argparse
 import logging
 
-from tempfile import gettempdir
+from os.path import abspath
 from pkg_resources import get_distribution
 from sys import argv
+from tempfile import gettempdir
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 class KoverDatasetCreationTool(object):
 
@@ -538,6 +539,9 @@ The most commonly used commands are:
                                  'You can specify multiple space separated values. Refer to the documentation for '
                                  'more information.',
                             default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
+        parser.add_argument('--kmer-blacklist', help='A file containing a list of k-mers to remove from the analysis.'
+                                                        'These k-mers guaranteed not to be used in the models.'
+                                                        'File format: fasta file or text file with one k-mer per line.', required=False)
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
                                                           'model.', default=10)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '
@@ -564,7 +568,7 @@ The most commonly used commands are:
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
-
+    
         # If no argument has been specified, default to help
         if len(argv) == 2:
             argv.append("--help")
@@ -596,7 +600,7 @@ The most commonly used commands are:
                   "Use 'kover dataset split' to create folds."
             exit()
         del dataset
-
+    
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s [%(process)d]: %(message)s")
@@ -626,6 +630,7 @@ The most commonly used commands are:
                                 split_name=args.split,
                                 model_type=args.model_type,
                                 p=args.p,
+                                kmer_blacklist_file=None if args.kmer_blacklist is None else abspath(args.kmer_blacklist),
                                 max_rules=args.max_rules,
                                 max_equiv_rules=args.max_equiv_rules,
                                 bound_delta=0.05,  # We use a fixed 5% delta to simplify the user experience
