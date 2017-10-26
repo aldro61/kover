@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
-	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin
+    Kover: Learn interpretable computational phenotyping models from k-merized genomic data
+    Copyright (C) 2015  Alexandre Drouin
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import argparse
@@ -153,7 +152,7 @@ class KoverDatasetCreationTool(object):
                      nb_cores=args.n_cpu,
                      verbose=args.verbose,
                      progress=args.progress)
-                     
+
     def from_reads(self):
         parser = argparse.ArgumentParser(prog="kover dataset create from-reads",
                                          description='Creates a Kover dataset from genomic data and optionally '
@@ -423,7 +422,7 @@ The two available data sources are:
 
 class CommandLineInterface(object):
     def __init__(self):
-        self.available_commands = ['dataset', 'learn']
+        self.available_commands = ['dataset', 'learn', 'predict']
 
         parser = argparse.ArgumentParser(description=KOVER_DESCRIPTION)
         parser.add_argument('--cite', action='store_true',
@@ -524,6 +523,52 @@ The most commonly used commands are:
         args = parser.parse_args(argv[2:3])
         getattr(dataset_tool, args.command)()
 
+    def predict(self):
+        parser = argparse.ArgumentParser(prog='kover predict', description="Use an existing kover model to make predictions.")
+        parser.add_argument('--genomic-data', help='A tab-separated file with one line per genome in the format GENOME_ID{tab}PATH, where the path refers to a fasta file containing the genome\'s contigs.', required=True)
+        parser.add_argument('--data-type', help="The type of genomic data.", choices=["fasta"], required=True)
+        parser.add_argument('--model', help="Path to the model's fasta file", required=True)
+        parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
+        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+
+        # If no argument has been specified, default to help
+        if len(argv) == 2:
+            argv.append("--help")
+
+        args = parser.parse_args(argv[2:])
+
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s [%(process)d]: %(message)s")
+
+        if args.progress:
+            progress_vars = {"current_task": None, "pbar": None}
+
+            def progress(task_name, p):
+                if task_name != progress_vars["current_task"]:
+                    if progress_vars["pbar"] is not None:
+                        progress_vars["pbar"].finish()
+                    progress_vars["current_task"] = task_name
+                    progress_vars["pbar"] = ProgressBar(widgets=['%s: ' % task_name, Percentage(), Bar(), Timer()],
+                                                        maxval=1.0)
+                    progress_vars["pbar"].start()
+                else:
+                    progress_vars["pbar"].update(p)
+        else:
+            progress = None
+
+        # TODO: eventually detect if it is a SCM or CART model
+        # TODO: note qu'on peut stocker un arbre de façon non ambigue en utilisant
+        #       des entiers pour numeroter les noeuds (tree traversal)
+        from kover.predicting.scm import predict
+        from progressbar import Bar, Percentage, ProgressBar, Timer
+
+        print predict(genomic_data_file=args.genomic_data,
+                genomic_data_type=args.data_type,
+                model_fasta_file=args.model,
+                progress_callback=progress,
+                error_callback=None)  #TODO error cb
+
     def learn(self):
         parser = argparse.ArgumentParser(prog='kover learn', description='Learn a model from data')
         parser.add_argument('--dataset', help='The Kover dataset from which to learn.', required=True)
@@ -568,7 +613,7 @@ The most commonly used commands are:
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
-    
+
         # If no argument has been specified, default to help
         if len(argv) == 2:
             argv.append("--help")
@@ -589,6 +634,7 @@ The most commonly used commands are:
         dataset = KoverDataset(args.dataset)
         dataset_kmer_count = dataset.kmer_count
         # - Check that the split exists
+
         try:
             dataset.get_split(args.split)
         except:
@@ -600,7 +646,7 @@ The most commonly used commands are:
                   "Use 'kover dataset split' to create folds."
             exit()
         del dataset
-    
+
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
                                 format="%(asctime)s.%(msecs)d %(levelname)s %(module)s - %(funcName)s [%(process)d]: %(message)s")
@@ -753,10 +799,11 @@ The most commonly used commands are:
         # Save model (also equivalent rules) [Fasta]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, (rule, importance) in enumerate(zip(model, rule_importances)):
-                f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, importance, rule.kmer_sequence))
-                with open(join(args.output_dir, "model_rule_%i_equiv.fasta" % (i + 1)), "w") as f_equiv:
+                rule_id = "{0:d}-{1!s}".format(i + 1, rule.type)
+                f.write(">model-type: {0!s}, rule-id: {1!s}, importance: {2:.2f}\n{3!s}\n\n".format(model.type, rule_id, importance, rule.kmer_sequence))
+                with open(join(args.output_dir, "model_rule_{0!s}_equiv.fasta".format(rule_id)), "w") as f_equiv:
                     f_equiv.write("\n\n".join(
-                        [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence)
+                        [">rule-{0:d}-equiv-{1:d},{2!s}\n{3!s}".format(i + 1, j + 1, rule.type, rule.kmer_sequence)
                          for j, rule in enumerate(equivalent_rules[i])]))
 
 
