@@ -557,17 +557,23 @@ The most commonly used commands are:
         else:
             progress = None
 
+        def error_callback(error):
+            print "An error occurred:", error.message
+            exit()
+
         # TODO: eventually detect if it is a SCM or CART model
         # TODO: note qu'on peut stocker un arbre de façon non ambigue en utilisant
         #       des entiers pour numeroter les noeuds (tree traversal)
         from kover.predicting.scm import predict
         from progressbar import Bar, Percentage, ProgressBar, Timer
 
-        print predict(genomic_data_file=args.genomic_data,
-                genomic_data_type=args.data_type,
-                model_fasta_file=args.model,
-                progress_callback=progress,
-                error_callback=None)  #TODO error cb
+        try:
+            print predict(genomic_data_file=args.genomic_data,
+                    genomic_data_type=args.data_type,
+                    model_fasta_file=args.model,
+                    progress_callback=progress)
+        except Exception as e:
+            print "An error occurred:", e.message
 
     def learn(self):
         parser = argparse.ArgumentParser(prog='kover learn', description='Learn a model from data')
