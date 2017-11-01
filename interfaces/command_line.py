@@ -21,7 +21,9 @@
 
 import argparse
 import logging
+import numpy as np
 
+from collections import defaultdict
 from tempfile import gettempdir
 from pkg_resources import get_distribution
 from sys import argv
@@ -441,7 +443,7 @@ class KoverLearningTool(object):
 
     def scm(self):
         parser = argparse.ArgumentParser(prog='kover learn scm', description='Learn a conjunction/disjunction model using the Set Covering Machine algorithm.')
-        parser.add_argument('--dataset', help='The Kover dataset from which to learn.', required=True)
+        parser.add_argument('--dataset', help='The Kover dataset to use for learning.', required=True)
         parser.add_argument('--split', help='The identifier of the split of the dataset to use for learning.',
                             required=True)
         parser.add_argument('--model-type', choices=['conjunction', 'disjunction'], nargs='+',
@@ -685,20 +687,29 @@ class KoverLearningTool(object):
 
     def tree(self):
         parser = argparse.ArgumentParser(prog='kover learn tree', description='Learn a decision tree model using the Classification And Regression Trees algorithm.')
-        parser.add_argument('--dataset', help='The Kover dataset to learn from.', required=True)
-        parser.add_argument('--split', help='The identifier of the split of the dataset that must be learnt from.',
+        parser.add_argument('--dataset', help='The Kover dataset to use for learning.', required=True)
+        parser.add_argument('--split', help='The identifier of the split of the dataset to use for learning.',
                             required=True)
-        parser.add_argument('--criterion', type=str, nargs='+', help='The criterion used to split the leaves of the decision tree.'
-                                '[Choices: gini, cross-entropy] (default: gini)', default="gini", required=False)
-        parser.add_argument('--max-depth', type=int, nargs='+', help='The maximum depth of the decision tree. (default: 10)',
+        parser.add_argument('--criterion', type=str, nargs='+', help='Hyperparameter: The criterion used to partition the leaves of the decision tree. '
+																	 'You can specify multiple space separated values. Refer to the documentation '
+																	 'for more information. (default: gini)',
+                            choices=['gini', 'crossentropy'], default='gini', required=False)
+        parser.add_argument('--max-depth', type=int, nargs='+', help='Hyperparameter: The maximum depth of the decision tree. You can specify multiple space separated '
+																	 'values. Refer to the documentation for more information. (default: 10)',
                             default=10, required=False)
         parser.add_argument('--min-samples-split', type=int, nargs='+',
-                            help='The minimum number of genomes that a tree node must contain to be split. '
-                            ' default: 2)', default=2, required=False)
-        parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.'
-                            'See documentation for examples.',default=None, required=False)
-        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.',
-                            default='cv', required=False)
+                            help='Hyperparameter: The minimum number of genomes that a leaf must contain to be partionned into two new leaves. You can specify multiple '
+                            'space separated values. Refer to the documentation for more information. (default: 2)', default=2, required=False)
+        parser.add_argument('--class-importance', type=str, nargs='+', help='Hyperparameter (this one is tricky so read carefully): This controls the cost of making prediction '
+                            'errors on each class. You can either specify a set of space-separated values, which will result in trying each value for each class, or provide a '
+                            'set of class-specific values to try using the following syntax: "class1: v1 v2 class2: v1 v2 v3 ...". Refer to the documentation for more information. '
+                            '(default: 1.0 for each class)',
+                            default=None, required=False)
+        parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
+                            help='The strategy used to select the best values for hyperparameters. The default is '
+                                 'k-fold cross-validation, where k is the number of folds defined in the split. Other '
+                                 'strategies, such as bound selection are available (refer to the documentation). Using none '
+                                 'selects the first value specified for each hyperparameter.', default='cv')
         parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
                                                       'algorithm and that your storage device will not be a bottleneck (simultaneous reading).',
@@ -743,81 +754,90 @@ class KoverLearningTool(object):
                   "Use 'kover dataset split' to create folds."
             exit()
 
-
-        phenotype_tags = pre_dataset.phenotype.tags[...]
+        # Load classification task specifications
+        phenotype_tags = pre_dataset.phenotype.tags[...].tolist()
         classification_type = pre_dataset.classification_type
+        del pre_dataset
+
+        def parse_class_importances(class_importance_input):
+            """
+            Parses a class importance specification with the following format:
+
+            class_1: v11 v12 class_2: v21 v22 ...
+
+            """
+            # ---- Input validation follows ----
+
+            # Check that importance values are specified for each class
+            for class_name in phenotype_tags:
+                try:
+                    class_importance_input.index(class_name + ":")
+                except ValueError:
+                    print "Error: no class importances defined for class \"{}\" which is in the dataset.".format(class_name)
+                    exit()
+
+            # Check that no unknown classes were used
+            for class_name in [x.replace(":", "") for x in class_importance_input if x.endswith(":")]:
+                try:
+                    phenotype_tags.index(class_name)
+                except ValueError:
+                    print "Error: unknown class \"{}\" in class importances.".format(class_name)
+                    exit()
+
+            # Check that there is at least one importance value for each class
+            for i in xrange(len(class_importance_input)):
+                if class_importance_input[i].endswith(":"):
+                    try:
+                        assert not class_importance_input[i + 1].endswith(":")
+                    except:
+                        print "Error: no class importances defined for class {} which is in the dataset.".format(class_importance_input[i].replace(":", ""))
+                        exit()
+
+            # Check that all importances specified are valid floats
+            for v in class_importance_input:
+                if not v.endswith(":"):
+                    try:
+                        float(v)
+                    except ValueError:
+                        print "Error: invalid value \"{}\" encountered in class importances.".format(v)
+                        exit()
+
+            # ---- Input is valid ----
+
+            # Get the list of importances to try for each class
+            class_importances = defaultdict(list)
+            for v in class_importance_input:
+                if v.endswith(":"):
+                    current_class = v.replace(":", "")
+                else:
+                    class_importances[current_class].append(float(v))
+
+            # Make a list of dictionnaries giving every possible combination of importances
+            grid_classes = class_importances.keys()
+            grid = product(*class_importances.values())
+            class_importances = [{c: importance for c, importance in zip(grid_classes, grid_row)} for grid_row in grid]
+
+            return np.unique(class_importances)
 
         if args.class_importance:
 
-            def isfloat(value):
-                try:
-                    float(value)
-                    return True
-                except ValueError:
-                    return False
+            if args.class_importance[0].endswith(":"):
+                # Separate set of class importances for each class
+                # Format: c1: v11 v2 c12: v21 v22 ...
+                class_importances = parse_class_importances(args.class_importance)
 
-            def str_to_importance(list_values):
-                if all([isfloat(value) for value in list_values]):
-                    if all([float(value) >= 0.0 for value in list_values]):
-                        return [float(value) for value in list_values]
-                print("Error: The class importance values are not all positive floats")
-                exit()
-
-            class_importance = []
-
-            # Specific grid for each class
-            if args.class_importance[0] in phenotype_tags:
-                class_positions = {}
-                class_importance_grid = {}
-
-                # Find class names position
-                for c, phenotype in enumerate(phenotype_tags):
-                    try:
-                        class_positions[c] = args.class_importance.index(phenotype)
-                    except ValueError:
-                        class_importance_grid[c] = [1.0]
-
-                # Sort in order of appearance
-                sorted_class_apparitions = sorted(class_positions, key=class_positions.get)
-                start = sorted_class_apparitions[0]
-
-                # Parse the importance for each class
-                for end in sorted_class_apparitions[1:]:
-                    importance_list = str_to_importance(args.class_importance[class_positions[start]+1:class_positions[end]])
-                    class_importance_grid[start] = importance_list
-                    start=end
-                importance_list = str_to_importance(args.class_importance[class_positions[start]+1:])
-                class_importance_grid[start] = importance_list
-
-                # Create the importance grid
-                class_importance_grid = [class_importance_grid[key] for key in sorted(class_importance_grid.keys())]
-                importance_grid = product(*class_importance_grid)
-                for grid in importance_grid:
-                   class_importance.append({c:importance for c, importance in enumerate(grid)})
-
-            # Importance overall grid
-            elif isfloat(args.class_importance[0]):
-
-                # Parse the importance list
-                importance_list = str_to_importance(args.class_importance)
-                if (len(importance_list) != phenotype_tags.shape[0]):
-                    print("Error: The importance grid must have the dimension as the number of classes")
-                    exit()
-
-                # Create the importance grid
-                importance_grid = list(permutations(importance_list, len(importance_list)))
-                for grid in importance_grid:
-                    class_importance.append({c:importance for c, importance in enumerate(grid)})
-
-            # Undefined syntax
             else:
-                print("Error: The class importance syntax is not recognized")
-                exit()
+                # Identical set of class importances for each class
+                # Format: v1 v2 v3 ...
+                tmp = []
+                for c in phenotype_tags:
+                    tmp.append(c + ":")
+                    tmp += args.class_importance
+                class_importances = parse_class_importances(tmp)
 
-        # Every class have an importance of 1.0
+        # No class importances specified, so each has an importance of 1.0
         else:
-            class_importance = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
-        del pre_dataset
+            class_importances = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
@@ -846,7 +866,7 @@ class KoverLearningTool(object):
                                 criterion=args.criterion,
                                 max_depth=args.max_depth,
                                 min_samples_split=args.min_samples_split,
-                                class_importance=class_importance,
+                                class_importance=class_importances,
                                 parameter_selection=args.hp_choice,
                                 n_cpu=args.n_cpu,
                                 progress_callback=progress)
@@ -920,7 +940,7 @@ class KoverLearningTool(object):
         else:
             report += "Selection strategy: No selection\n"
         report += "Criterion: %s\n" % best_hp["criterion"]
-        report += "Class importance: %s\n" % ", ".join(["class %s: %.3f" % (phenotype_tags[c], best_hp["class_importance"][c]) for c in range(len(phenotype_tags))])
+        report += "Class importance: %s\n" % ", ".join(["class %s: %.3f" % (c, best_hp["class_importance"][c]) for c in phenotype_tags])
         report += "Maximum tree depth: %d\n" % best_hp["max_depth"]
         report += "Minimum samples to split a node (examples): %.3f\n" % best_hp["min_samples_split"]
         report += "\n"
