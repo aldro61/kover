@@ -684,7 +684,7 @@ class KoverLearningTool(object):
                          for j, rule in enumerate(equivalent_rules[i])]))
 
     def tree(self):
-        parser = argparse.ArgumentParser(prog='kover learn tree', description='Learn a decision tree model using the Classification And Regression Trees algorithm.'')
+        parser = argparse.ArgumentParser(prog='kover learn tree', description='Learn a decision tree model using the Classification And Regression Trees algorithm.')
         parser.add_argument('--dataset', help='The Kover dataset to learn from.', required=True)
         parser.add_argument('--split', help='The identifier of the split of the dataset that must be learnt from.',
                             required=True)
