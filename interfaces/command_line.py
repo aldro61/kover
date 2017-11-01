@@ -114,7 +114,7 @@ class KoverDatasetCreationTool(object):
                                                          default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
-        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', 
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.',
                                                 default=gettempdir())
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
@@ -153,7 +153,7 @@ class KoverDatasetCreationTool(object):
                      nb_cores=args.n_cpu,
                      verbose=args.verbose,
                      progress=args.progress)
-                     
+
     def from_reads(self):
         parser = argparse.ArgumentParser(prog="kover dataset create from-reads",
                                          description='Creates a Kover dataset from genomic data and optionally '
@@ -178,7 +178,7 @@ class KoverDatasetCreationTool(object):
                                                          default=0)
         parser.add_argument('--compression', type=int, help='The gzip compression level (0 - 9). 0 means no compression'
                                                             '. The default value is 4.', default=4)
-        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.', 
+        parser.add_argument('--temp-dir', help='Output directory for temporary files. The default is the system\'s temp dir.',
                                                 default=gettempdir())
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
@@ -267,7 +267,7 @@ The two available data sources are:
         parser.add_argument('--phenotype-metadata',
                             help='Prints the path of the file from which the phenotypic metadata'
                                  ' was acquired.', action='store_true')
-        parser.add_argument('--phenotype-tags', help='Prints the phenotype tags associated to the dataset', 
+        parser.add_argument('--phenotype-tags', help='Prints the phenotype tags associated to the dataset',
                             action='store_true')
         parser.add_argument('--splits',
                             help='Prints the lists of splits of the dataset that are available for learning.',
@@ -434,13 +434,13 @@ The two available data sources are:
 
         if args.progress:
             progress_vars["pbar"].finish()
-            
+
 class KoverLearningTool(object):
     def __init__(self):
-            self.available_commands = ['logical', 'tree']
-            
-    def logical(self):
-        parser = argparse.ArgumentParser(prog='kover learn logical', description='Learn a  logical model from data')
+            self.available_commands = ['scm', 'tree']
+
+    def scm(self):
+        parser = argparse.ArgumentParser(prog='kover learn scm', description='Learn a conjunction/disjunction model using the Set Covering Machine algorithm.')
         parser.add_argument('--dataset', help='The Kover dataset from which to learn.', required=True)
         parser.add_argument('--split', help='The identifier of the split of the dataset to use for learning.',
                             required=True)
@@ -502,12 +502,12 @@ class KoverLearningTool(object):
         dataset_kmer_count = pre_dataset.kmer_count
         classification_type = pre_dataset.classification_type
         phenotype_tags = pre_dataset.phenotype.tags[...]
-        
+
         # Check if the dataset is compatible
         if classification_type != "binary":
                 print "Error: The SCM cannot learn a multi-class classifier"
                 exit()
-                
+
         # - Check that the split exists
         try:
             pre_dataset.get_split(args.split)
@@ -587,13 +587,13 @@ class KoverLearningTool(object):
         report += "Phenotype: %s\n" % dataset.phenotype.description.title()
         report += "Genomic data type: %s\n" % dataset.genome_source_type
         report += "Split: %s\n" % args.split
-        
+
         report += "Number of genomes used for training: %d " % (len(split.train_genome_idx))
         nb_genome_training = {c:(dataset.phenotype.metadata[split.train_genome_idx] == c).sum()\
                                 for c in range(len(phenotype_tags))}
         training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(training_groups)
-        
+
         report += "Number of genomes used for testing: %d " % (len(split.test_genome_idx))
         nb_genome_testing = {c:(dataset.phenotype.metadata[split.test_genome_idx] == c).sum() if \
                             len(split.test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
@@ -682,22 +682,22 @@ class KoverLearningTool(object):
                     f_equiv.write("\n\n".join(
                         [">rule-%d-equiv-%d,%s\n%s" % (i + 1, j + 1, rule.type, rule.kmer_sequence)
                          for j, rule in enumerate(equivalent_rules[i])]))
-        
+
     def tree(self):
-        parser = argparse.ArgumentParser(prog='kover learn tree', description='Learn a decision tree model from data.')
+        parser = argparse.ArgumentParser(prog='kover learn tree', description='Learn a decision tree model using the Classification And Regression Trees algorithm.'')
         parser.add_argument('--dataset', help='The Kover dataset to learn from.', required=True)
-        parser.add_argument('--split', help='The identifier of the split of the dataset that must be learnt from.', 
+        parser.add_argument('--split', help='The identifier of the split of the dataset that must be learnt from.',
                             required=True)
         parser.add_argument('--criterion', type=str, nargs='+', help='The criterion used to split the leaves of the decision tree.'
                                 '[Choices: gini, cross-entropy] (default: gini)', default="gini", required=False)
         parser.add_argument('--max-depth', type=int, nargs='+', help='The maximum depth of the decision tree. (default: 10)',
                             default=10, required=False)
-        parser.add_argument('--min-samples-split', type=int, nargs='+', 
+        parser.add_argument('--min-samples-split', type=int, nargs='+',
                             help='The minimum number of genomes that a tree node must contain to be split. '
                             ' default: 2)', default=2, required=False)
         parser.add_argument('--class-importance', type=str, nargs='+', help='This controls the cost of making prediction errors on each class.'
                             'See documentation for examples.',default=None, required=False)
-        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.', 
+        parser.add_argument('--hp-choice', choices=['cv', 'none'], help='The strategy used to select the hyperparameter values.',
                             default='cv', required=False)
         parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
@@ -708,7 +708,7 @@ class KoverLearningTool(object):
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
-        
+
         # If no argument has been specified, default to help
         if len(argv) == 3:
             argv.append("--help")
@@ -728,59 +728,59 @@ class KoverLearningTool(object):
 
         # Input validation
         pre_dataset = KoverDataset(args.dataset)
-            
+
         # - Check that the split exists
         try:
             pre_dataset.get_split(args.split)
         except:
             print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
             exit()
-            
-            
+
+
         # - Must have at least 2 folds to perform cross-validation
         if args.hp_choice == "cv" and len(pre_dataset.get_split(args.split).folds) < 2:
             print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
                   "Use 'kover dataset split' to create folds."
             exit()
-        
-        
+
+
         phenotype_tags = pre_dataset.phenotype.tags[...]
         classification_type = pre_dataset.classification_type
 
         if args.class_importance:
-            
+
             def isfloat(value):
                 try:
                     float(value)
                     return True
                 except ValueError:
                     return False
-                    
+
             def str_to_importance(list_values):
                 if all([isfloat(value) for value in list_values]):
                     if all([float(value) >= 0.0 for value in list_values]):
                         return [float(value) for value in list_values]
                 print("Error: The class importance values are not all positive floats")
                 exit()
-                    
+
             class_importance = []
-            
+
             # Specific grid for each class
             if args.class_importance[0] in phenotype_tags:
                 class_positions = {}
                 class_importance_grid = {}
-                
+
                 # Find class names position
                 for c, phenotype in enumerate(phenotype_tags):
                     try:
                         class_positions[c] = args.class_importance.index(phenotype)
                     except ValueError:
                         class_importance_grid[c] = [1.0]
-                        
+
                 # Sort in order of appearance
                 sorted_class_apparitions = sorted(class_positions, key=class_positions.get)
                 start = sorted_class_apparitions[0]
-                
+
                 # Parse the importance for each class
                 for end in sorted_class_apparitions[1:]:
                     importance_list = str_to_importance(args.class_importance[class_positions[start]+1:class_positions[end]])
@@ -788,32 +788,32 @@ class KoverLearningTool(object):
                     start=end
                 importance_list = str_to_importance(args.class_importance[class_positions[start]+1:])
                 class_importance_grid[start] = importance_list
-                
+
                 # Create the importance grid
                 class_importance_grid = [class_importance_grid[key] for key in sorted(class_importance_grid.keys())]
                 importance_grid = product(*class_importance_grid)
                 for grid in importance_grid:
                    class_importance.append({c:importance for c, importance in enumerate(grid)})
-            
+
             # Importance overall grid
             elif isfloat(args.class_importance[0]):
-                
+
                 # Parse the importance list
                 importance_list = str_to_importance(args.class_importance)
                 if (len(importance_list) != phenotype_tags.shape[0]):
                     print("Error: The importance grid must have the dimension as the number of classes")
                     exit()
-                    
+
                 # Create the importance grid
                 importance_grid = list(permutations(importance_list, len(importance_list)))
                 for grid in importance_grid:
                     class_importance.append({c:importance for c, importance in enumerate(grid)})
-            
+
             # Undefined syntax
             else:
                 print("Error: The class importance syntax is not recognized")
                 exit()
-                
+
         # Every class have an importance of 1.0
         else:
             class_importance = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
@@ -863,7 +863,7 @@ class KoverLearningTool(object):
                               ("fp", "False Positives"), ("fn", "False Negatives")]
         elif classification_type == "multiclass":
             metric_aliases = [("risk", "Error rate"), ("confusion_matrix", "Confusion Matrix")]
-        
+
         # Convert confusion matrix to a nice text output
         def confusion_matrix_to_str(confusion_matrix):
             matrix_str = ""
@@ -880,12 +880,12 @@ class KoverLearningTool(object):
                 matrix_str += "| " + phenotype_tags[c].ljust(size_header - 5) + ("(" + str(c) + ")").center(5) + "|"
                 matrix_str += "|".join([str(score).center(col_width) for score in confusion_matrix[c]])  + "|\n"
                 matrix_str += horizontal_bar
-            
+
             return matrix_str
-            
+
         dataset = KoverDataset(args.dataset)
         split = dataset.get_split(args.split)
-        
+
         report = ""
         report += "Kover Learning Report\n" + "="*21 + "\n"
         report += "\n"
@@ -900,19 +900,19 @@ class KoverLearningTool(object):
         report += "Dataset UUID: %s\n" % dataset.uuid
         report += "Phenotype: %s\n" % dataset.phenotype.description.title()
         report += "Split: %s\n" % args.split
-        
+
         report += "Number of genomes used for training: %d " % (len(split.train_genome_idx))
         nb_genome_training = {c:(dataset.phenotype.metadata[split.train_genome_idx] == c).sum()\
                                 for c in range(len(phenotype_tags))}
         training_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_training[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(training_groups)
-        
+
         report += "Number of genomes used for testing: %d " % (len(split.test_genome_idx))
         nb_genome_testing = {c:(dataset.phenotype.metadata[split.test_genome_idx] == c).sum() if \
                             len(split.test_genome_idx) > 0 else 0 for c in range(len(phenotype_tags))}
         testing_groups = ["Group %s: %d" % (phenotype_tags[c], nb_genome_testing[c]) for c in range(len(phenotype_tags))]
         report += "(%s)\n" % ", ".join(testing_groups)
-        
+
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
@@ -1088,15 +1088,15 @@ The most commonly used commands are:
 
         args = parser.parse_args(argv[2:3])
         getattr(dataset_tool, args.command)()
-        
+
     def learn(self):
         learning_tool = KoverLearningTool()
-        
+
         parser = argparse.ArgumentParser(usage= \
 '''%(prog)s learn <experiment> [<args>]
 The most commonly used commands are:
-    logical    Learn a logical model using the Set Covering Machine
-    tree       Learn a tree model using Classification And Regression Trees''')
+    scm        Learn a conjunction/disjunction model using the Set Covering Machine algorithm.
+    tree       Learn a decision tree model using the Classification And Regression Trees algorithm.''')
 
         parser.add_argument('command', help='The learning experiment to perform',
                             choices=learning_tool.available_commands)
