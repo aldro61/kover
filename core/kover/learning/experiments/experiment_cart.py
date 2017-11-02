@@ -86,8 +86,20 @@ def _tiebreaker(best_score_idx, rule_risks):
     """
     logging.debug("There are %d candidate rules." % best_score_idx.shape[0])
     tie_rule_risks = rule_risks[best_score_idx]
-    result = best_score_idx[tie_rule_risks == tie_rule_risks.min()]
+    result = best_score_idx[np.isclose(tie_rule_risks, tie_rule_risks.min())]
     return result
+
+
+def _split_callback(node, equivalent_rules_idx):
+    """
+    Called each time a leaf is split into two new leaves. This function is used
+    to keep track of the number of equivalent rules at each decision point. It
+    simply injects a list of equivalent rule indices into the rule used to split.
+    It's kinda hacky, but also really simple.
+
+    """
+    logging.debug("Injecting equivalent rules into new tree node")
+    node.rule.equivalent_rules_idx = equivalent_rules_idx
 
 
 def _readdress_tree(tree, rule_new_idx_by_kmer_seq):
@@ -236,11 +248,11 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
     master_predictor.fit(rules=rules,
                          rule_classifications=rule_classifications,
                          example_idx = {c:split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
-                                                                                            for c in range(n_classes)},
-                         rule_blacklist=None,  # TODO: blacklist not implemented
-                         tiebreaker=None,
+                                        for c in range(n_classes)},
+                         rule_blacklist=None,
+                         tiebreaker=partial(_tiebreaker, rule_risks=split.unique_risk_by_kmer[...]),
                          level_callback=None,
-                         split_callback=None)
+                         split_callback=_split_callback)
 
     logging.debug("Pruning the master tree using minimum cost-complexity pruning and the sample-compression bound")
     min_score = np.infty
@@ -339,8 +351,8 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
                                rule_classifications=rule_classifications,
                                example_idx = {c: fold.train_genome_idx[example_labels[fold.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                               rule_blacklist=None,  # TODO: blacklist not implemented
-                               tiebreaker=None,
+                               rule_blacklist=None,
+                               tiebreaker=partial(_tiebreaker, rule_risks=split.unique_risk_by_kmer[...]),
                                level_callback=None,
                                split_callback=None)
 
@@ -350,10 +362,10 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
                          rule_classifications=rule_classifications,
                          example_idx = {c:split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                         rule_blacklist=None,  # TODO: blacklist not implemented
-                         tiebreaker=None,
+                         rule_blacklist=None,
+                         tiebreaker=partial(_tiebreaker, rule_risks=split.unique_risk_by_kmer[...]),
                          level_callback=None,
-                         split_callback=None)
+                         split_callback=_split_callback)
 
     # Get the pruned master and cross-validation trees
     master_alphas, master_pruned_trees = _prune_tree(master_predictor.decision_tree)
@@ -567,6 +579,11 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     best_model = CARTModel(class_tags=phenotype_tags)
     best_model.decision_tree = best_master_tree
 
+    # Extract all the equivalent rules for the nodes in the model
+    rules = LazyKmerRuleList(dataset.kmer_sequences, dataset.kmer_by_matrix_column)
+    model_equivalent_rules = {r: [rules[i] for i in r.equivalent_rules_idx] for r in best_master_tree}
+
     return best_hps, best_hp_score, train_metrics, test_metrics, best_model,\
-                    dict((str(r), 1.0) for r in best_master_tree.rules), classifications
-    # TODO: missing model_equivalent_rules, rule importances
+           dict((r, 1.0) for r in best_master_tree.rules), model_equivalent_rules, \
+           classifications
+    # TODO: missing rule importances (need to fix the todo in learners/cart)

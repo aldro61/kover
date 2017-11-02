@@ -872,6 +872,7 @@ class KoverLearningTool(object):
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
         model, rule_importances, \
+        equivalent_rules, \
         classifications = learn_CART(dataset_file=args.dataset,
                                 split_name=args.split,
                                 criterion=args.criterion,
@@ -1004,7 +1005,7 @@ class KoverLearningTool(object):
                    "model": {"n_rules": len(model),
                              "depth": model.depth,
                              "rules": [str(r) for r in model.decision_tree],
-                             "rule_importances": [rule_importances[str(r)] for r in model.decision_tree]},
+                             "rule_importances": [rule_importances[r] for r in model.decision_tree]},
                    "classifications": classifications,
                    "running_time": running_time.seconds}
         with open(join(args.output_dir, 'results.json'), 'w') as f:
@@ -1019,7 +1020,7 @@ class KoverLearningTool(object):
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, rule in enumerate(model.decision_tree):
-                f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, rule_importances[str(rule)], rule.kmer_sequence))
+                f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, rule_importances[rule], rule.kmer_sequence))
         #TODO: save equivalent rules
 
 class CommandLineInterface(object):
