@@ -435,13 +435,25 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
                                                                      min_samples_split))):
 
         # XXX: master_tree is the pruned decision tree learned on the entire training set (no need to retrain later)
-        # TODO: Add more logic, like prefering balanced class importances, etc.
         n_completed += 1
         progress_callback(hp_search_type.title(), n_completed / n_hp_combinations)
         if score < best_score:
             best_hps = hps
             best_score = score
             best_master_tree = master_tree
+        elif np.isclose(score, best_score):
+            master_tree_length = len(master_tree)
+            best_master_tree_length = len(best_master_tree)
+            # XXX: In case of a tie, use the following rules (in order of precedence):
+            #      1. Pick the smallest tree
+            #      2. Pick the tree with the least variance in the class importances
+            #      Note: max_depth and min_samples_split are not specified as they are implied by rule 1
+            if (master_tree_length < best_master_tree_length) or \
+               (master_tree_length == best_master_tree_length and np.var(hps["class_importance"].values()) < np.var(best_hps["class_importance"].values())):
+                best_hps = hps
+                best_master_tree = best_master_tree
+                best_score = score
+
 
     return best_score, best_hps, best_master_tree
 
