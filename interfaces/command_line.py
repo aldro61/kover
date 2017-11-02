@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """
-	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
+    Kover: Learn interpretable computational phenotyping models from k-merized genomic data
+    Copyright (C) 2015  Alexandre Drouin & Gaël Letarte St-Pierre
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import argparse
@@ -543,25 +543,27 @@ class KoverLearningTool(object):
         else:
             progress = None
 
+        args.bound_delta = 0.05  # Fixed value to simplify the user experience
+
         start_time = time()
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
         model, rule_importances, \
         equivalent_rules, \
         classifications = learn_SCM(dataset_file=args.dataset,
-                                split_name=args.split,
-                                model_type=args.model_type,
-                                p=args.p,
-                                max_rules=args.max_rules,
-                                max_equiv_rules=args.max_equiv_rules,
-                                bound_delta=0.05,  # We use a fixed 5% delta to simplify the user experience
-                                bound_max_genome_size=args.bound_max_genome_size
-                                if args.bound_max_genome_size is not None
-                                else dataset_kmer_count,
-                                parameter_selection=args.hp_choice,
-                                n_cpu=args.n_cpu,
-                                random_seed=args.random_seed,
-                                progress_callback=progress)
+                                    split_name=args.split,
+                                    model_type=args.model_type,
+                                    p=args.p,
+                                    max_rules=args.max_rules,
+                                    max_equiv_rules=args.max_equiv_rules,
+                                    bound_delta=args.bound_delta,
+                                    bound_max_genome_size=args.bound_max_genome_size
+                                    if args.bound_max_genome_size is not None
+                                    else dataset_kmer_count,
+                                    parameter_selection=args.hp_choice,
+                                    n_cpu=args.n_cpu,
+                                    random_seed=args.random_seed,
+                                    progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
         if args.progress:
@@ -691,11 +693,11 @@ class KoverLearningTool(object):
         parser.add_argument('--split', help='The identifier of the split of the dataset to use for learning.',
                             required=True)
         parser.add_argument('--criterion', type=str, nargs='+', help='Hyperparameter: The criterion used to partition the leaves of the decision tree. '
-																	 'You can specify multiple space separated values. Refer to the documentation '
-																	 'for more information. (default: gini)',
+     'You can specify multiple space separated values. Refer to the documentation '
+     'for more information. (default: gini)',
                             choices=['gini', 'crossentropy'], default='gini', required=False)
         parser.add_argument('--max-depth', type=int, nargs='+', help='Hyperparameter: The maximum depth of the decision tree. You can specify multiple space separated '
-																	 'values. Refer to the documentation for more information. (default: 10)',
+     'values. Refer to the documentation for more information. (default: 10)',
                             default=10, required=False)
         parser.add_argument('--min-samples-split', type=int, nargs='+',
                             help='Hyperparameter: The minimum number of genomes that a leaf must contain to be partionned into two new leaves. You can specify multiple '
@@ -705,11 +707,17 @@ class KoverLearningTool(object):
                             'set of class-specific values to try using the following syntax: "class1: v1 v2 class2: v1 v2 v3 ...". Refer to the documentation for more information. '
                             '(default: 1.0 for each class)',
                             default=None, required=False)
-        parser.add_argument('--hp-choice', choices=['bound', 'cv', 'none'],
-                            help='The strategy used to select the best values for hyperparameters. The default is '
-                                 'k-fold cross-validation, where k is the number of folds defined in the split. Other '
-                                 'strategies, such as bound selection are available (refer to the documentation). Using none '
-                                 'selects the first value specified for each hyperparameter.', default='cv')
+        parser.add_argument('--hp-choice', choices=['bound', 'cv'],
+                            help='The strategy used to select the best values for the hyperparameters. The default is '
+                                 'k-fold cross-validation, where k is the number of folds defined in the split. '
+     'Alternatively, you can use bound selection, which is much faster, but may not work '
+     'as well for smaller datasets. Also note that, even if a single value is provided '
+     'for each hyperparameter, a search will be performed as part of the tree '
+     'pruning process. Refer to the documentation for more information. (default: cv)', default='cv')
+        parser.add_argument('--bound-max-genome-size', type=int, help='Specify this only if --hp-choice is bound. The '
+                            'maximum size, in base pairs, of any genome in the dataset. If you are unsure about this '
+                            'value, you should use an overestimation. This will only affect the tightness of the bound '
+                            'on the error rate. By default number of k-mers in the dataset is used.')
         parser.add_argument('--n-cpu', '--n-cores', type=int, help='The number of CPUs used to select the hyperparameter values. '
                                                       'Make sure your computer has enough RAM to handle multiple simultaneous trainings of the '
                                                       'algorithm and that your storage device will not be a bottleneck (simultaneous reading).',
@@ -755,6 +763,7 @@ class KoverLearningTool(object):
             exit()
 
         # Load classification task specifications
+        dataset_kmer_count = pre_dataset.kmer_matrix.shape[1]
         phenotype_tags = pre_dataset.phenotype.tags[...].tolist()
         classification_type = pre_dataset.classification_type
         del pre_dataset
@@ -819,13 +828,12 @@ class KoverLearningTool(object):
 
             return np.unique(class_importances)
 
+        # Determine which type of class importances was received as input
         if args.class_importance:
-
             if args.class_importance[0].endswith(":"):
                 # Separate set of class importances for each class
                 # Format: c1: v11 v2 c12: v21 v22 ...
                 class_importances = parse_class_importances(args.class_importance)
-
             else:
                 # Identical set of class importances for each class
                 # Format: v1 v2 v3 ...
@@ -834,9 +842,8 @@ class KoverLearningTool(object):
                     tmp.append(c + ":")
                     tmp += args.class_importance
                 class_importances = parse_class_importances(tmp)
-
-        # No class importances specified, so each has an importance of 1.0
         else:
+    # No class importances specified, so each has an importance of 1.0
             class_importances = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
 
         if args.verbose:
@@ -857,6 +864,10 @@ class KoverLearningTool(object):
         else:
             progress = None
 
+        args.bound_delta = 0.05  # Fixed value to simplify the user experience
+        if args.bound_max_genome_size is None:
+            args.bound_max_genome_size = dataset_kmer_count
+
         start_time = time()
         best_hp, best_hp_score, \
         train_metrics, test_metrics, \
@@ -867,6 +878,8 @@ class KoverLearningTool(object):
                                 max_depth=args.max_depth,
                                 min_samples_split=args.min_samples_split,
                                 class_importance=class_importances,
+                                bound_delta=args.bound_delta,
+                                bound_max_genome_size=args.bound_max_genome_size,
                                 parameter_selection=args.hp_choice,
                                 n_cpu=args.n_cpu,
                                 progress_callback=progress)
@@ -936,13 +949,16 @@ class KoverLearningTool(object):
         report += "\n"
         report += "Hyperparameter Values:\n" + "-" * 22 + "\n"
         if args.hp_choice == "cv":
-            report += "Selection strategy: %d-fold cross-validation (score = %.5f)\n" % (len(split.folds), best_hp_score)
+            report += "Selection strategy: {0:d}-fold cross-validation (score = {1:.5f})\n".format(len(split.folds), best_hp_score)
+        elif args.hp_choice == "bound":
+            report += "Selection strategy: sample-compression bound (delta = {0:.3f}, max-genome-size = {1:d}, value = {2:.5f})\n".format(args.bound_delta, args.bound_max_genome_size, best_hp_score)
         else:
             report += "Selection strategy: No selection\n"
-        report += "Criterion: %s\n" % best_hp["criterion"]
-        report += "Class importance: %s\n" % ", ".join(["class %s: %.3f" % (c, best_hp["class_importance"][c]) for c in phenotype_tags])
-        report += "Maximum tree depth: %d\n" % best_hp["max_depth"]
-        report += "Minimum samples to split a node (examples): %.3f\n" % best_hp["min_samples_split"]
+        report += "Criterion: {0!s}\n".format(best_hp["criterion"])
+        report += "Class importance: {0!s}\n".format(", ".join(["class {0!s}: {1:.3f}".format(c, best_hp["class_importance"][c]) for c in phenotype_tags]))
+        report += "Maximum tree depth: {0:d}\n".format(best_hp["max_depth"])
+        report += "Minimum samples to split a node (examples): {0:.3f}\n".format(best_hp["min_samples_split"])
+        report += "Pruning alpha: {0:.8f}\n".format(best_hp["pruning_alpha"])
         report += "\n"
         # Print the training set metrics
         report += "Metrics (training data)\n" + "-"*23 + "\n"
