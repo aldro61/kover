@@ -28,53 +28,54 @@ cart = "cart"
 class BaseModel(object):
     def __init__(self):
         super(BaseModel, self).__init__()
-        
+
     def predict(self, X):
         raise NotImplementedError()
-        
+
     @property
     def learner(self):
         raise NotImplementedError()
-        
+
     def __str__(self):
         return self._to_string()
-        
+
+
 class CARTModel(BaseModel):
     def __init__(self, class_tags=None):
         super(CARTModel, self).__init__()
         self.decision_tree = None
         self.class_tags = class_tags
-        
+
     def predict(self, X):
         if self.decision_tree is None:
             raise RuntimeError("A decision tree must be fitted prior to calling predict.")
         predictions = self.decision_tree.predict(X)
         return np.asarray(predictions, dtype=np.uint8)
-        
+
     def predict_proba(self, X):
         if self.decision_tree is None:
             raise RuntimeError("A decision tree must be fitted prior to calling predict.")
         self.decision_tree.predict_proba(X)
-        
+
     @property
     def learner(self):
         return cart
-        
+
     def _to_string(self, node=None,depth=0):
         if node is None:
             if self.decision_tree is None:
                 print("No tree has been added to the model")
             node = self.decision_tree
-            
+
         if self.class_tags is None:
             return str(self.decision_tree)
-            
+
         tree_str = ""
-        
+
         # Case : node is a leaf
         if node.is_leaf:
 			tree_str += "\n" + ("    "*depth) + str(self.class_tags[node.class_prediction])
-        
+
         # Case : node has two children
         else:
             # Print right branch
@@ -87,20 +88,21 @@ class CARTModel(BaseModel):
 
             # Print left_child branch
             tree_str += self._to_string(node=node.left_child, depth=depth + 1)
-        
+
         return tree_str
-        
+
     def __len__(self):
         if self.decision_tree is None:
             return 0
         return len(self.decision_tree)
-    
+
     @property
     def depth(self):
         if self.decision_tree is None:
             return 0
         return self.decision_tree.tree_depth
-        
+
+
 class SCMModel(BaseModel):
     def __init__(self):
         super(SCMModel, self).__init__()
@@ -124,7 +126,7 @@ class SCMModel(BaseModel):
     @property
     def example_dependencies(self):
         return [d for ba in self.rules for d in ba.example_dependencies]
-    
+
     @property
     def learner(self):
         return scm
@@ -145,6 +147,7 @@ class SCMModel(BaseModel):
 
     def __len__(self):
         return len(self.rules)
+
 
 class ConjunctionModel(SCMModel):
     def predict_proba(self, X):
