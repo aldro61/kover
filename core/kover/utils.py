@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 """
-	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin
+    Kover: Learn interpretable computational phenotyping models from k-merized genomic data
+    Copyright (C) 2015  Alexandre Drouin
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import h5py as h
@@ -22,6 +22,7 @@ import logging
 import numpy as np
 
 from math import ceil
+
 
 def _class_to_string(instance):
     """
@@ -41,12 +42,14 @@ def _class_to_string(instance):
     return instance.__class__.__name__ + "(" + ",".join(
         [str(k) + "=" + str(v) for k, v in instance.__dict__.iteritems() if str(k[0]) != "_"]) + ")"
 
+
 def _duplicate_last_element(l, length):
     """
     Duplicates the last element of a list until a given length is reached. (In-place)
     """
     l += [l[-1]] * (length - len(l))
     return l
+
 
 def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     fid = h.h5f.open(filename, access_type)
@@ -58,7 +61,8 @@ def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     access_property_list.set_cache(*cache_properties)
     file_id = h.h5f.open(filename, access_type, fapl=access_property_list)
     return h.File(file_id)
-    
+
+
 def _init_callback_functions(warning_callback = None, error_callback = None, progress_callback = None):
     """
     Initialize the execution callback functions. If a function is provided, it is returned unchanged. Otherwise, a
@@ -85,6 +89,7 @@ def _init_callback_functions(warning_callback = None, error_callback = None, pro
         progress_callback = lambda t, p: None
     return warning_callback, error_callback, progress_callback
 
+
 def _minimum_uint_size(max_value):
     """
     Find the minimum size unsigned integer type that can store values of at most max_value
@@ -99,6 +104,7 @@ def _minimum_uint_size(max_value):
         return np.uint64
     else:
         return np.uint128
+
 
 def _pack_binary_bytes_to_ints(a, pack_size):
     """
@@ -124,6 +130,7 @@ def _pack_binary_bytes_to_ints(a, pack_size):
         packed_rows += 1
 
     return b
+
 
 def _unpack_binary_bytes_from_ints(a):
     """
