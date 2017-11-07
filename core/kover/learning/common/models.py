@@ -32,6 +32,9 @@ class BaseModel(object):
     def predict(self, X):
         raise NotImplementedError()
 
+	def predict_proba(self, X):
+	    raise NotImplementedError()
+
     @property
     def learner(self):
         raise NotImplementedError()
@@ -74,7 +77,7 @@ class CARTModel(BaseModel):
 
         # Case : node is a leaf
         if node.is_leaf:
-			tree_str += "\n" + ("    "*depth) + str(self.class_tags[node.class_prediction])
+			tree_str += "\n" + ("    " * depth) + str(self.class_tags[node.class_prediction])
 
         # Case : node has two children
         else:
@@ -82,9 +85,9 @@ class CARTModel(BaseModel):
             tree_str += self._to_string(node=node.right_child, depth=depth + 1)
 
             # Print own value
-            tree_str += "\n" + ("    "*depth + "   ") + str("/")
-            tree_str += "\n" + ("    "*depth) + str(node.rule)
-            tree_str += "\n" + ("    "*depth + "   ") + str("\\")
+            tree_str += "\n" + ("    " * depth + "   ") + str("/")
+            tree_str += "\n" + ("    " * depth) + str(node.rule)
+            tree_str += "\n" + ("    " * depth + "   ") + str("\\")
 
             # Print left_child branch
             tree_str += self._to_string(node=node.left_child, depth=depth + 1)
