@@ -24,10 +24,10 @@ setup(
     license = "GPLv3",
     keywords = "genomics, machine learning, set covering machine, kmer",
     url = "http://github.com/aldro61/kover",
-    
+
     # Cython Extension
     ext_modules = [Extension("kover/learning/common/popcount", ["kover/learning/common/popcount.c"], extra_compile_args=["-march=native"])],
-    data_files=[('kover/dataset/tools/kmer_tools/', ['kover/dataset/tools/kmer_tools/build/bin/dsk2kover', 
-																  'kover/dataset/tools/kmer_tools/build/bin/multidsk', 
+    data_files=[('kover/dataset/tools/kmer_tools/', ['kover/dataset/tools/kmer_tools/build/bin/dsk2kover',
+																  'kover/dataset/tools/kmer_tools/build/bin/multidsk',
 																  'kover/dataset/tools/kmer_tools/build/bin/dsk'])]
 )

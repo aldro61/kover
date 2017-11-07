@@ -70,7 +70,7 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
     md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
     md_unique_labels, label_first_apperance_indices, indices = np.unique(md_genome_labels, return_index=True,\
                                                                             return_inverse=True)
-    
+
     # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
     if not(len(md_unique_labels) == 2 and '0' in md_unique_labels and '1' in md_unique_labels):
         # Keeping order of appearance
@@ -81,21 +81,21 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 
     if len(md_unique_labels) < 2:
         error_callback(Exception("The dataset must contain at least 2 different phenotypes"))
-    
+
     elif len(md_unique_labels) > 255:
         error_callback(Exception("The dataset can contain at most 255 different phenotypes"))
-        
+
     elif len(md_unique_labels) == 2:
         classification_type = "binary"
-        
+
     else:
         classification_type = "multiclass"
     logging.debug("The dataset problem type is " + classification_type + " classification.")
-    
+
     # Converting labels to numerical ascending values
     numerical_labels = np.arange(0, len(md_unique_labels))
     md_genome_labels = numerical_labels[indices]
-    
+
     if len(md_genome_ids) > len(set(md_genome_ids)):
         error_callback(Exception("The metadata contains multiple values for the same genome."))
 
@@ -184,10 +184,10 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     if phenotype_description is not None:
         genome_ids, labels,\
         labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=genome_ids, 
-                                                           warning_callback=warning_callback, 
+                                                           matrix_genome_ids=genome_ids,
+                                                           warning_callback=warning_callback,
                                                            error_callback=error_callback)
-                                                           
+
         h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
@@ -205,7 +205,7 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
                              data=genome_ids,
                              compression=compression,
                              compression_opts=compression_opts)
-                             
+
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
     h5py_file.create_dataset("phenotype_tags",
@@ -325,12 +325,12 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     if phenotype_description is not None:
         genome_ids, labels,\
         labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=contig_file_by_genome_id.keys(), 
-                                                           warning_callback=warning_callback, 
+                                                           matrix_genome_ids=contig_file_by_genome_id.keys(),
+                                                           warning_callback=warning_callback,
                                                            error_callback=error_callback)
 
         h5py_file.attrs["classification_type"] = classification_type
-        
+
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
         sorter = np.argsort(labels)
@@ -347,14 +347,14 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
                              data=genome_ids,
                              compression=compression,
                              compression_opts=compression_opts)
-                             
+
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
     h5py_file.create_dataset("phenotype_tags",
                              data=labels_tags,
                              compression=compression,
                              compression_opts=compression_opts)
-                             
+
     h5py_file.close()
 
     logging.debug("Initializing DSK.")
@@ -447,10 +447,10 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     if phenotype_description is not None:
         genome_ids, labels,\
         labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=reads_folder_by_genome_id.keys(), 
-                                                           warning_callback=warning_callback, 
+                                                           matrix_genome_ids=reads_folder_by_genome_id.keys(),
+                                                           warning_callback=warning_callback,
                                                            error_callback=error_callback)
-   
+
         h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
         logging.debug("Sorting genomes by metadata label for optimal performance.")
@@ -468,14 +468,14 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
                              data=genome_ids,
                              compression=compression,
                              compression_opts=compression_opts)
-                             
+
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
     h5py_file.create_dataset("phenotype_tags",
                              data=labels_tags,
                              compression=compression,
                              compression_opts=compression_opts)
-                             
+
     h5py_file.close()
 
     logging.debug("Initializing DSK.")

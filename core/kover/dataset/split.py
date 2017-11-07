@@ -58,11 +58,11 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
             error_callback(Exception("The %s genome identifiers contain IDs that are not in the dataset: %s" %
                                      (learning_sep, ", ".join(idsnot_in_ds))))
         return ids
-    
+
     # Parse and validate training and testing ids
     train_ids = _parse_ids(ids_file=train_ids_file,
                              learning_step="training")
-                             
+
     test_ids = _parse_ids(ids_file=test_ids_file,
                              learning_step="testing")
 
@@ -71,21 +71,21 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
     test_idx = [idx_by_genome_id[id] for id in test_ids]
 
     # Splitting the dataset
-    _split(dataset=dataset, 
-           split_name=split_name, 
-           train_idx=train_idx, 
+    _split(dataset=dataset,
+           split_name=split_name,
+           train_idx=train_idx,
            test_idx=test_idx,
-           random_generator=random_generator, 
-           random_seed=random_seed, 
+           random_generator=random_generator,
+           random_seed=random_seed,
            n_folds=n_folds,
-           warning_callback=warning_callback, 
-           error_callback=error_callback, 
+           warning_callback=warning_callback,
+           error_callback=error_callback,
            progress_callback=progress_callback)
 
 
 def split_with_proportion(input, split_name, train_prop, random_seed, n_folds, warning_callback=None, error_callback=None,
                           progress_callback=None):
-    
+
     # Execution callback functions
     if warning_callback is None:
         warning_callback = lambda w: logging.warning(w)
@@ -107,17 +107,17 @@ def split_with_proportion(input, split_name, train_prop, random_seed, n_folds, w
     random_generator.shuffle(idx)
     train_idx = idx[:n_train]
     test_idx = idx[n_train:]
-    
+
     # Splitting the dataset
-    _split(dataset=dataset, 
-           split_name=split_name, 
-           train_idx=train_idx, 
+    _split(dataset=dataset,
+           split_name=split_name,
+           train_idx=train_idx,
            test_idx=test_idx,
-           random_generator=random_generator, 
-           random_seed=random_seed, 
+           random_generator=random_generator,
+           random_seed=random_seed,
            n_folds=n_folds,
-           warning_callback=warning_callback, 
-           error_callback=error_callback, 
+           warning_callback=warning_callback,
+           error_callback=error_callback,
            progress_callback=progress_callback)
 
 
@@ -136,9 +136,9 @@ def _split(dataset, split_name, random_generator, random_seed, train_idx, test_i
     _validate_split(dataset=dataset,
                     split_name=split_name,
                     train_idx=train_idx,
-                    test_idx=test_idx, 
-                    n_folds=n_folds, 
-                    warning_callback=warning_callback, 
+                    test_idx=test_idx,
+                    n_folds=n_folds,
+                    warning_callback=warning_callback,
                     error_callback=error_callback)
 
     train_idx = np.array(train_idx)

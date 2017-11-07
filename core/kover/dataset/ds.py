@@ -27,7 +27,7 @@ class KoverDataset(object):
 	def __init__(self, file):
 		self.path = file
 		self.dataset_open = partial(_hdf5_open_no_chunk_cache, file)
-	
+
 	@property
 	def classification_type(self):
 		dataset = self.dataset_open()
@@ -37,7 +37,7 @@ class KoverDataset(object):
 		except:
 			classification_type = "binary"
 		return classification_type
-		
+
 	@property
 	def compression(self):
 		dataset = self.dataset_open()
@@ -101,12 +101,12 @@ class KoverDataset(object):
 			description = dataset.attrs["phenotype_description"]
 		except:
 			description = dataset.attrs["phenotype_name"]
-			
+
 		try:
 			tags = dataset["phenotype_tags"]
 		except:
 			tags = np.array(['0', '1'])
-		
+
 		return KoverDatasetPhenotype(description=description,
 									 tags=tags,
 									 metadata=dataset["phenotype"],
