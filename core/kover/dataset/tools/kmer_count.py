@@ -23,7 +23,7 @@ from os.path import abspath, dirname, join
 def contigs_count_kmers(file_path, out_dir, kmer_size, out_compress, nb_cores, verbose, progress):
 
 	dir_path = dirname(abspath(__file__))
-	
+
 	# Calling MultiDSK tool
 	call([str(join(dir_path, "kmer_tools", "multidsk")),
 					"-file", str(file_path),

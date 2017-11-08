@@ -61,7 +61,7 @@ def _get_binary_metrics(predictions, answers):
 	metrics["specificity"].append(specificity)
 	metrics["f1_score"].append(f1_score)
     return metrics
-    
+
 def _get_multiclass_metrics(predictions, answers, nb_class):
     """
     Compute metrics for multi-class predictions.
