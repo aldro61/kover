@@ -421,9 +421,6 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
             min_score_tree = t
             hps["pruning_alpha"] = geo_mean_alpha_k  # Save the best value of alpha
 
-    if min_score_tree is None:
-        raise Exception("HOLY FUCK ERROR")
-
     # Return the best tree and its error estimate
     return hps, min_score, min_score_tree
 

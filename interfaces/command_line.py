@@ -903,10 +903,10 @@ class KoverLearningTool(object):
             matrix_str = ""
             size_header = len(max(phenotype_tags, key=len)) + 5
             col_width = 5
-            horizontal_bar = "+-" + "-"*size_header + "+" + "+".join(["-"*col_width for c in range(len(phenotype_tags))]) + "+\n"
+            horizontal_bar = "+-" + "-" * size_header + "+" + "+".join(["-" * col_width for c in range(len(phenotype_tags))]) + "+\n"
 
             matrix_str += horizontal_bar
-            matrix_str += "| " + " "*size_header + "|"
+            matrix_str += "| " + " " * size_header + "|"
             matrix_str += "|".join([str(c).center(col_width) for c in range(len(phenotype_tags))])
             matrix_str += "|\n"
             matrix_str += horizontal_bar.replace('-', '=')
@@ -916,6 +916,16 @@ class KoverLearningTool(object):
                 matrix_str += horizontal_bar
 
             return matrix_str
+
+        # Create identifiers for each rules
+        rule_ids = {}
+        id_by_node = {n: i if not n.is_leaf else "leaf___{}".format("__".join(["{0!s}_{1:.8f}".format(model.class_tags[c], p) for c, p in enumerate(n.breiman_info.p_j_given_t)])) for i, n in model.decision_tree}
+        for node_id, node in model.decision_tree:
+            if not node.is_leaf:
+                simple_rule_id = str(node_id)
+                fasta_header = "rule_id: {}, left_child: {}, right_child: {}".format(node_id, id_by_node[node.left_child], id_by_node[node.right_child])
+                rule_ids[node.rule] = {"simple": simple_rule_id, "fasta": fasta_header}
+        del id_by_node
 
         dataset = KoverDataset(args.dataset)
         split = dataset.get_split(args.split)
@@ -1005,7 +1015,8 @@ class KoverLearningTool(object):
                    "model": {"n_rules": len(model.decision_tree.rules),
                              "depth": model.decision_tree.depth,
                              "rules": [str(r) for r in model.decision_tree.rules],
-                             "rule_importances": [rule_importances[r] for r in model.decision_tree.rules]},
+                             "rule_importances": [rule_importances[r] for r in model.decision_tree.rules],
+                             "rule_identifiers": [rule_ids[r]["simple"] for r in model.decision_tree.rules]},
                    "classifications": classifications,
                    "running_time": running_time.seconds}
         with open(join(args.output_dir, 'results.json'), 'w') as f:
@@ -1020,8 +1031,9 @@ class KoverLearningTool(object):
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, rule in enumerate(model.decision_tree.rules):
-                f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, rule_importances[rule], rule.kmer_sequence))
+                f.write(">{0!s}, importance: {1:.2f}\n{2!s}\n\n".format(rule_ids[rule]["fasta"], rule_importances[rule], rule.kmer_sequence))
         #TODO: save equivalent rules
+
 
 class CommandLineInterface(object):
     def __init__(self):
