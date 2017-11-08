@@ -29,19 +29,17 @@ class BreimanInfo(object):
 	def __init__(self, node_n_examples_by_class, class_priors, total_n_examples_by_class):
 
 		# Eq. 2.2 Probability that an example is in class j and falls into node t
-		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in
-		                 zip(class_priors.values(),
-					         node_n_examples_by_class,
-					         total_n_examples_by_class.values())]
+		self.p_j_t = {c: class_priors[c] * node_n_examples_by_class[c] / total_n_examples_by_class[c]
+					     for c in class_priors.iterkeys()}
 
 		# Eq. 2.3 Probability that any example falls in node t
-		self.p_t = sum(self.p_j_t)
+		self.p_t = sum(self.p_j_t.values())
 
 		# Eq. 2.4 Probability that an example is in class j given that it falls in node t
-		self.p_j_given_t = [p_j_t / self.p_t for p_j_t in self.p_j_t]
+		self.p_j_given_t = {c: self.p_j_t[c] / self.p_t for c in class_priors.iterkeys()}
 
 		# Def. 2.10 Probability of misclassification given that an example falls into node t
-		self.r_t = 1.0 - max(self.p_j_given_t)
+		self.r_t = 1.0 - max(self.p_j_given_t.values())
 
 		# Contribution of the node to the tree's overall missclassification rate
 		self.R_t = self.r_t * self.p_t
