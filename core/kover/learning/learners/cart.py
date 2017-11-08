@@ -444,7 +444,7 @@ def _prune_tree(tree):
 			return [(min_gt, root)] + (__sequential_prune(root) if not root.is_leaf else [])
 
 		logging.debug("Pruning sequentially until only the root remains (T1 >> ... >> {root}")
-		return [(0, T1)] + __sequential_prune(T1)
+		return [(0, T1)] + (__sequential_prune(T1) if not T1.is_leaf else [])
 
 	logging.debug("Copying model")
 	tree = deepcopy(tree)

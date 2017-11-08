@@ -52,7 +52,7 @@ class BetweenDict(dict):
 
     def __getitem__(self, key):
         for k, v in self.items():
-            if k[0] <= key < k[1]:
+            if k[0] <= key < k[1] or (k[0] <= key and k[1] == np.infty) or (k[0] == -np.infty and key < k[1]):
                 return v
         raise KeyError("Key '%s' is not between any values in the BetweenDict" % key)
 
@@ -406,16 +406,23 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
     min_score = np.infty
     min_score_tree = None
 
-    for i in xrange(len(master_alphas) - 1):
-        alpha_k = master_alphas[i]
-        alpha_kplus1 = master_alphas[i + 1]
-        alphaprime_k = sqrt(alpha_k * alpha_kplus1)
-        cv_score = np.mean([fold_scores_by_alpha[j][alphaprime_k] for j in xrange(len(split.folds))])
+    logging.debug("The master alphas are: " + str(master_alphas))
+    for i, t in enumerate(master_pruned_trees):
+
+        if i < len(master_alphas) - 1:
+            geo_mean_alpha_k = sqrt(master_alphas[i] * master_alphas[i + 1])
+        else:
+            geo_mean_alpha_k = np.infty
+
+        cv_score = np.mean([fold_scores_by_alpha[j][geo_mean_alpha_k] for j in xrange(len(split.folds))])
 
         if cv_score <= min_score:  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
             min_score = cv_score
-            min_score_tree = master_pruned_trees[i]
-            hps["pruning_alpha"] = alphaprime_k  # Save the best value of alpha
+            min_score_tree = t
+            hps["pruning_alpha"] = geo_mean_alpha_k  # Save the best value of alpha
+
+    if min_score_tree is None:
+        raise Exception("HOLY FUCK ERROR")
 
     # Return the best tree and its error estimate
     return hps, min_score, min_score_tree

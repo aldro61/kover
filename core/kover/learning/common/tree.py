@@ -57,7 +57,11 @@ class TreeNode(BaseModel):
 		self.depth = depth
 		self.criterion_value = criterion_value
 
-		n_examples_by_class = [len(class_examples_idx[c]) for c in range(len(class_examples_idx))]
+		assert isinstance(class_examples_idx, dict)
+		assert isinstance(total_n_examples_by_class, dict)
+		assert isinstance(class_priors, dict)
+
+		n_examples_by_class = {c: len(c_idx) for c, c_idx in class_examples_idx.iteritems()}
 		self.breiman_info = BreimanInfo(node_n_examples_by_class=n_examples_by_class,
 										class_priors=class_priors,
 										total_n_examples_by_class=total_n_examples_by_class)
@@ -101,7 +105,7 @@ class TreeNode(BaseModel):
 		Returns the class predicted by this node as a leaf
 
 		"""
-		return np.argmax(self.breiman_info.p_j_given_t)
+		return self.breiman_info.p_j_given_t.keys()[np.argmax(self.breiman_info.p_j_given_t.values())]
 
 	@property
 	def rules(self):
@@ -129,12 +133,19 @@ class TreeNode(BaseModel):
 
 	def __iter__(self):
 		"""
-		Yields all the rules of the tree
+		Yields all the rules of the tree in preorder
 
 		"""
-		raise NotImplementedError() # Implement a structured traversal of the tree
-		# for r in _get_tree_rules(self):
-		# 	yield r
+		def _preorder(node):
+			nodes = [node]
+			if not node.is_leaf:
+				nodes += _preorder(node.left_child)
+				nodes += _preorder(node.right_child)
+			return nodes
+		nodes = _preorder(self)
+
+		for node_id, node in zip(range(len(nodes)), nodes):
+			yield node_id, node
 
 	def __len__(self):
 		"""
@@ -213,6 +224,8 @@ class ProbabilisticTreeNode(TreeNode):
 		Multi-class predictions using the current node's rule
 
 		"""
+		X = np.ascontiguousarray(X)
+		
 		# Get probabilistic predictions
 		class_probabilities = self.predict_proba(X)
 
@@ -226,6 +239,8 @@ class ProbabilisticTreeNode(TreeNode):
 		Probabilistic class predictions using the current node's rule
 
 		"""
+		X = np.ascontiguousarray(X)
+
 		class_probabilities = np.zeros((len(self.class_examples_idx.keys()), X.shape[0]))
 
 		# Push each example down the tree (an example is a row of X)
@@ -243,7 +258,7 @@ class ProbabilisticTreeNode(TreeNode):
 				 current_node = current_node.right_child
 
 			# A leaf has been reached. Use the leaf class proportions as the the class probabilities.
-			for c in self.class_examples_idx.keys():
+			for c in self.class_examples_idx.iterkeys():
 			  class_probabilities[c][i] = current_node.breiman_info.p_j_given_t[c]
 
 		return class_probabilities
