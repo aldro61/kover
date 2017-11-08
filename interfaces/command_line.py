@@ -978,7 +978,7 @@ class KoverLearningTool(object):
                 else:
                     report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        report += "Model (%d rules, depth = %d):\n" % (len(model), model.depth)
+        report += "Model (%d rules, depth = %d):\n" % (len(model.decision_tree.rules), model.decision_tree.depth)
         report += str(model) + "\n"
         report += "\n"
 
@@ -1002,10 +1002,10 @@ class KoverLearningTool(object):
                           "strategy": args.hp_choice},
                    "metrics": {"train": train_metrics,
                                "test": test_metrics},
-                   "model": {"n_rules": len(model),
-                             "depth": model.depth,
-                             "rules": [str(r) for r in model.decision_tree],
-                             "rule_importances": [rule_importances[r] for r in model.decision_tree]},
+                   "model": {"n_rules": len(model.decision_tree.rules),
+                             "depth": model.decision_tree.depth,
+                             "rules": [str(r) for r in model.decision_tree.rules],
+                             "rule_importances": [rule_importances[r] for r in model.decision_tree.rules]},
                    "classifications": classifications,
                    "running_time": running_time.seconds}
         with open(join(args.output_dir, 'results.json'), 'w') as f:
@@ -1019,7 +1019,7 @@ class KoverLearningTool(object):
 
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
-            for i, rule in enumerate(model.decision_tree):
+            for i, rule in enumerate(model.decision_tree.rules):
                 f.write(">rule-%d %s, importance: %.2f\n%s\n\n" % (i + 1, rule.type, rule_importances[rule], rule.kmer_sequence))
         #TODO: save equivalent rules
 

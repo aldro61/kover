@@ -29,8 +29,10 @@ class BreimanInfo(object):
 	def __init__(self, node_n_examples_by_class, class_priors, total_n_examples_by_class):
 
 		# Eq. 2.2 Probability that an example is in class j and falls into node t
-		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in zip(class_priors.values(), node_n_examples_by_class,
-																		  total_n_examples_by_class.values())]
+		self.p_j_t = [pi_j * N_j_t / N_j for pi_j, N_j_t, N_j in
+		                 zip(class_priors.values(),
+					         node_n_examples_by_class,
+					         total_n_examples_by_class.values())]
 
 		# Eq. 2.3 Probability that any example falls in node t
 		self.p_t = sum(self.p_j_t)
@@ -66,74 +68,87 @@ class TreeNode(BaseModel):
 	def is_leaf(self):
 		"""
 		Returns true if current node is a leaf
+
 		"""
-		return self.left_child is None and self.right_child is None
+		return self.rule is None and self.left_child is None and self.right_child is None
 
 	@property
 	def is_root(self):
 		"""
 		Returns true if current node is the tree root
+
 		"""
-		return self.parent is None and self.left_child is not None and self.right_child is not None
+		return self.parent is None
 
 	@property
 	def n_examples(self):
 		"""
 		Returns the number of examples in the node
+
 		"""
-		return  sum(len(x) for x in self.class_examples_idx.itervalues())
+		return  sum(len(c_idx) for c_idx in self.class_examples_idx.itervalues())
 
 	@property
 	def class_proportions(self):
 		"""
 		Returns the proportion of examples of each class in the node
+
 		"""
-		return {key:1.0 * len(value)/self.n_examples for key, value in self.class_examples_idx.items()}
+		n_examples = self.n_examples
+		return {c: float(len(c_idx)) / n_examples for c, c_idx in self.class_examples_idx.iteritems()}
 
 	@property
 	def class_prediction(self):
 		"""
 		Returns the class predicted by this node as a leaf
+
 		"""
-		return np.argmax(np.array(self.breiman_info.p_j_given_t))
+		return np.argmax(self.breiman_info.p_j_given_t)
 
 	@property
 	def rules(self):
 		"""
 		Returns all the rules of the tree
+
 		"""
-		return self._get_tree_rules()
+		return _get_tree_rules(self)
 
 	@property
 	def leaves(self):
 		"""
 		Returns all the leaves of the tree
+
 		"""
-		return self._get_tree_leaves()
+		return _get_tree_leaves(self)
 
 	@property
 	def tree_depth(self):
 		"""
-		Returns the tree depth
+		Returns the depth of the tree
+
 		"""
-		return self._get_tree_depth()
+		return _get_tree_depth(self)
 
 	def __iter__(self):
 		"""
 		Yields all the rules of the tree
+
 		"""
-		for r in self._get_tree_rules():
-			yield r
+		raise NotImplementedError() # Implement a structured traversal of the tree
+		# for r in _get_tree_rules(self):
+		# 	yield r
 
 	def __len__(self):
 		"""
-		Returns the number of rules in the tree
+		Returns the number of nodes in the tree
+
 		"""
-		return len(self._get_tree_rules())
+		return len(self.rules) + len(self.leaves)
 
 	def __str__(self, depth=0):
 		"""
 		Convert the tree to a text representation
+
 		"""
 		tree_str = ""
 
@@ -156,42 +171,49 @@ class TreeNode(BaseModel):
 
 		return tree_str
 
-	def _get_tree_leaves(self):
-		def _get_leaves(node):
-			leaves = []
-			if not node.is_leaf:
-				leaves += _get_leaves(node.left_child)
-				leaves += _get_leaves(node.right_child)
-			else:
-				leaves.append(node)
-			return leaves
-		return _get_leaves(self)
 
-	def _get_tree_rules(self):
-		def _get_rules(node):
-			rules = []
-			if node.rule is not None:
-				rules.append(node.rule)
-				rules += _get_rules(node.left_child)
-				rules += _get_rules(node.right_child)
-			return rules
-		return _get_rules(self)
+def _get_tree_leaves(root):
+	def _get_leaves(node):
+		leaves = []
+		if not node.is_leaf:
+			leaves += _get_leaves(node.left_child)
+			leaves += _get_leaves(node.right_child)
+		else:
+			leaves.append(node)
+		return leaves
+	return _get_leaves(root)
 
-	def _get_tree_depth(self):
-		def _get_depth(node):
-			depth = 0
-			if not node.is_leaf:
-				depth = max(_get_depth(node.left_child), _get_depth(node.right_child))
-			else:
-				depth = node.depth
-			return depth
-		return _get_depth(self)
+
+def _get_tree_rules(root):
+	def _get_rules(node):
+		rules = []
+		if not node.is_leaf:
+			rules.append(node.rule)
+			rules += _get_rules(node.left_child)
+			rules += _get_rules(node.right_child)
+		return rules
+	return _get_rules(root)
+
+
+def _get_tree_depth(root):
+	"""
+	Assumes that the depth is builtin the tree nodes, does not calculate it.
+
+	"""
+	def _get_depth(node):
+		if not node.is_leaf:
+			depth = max(_get_depth(node.left_child), _get_depth(node.right_child))
+		else:
+			depth = node.depth
+		return depth
+	return _get_depth(root)
 
 
 class ProbabilisticTreeNode(TreeNode):
 	def predict(self, X):
 		"""
 		Multi-class predictions using the current node's rule
+
 		"""
 		# Get probabilistic predictions
 		class_probabilities = self.predict_proba(X)
@@ -204,6 +226,7 @@ class ProbabilisticTreeNode(TreeNode):
 	def predict_proba(self, X):
 		"""
 		Probabilistic class predictions using the current node's rule
+
 		"""
 		class_probabilities = np.zeros((len(self.class_examples_idx.keys()), X.shape[0]))
 
