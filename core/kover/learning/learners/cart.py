@@ -95,6 +95,9 @@ class DecisionTreeClassifier(object):
 				* equation numbers refer to Breiman et al. (1984)
 				* j = a class
 				* t = current node
+				* This code works if n_examples_by_class[c] is an array giving
+				  the value for multiple candidate splits, or an integer giving
+				  the value for a single split.
 
 			"""
 			p_j_t = {c: 1.0 * altered_priors[c] * n_examples_by_class[c] / n_total_class_examples[c] \
@@ -113,8 +116,8 @@ class DecisionTreeClassifier(object):
 		def _gini_rule_score(example_idx):
 			"""
 			example_idx: a dictionnary where the keys are classes and the values
-						 give the number of examples of the class in the node to
-						 split
+						 give the indices of the examples with the corresponding
+						 class that are in the node to split.
 
 			"""
 			logging.debug("Scoring rules with the gini impurity strategy")
@@ -124,9 +127,13 @@ class DecisionTreeClassifier(object):
 			#      for presence and absence rules, which we don't need here.
 			# TODO: We could have a parameter called return_absence=True, which avoid using twice the RAM.
 			last_presence_rule_idx = int(1.0 * len(rules) / 2)  # Just because sum_rows returns pres/abs rules
+			# For each class, we compute a vector that gives the number of examples of this class
+			# that contain each k-mer. This is the number of examples that will go in the left leaf
+			# if a split is made on a given k-mer rule.
 			left_n_examples_by_class = \
 				{c: np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx], dtype=np.float) \
 					if len(example_idx[c]) > 0 else 0. for c in example_idx.keys()}
+			# Similarly, we compute the number of examples that would be sent to the right leaf (don't contain the k-mer)
 			right_n_examples_by_class = {c: np.asarray(len(example_idx[c]) - left_n_examples_by_class[c], dtype=np.float) \
 											for c in left_n_examples_by_class.keys()}
 
