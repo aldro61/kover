@@ -1027,12 +1027,16 @@ class KoverLearningTool(object):
         config["dataset"] = abspath(config['dataset'])
         with open(join(args.output_dir, 'config.json'), 'w') as f:
             json_dump(config, f)
-
+        
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, rule in enumerate(model.decision_tree.rules):
                 f.write(">{0!s}, importance: {1:.2f}\n{2!s}\n\n".format(rule_ids[rule]["fasta"], rule_importances[rule], rule.kmer_sequence))
-        #TODO: save equivalent rules
+
+                with open(join(args.output_dir, "model_rule_{0!s}_equiv.fasta".format(rule_ids[rule]["simple"])), "w") as f_equiv:
+                    f_equiv.write("\n\n".join(
+                        [">rule-{0!s}-equiv-{1:d}\n{2!s}".format(rule_ids[rule]["simple"], j + 1, equiv_rule.kmer_sequence)
+                         for j, equiv_rule in enumerate(equivalent_rules[rule])]))
 
 
 class CommandLineInterface(object):
