@@ -378,6 +378,7 @@ def _prune_tree(tree):
 				node.left_child = None
 				del node.right_child
 				node.right_child = None
+				assert n.is_leaf  # Runtime validation
 				if not node.is_root and node.parent.left_child.is_leaf and node.parent.right_child.is_leaf:
 					logging.debug("Adding the new leaf's parent to the list of leaf parents")
 					parents.append(node.parent)
@@ -439,6 +440,7 @@ def _prune_tree(tree):
 				n.left_child = None
 				del n.right_child
 				n.right_child = None
+				assert n.is_leaf  # Runtime validation
 
 			# Repeat until only the root node remains
 			return [(min_gt, root)] + (__sequential_prune(root) if not root.is_leaf else [])

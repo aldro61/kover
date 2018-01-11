@@ -186,6 +186,7 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta,
     # Compute the bound value
     logging.debug("Computing the bound value.")
     h_card = float(len(model.rules) + len(model.leaves))
+    assert h_card > 0  # Runtime validation
     m = float(len(train_answers))
     Z_card = float(len(compression_set))
     N_Z = Z_card * max_genome_size
