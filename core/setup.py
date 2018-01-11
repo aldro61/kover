@@ -29,5 +29,9 @@ setup(
     ext_modules = [Extension("kover/learning/common/popcount", ["kover/learning/common/popcount.c"], extra_compile_args=["-march=native"])],
     data_files=[('kover/dataset/tools/kmer_tools/', ['kover/dataset/tools/kmer_tools/build/bin/dsk2kover',
 																  'kover/dataset/tools/kmer_tools/build/bin/multidsk',
-																  'kover/dataset/tools/kmer_tools/build/bin/dsk'])]
+																  'kover/dataset/tools/kmer_tools/build/bin/dsk'])],
+
+    # Unit Tests
+    test_suite='nose.collector',
+    tests_require=['nose']
 )
