@@ -185,17 +185,21 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta,
 
     # Compute the bound value
     logging.debug("Computing the bound value.")
-    h_card = float(len(model.rules) + len(model.leaves))
-    assert h_card > 0  # Runtime validation
-    m = float(len(train_answers))
-    Z_card = float(len(compression_set))
-    N_Z = Z_card * max_genome_size
+    m = float(len(train_answers))  # Number of training examples
+    Z_card = float(len(compression_set))  # Number of examples in the compression set
+    N_Z = Z_card * max_genome_size  # Number of nucleotides in the compression set
+    # Number of errors on examples not in the compression set
     r = float((train_predictions != train_answers).sum() - (train_predictions[compression_set] != train_answers[compression_set]).sum())
+    n = float(len(model.rules))
+
+    # Sample-compression bound value
     return 1.0 - exp((-1.0 / (m - Z_card - r)) * (ln(comb(m, Z_card, exact=True)) +
                                                   ln(comb(m - Z_card, r, exact=True)) +
-                                                  h_card * ln(N_Z + n_classes) +
+                                                  (n * ln(N_Z) if n > 0 else 0.) +
+                                                  (n + 1) * ln(n_classes) +
+                                                  ln(comb(2 * n + 1, n, exact=True)) +
                                                   ln(pi**6 *
-                                                  (h_card + 1)**2 *
+                                                  (n + 1)**2 *
                                                   (r + 1)**2 *
                                                   (Z_card + 1)**2 /
                                                   (216 * delta))))
