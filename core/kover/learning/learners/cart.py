@@ -23,6 +23,7 @@ import numpy as np
 from collections import defaultdict, deque
 from math import ceil
 from copy import deepcopy
+from sys import setrecursionlimit; setrecursionlimit(1500)
 
 from ..common.models import cart, CARTModel
 from ..common.tree import ProbabilisticTreeNode
