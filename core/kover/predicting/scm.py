@@ -67,6 +67,9 @@ def predict_on_genome(model_type, model_rules, model_kmer_len, contig_sequences,
         if len(kmer_in_genome[kmer]) > 0:
             rule_outcomes.append(True if rule_type == "presence" else False)
             rule_kmer_hits.append(kmer_in_genome[kmer])
+        else:
+            rule_outcomes.append(False if rule_type == "presence" else True)
+            rule_kmer_hits.append(None)
 
     # TODO: As a minimum viable product, we will just return the prediction,
     #       but future versions will include explanations derived from the model
