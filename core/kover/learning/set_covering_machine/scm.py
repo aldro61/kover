@@ -263,26 +263,27 @@ class SetCoveringMachine(BaseSetCoveringMachine):
             block_utilities = negative_cover_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE] - \
                               float(self.p) * positive_error_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE]
 
+            # Discard blacklisted rules
+            block_utilities[rule_is_blacklisted[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE]] = -np.infty
+
             # Check if there is a better rule or equal in this block
             block_max_utility = np.max(block_utilities)
             if block_max_utility > best_utility or np.allclose(best_utility, block_max_utility):
 
                 # Find the indices of the better rules that are not blacklisted
                 block_utility_argmax = np.where(block_utilities == block_max_utility)[0] + block * UTIL_BLOCK_SIZE
-                block_utility_argmax = block_utility_argmax[~rule_is_blacklisted[block_utility_argmax]]
 
                 # Update the best utility value and other infos
-                if len(block_utility_argmax) > 0:
-                    if np.allclose(block_max_utility, best_utility):
-                        best_utility_idx = np.hstack((best_utility_idx, block_utility_argmax))
-                        best_utility_pos_error_count = np.hstack((best_utility_pos_error_count,
-                                                                  positive_error_counts[block_utility_argmax]))
-                        best_utility_neg_cover_count = np.hstack((best_utility_neg_cover_count,
-                                                                  negative_cover_counts[block_utility_argmax]))
-                    else:
-                        best_utility = block_max_utility
-                        best_utility_idx = block_utility_argmax
-                        best_utility_pos_error_count = positive_error_counts[block_utility_argmax]
-                        best_utility_neg_cover_count = negative_cover_counts[block_utility_argmax]
+                if np.allclose(block_max_utility, best_utility):
+                    best_utility_idx = np.hstack((best_utility_idx, block_utility_argmax))
+                    best_utility_pos_error_count = np.hstack((best_utility_pos_error_count,
+                                                              positive_error_counts[block_utility_argmax]))
+                    best_utility_neg_cover_count = np.hstack((best_utility_neg_cover_count,
+                                                              negative_cover_counts[block_utility_argmax]))
+                else:
+                    best_utility = block_max_utility
+                    best_utility_idx = block_utility_argmax
+                    best_utility_pos_error_count = positive_error_counts[block_utility_argmax]
+                    best_utility_neg_cover_count = negative_cover_counts[block_utility_argmax]
 
         return best_utility, best_utility_idx, best_utility_pos_error_count, best_utility_neg_cover_count
