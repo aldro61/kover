@@ -218,6 +218,10 @@ class DecisionTreeClassifier(object):
 			# Score all the rules according to the criterion
 			rules_criterion = score_rules(example_idx=example_idx)
 
+			# Remove rules that are blacklisted
+			logging.debug("Removing {0:d} blacklisted rules".format(len(rule_blacklist)))
+			rules_criterion[rule_blacklist] = (np.infty if choice_func == min else -np.infty)
+
 			# Check if we were able to find a split
 			if (choice_func == min and min(rules_criterion) == np.infty) or (choice_func == max and max(rules_criterion) == -np.infty):
 				return None, None, None, None
