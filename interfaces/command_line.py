@@ -847,7 +847,7 @@ class KoverLearningTool(object):
                 class_importances = parse_class_importances(tmp)
         else:
             # No class importances specified, so each has an importance of 1.0
-            class_importances = [{c:1.0 for c in range(phenotype_tags.shape[0])}]
+            class_importances = [{c:1.0 for c in phenotype_tags}]
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
