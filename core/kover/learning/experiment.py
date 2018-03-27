@@ -493,7 +493,7 @@ def learn(dataset_file, split_name, model_type, p, kmer_blacklist_file, max_rule
         best_hp, \
         best_model, \
         best_rule_importances, \
-        best_predictor_equiv_rules = _bound_selection(dataset_file=dataset_file, split_name=split_name, model_type=model_type,
+        best_predictor_equiv_rules = _bound_selection(dataset_file=dataset_file, split_name=split_name, model_types=model_type,
                                                       p_values=p, max_rules=max_rules, max_equiv_rules=max_equiv_rules,
                                                       rule_blacklist=rule_blacklist, bound_delta=bound_delta,
                                                       bound_max_genome_size=bound_max_genome_size, n_cpu=n_cpu,
