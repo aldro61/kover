@@ -992,7 +992,7 @@ class KoverLearningTool(object):
                 else:
                     report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        report += "Model (%d rules, depth = %d):\n" % (len(model.decision_tree.rules), model.decision_tree.depth)
+        report += "Model (%d rules, depth = %d):\n" % (len(model.decision_tree.rules), model.depth)
         report += str(model) + "\n"
         report += "\n"
 
