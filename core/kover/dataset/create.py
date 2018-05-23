@@ -68,16 +68,14 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 	"""
     logging.debug("Parsing metadata.")
     md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
-    md_unique_labels, label_first_apperance_indices, indices = np.unique(md_genome_labels, return_index=True,\
-                                                                            return_inverse=True)
+    md_unique_labels, indices = np.unique(md_genome_labels, return_inverse=True)
 
     # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
     if not(len(md_unique_labels) == 2 and '0' in md_unique_labels and '1' in md_unique_labels):
-        # Keeping order of appearance
-        md_unique_labels = [md_genome_labels[idx] for idx in sorted(label_first_apperance_indices)]
+        # Sorting labels alphabetically for consistent indices assignement across multiple datasets
+        md_unique_labels.sort()
         label_to_indice = {md_unique_labels[l]:l for l in range(len(md_unique_labels))}
         indices = np.array([label_to_indice[l] for l in md_genome_labels])
-
 
     if len(md_unique_labels) < 2:
         error_callback(Exception("The dataset must contain at least 2 different phenotypes"))

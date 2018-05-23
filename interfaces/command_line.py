@@ -482,6 +482,7 @@ class KoverLearningTool(object):
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
         parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+        parser.add_argument('--authorized-rules', type=str, default="", help=argparse.SUPPRESS)
 
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -563,6 +564,7 @@ class KoverLearningTool(object):
                                     parameter_selection=args.hp_choice,
                                     n_cpu=args.n_cpu,
                                     random_seed=args.random_seed,
+                                    authorized_rules=args.authorized_rules,
                                     progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
 
@@ -726,7 +728,8 @@ class KoverLearningTool(object):
                             help='The directory in which to store Kover\'s output. It will be created if '
                                  'it does not exist.', default='.')
         parser.add_argument('-x', '--progress', help='Shows a progress bar for the execution.', action='store_true')
-        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true')
+        parser.add_argument('-v', '--verbose', help='Sets the verbosity level.', default=False, action='store_true'),
+        parser.add_argument('--authorized-rules', type=str, default="", help=argparse.SUPPRESS)  # Hidden argument
 
         # If no argument has been specified, default to help
         if len(argv) == 3:
@@ -882,6 +885,7 @@ class KoverLearningTool(object):
                                 bound_delta=args.bound_delta,
                                 bound_max_genome_size=args.bound_max_genome_size,
                                 parameter_selection=args.hp_choice,
+                                authorized_rules=args.authorized_rules,
                                 n_cpu=args.n_cpu,
                                 progress_callback=progress)
         running_time = timedelta(seconds=time() - start_time)
@@ -988,7 +992,7 @@ class KoverLearningTool(object):
                 else:
                     report += "%s: %s\n" % (str(alias), str(round(test_metrics[key][0], 5)))
             report += "\n"
-        report += "Model (%d rules, depth = %d):\n" % (len(model.decision_tree.rules), model.decision_tree.depth)
+        report += "Model (%d rules, depth = %d):\n" % (len(model.decision_tree.rules), model.depth)
         report += str(model) + "\n"
         report += "\n"
 
@@ -1027,7 +1031,7 @@ class KoverLearningTool(object):
         config["dataset"] = abspath(config['dataset'])
         with open(join(args.output_dir, 'config.json'), 'w') as f:
             json_dump(config, f)
-        
+
         # Save model (also equivalent rules) [json]
         with open(join(args.output_dir, 'model.fasta'), "w") as f:
             for i, rule in enumerate(model.decision_tree.rules):

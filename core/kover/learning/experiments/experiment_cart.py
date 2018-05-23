@@ -205,7 +205,7 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta,
                                                   (216 * delta))))
 
 
-def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_size):
+def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_size, rule_blacklist):
     """
     Learns a cost-complexity pruned decision tree for a fixed set of hyperparameters and returns an estimate of its
     generalization error.
@@ -220,6 +220,9 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
         The name of the train/test split to use
     hps: dict
         A dictionnary of hyperparameter values (one value per key)
+    rule_blacklist: dict or list
+        A dictionnary giving the rules to blacklist for the full train and each fold,
+        or a list of rules to blacklist all the time.
 
     Returns:
     --------
@@ -258,7 +261,7 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
                          rule_classifications=rule_classifications,
                          example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
                                            for c in range(n_classes)},
-                         rule_blacklist=None,
+                         rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
                          tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
                          level_callback=None,
                          split_callback=_split_callback)
@@ -292,7 +295,7 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
     return hps, min_score, min_score_tree
 
 
-def _learn_pruned_tree_cv(hps, dataset_file, split_name):
+def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
     """
     Learns a cost-complexity pruned decision tree for a fixed set of hyperparameters and returns an estimate of its
     generalization error.
@@ -307,6 +310,9 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
         The name of the train/test split to use
     hps: dict
         A dictionnary of hyperparameter values (one value per key)
+    rule_blacklist: dict or list
+        A dictionnary giving the rules to blacklist for the full train and each fold,
+        or a list of rules to blacklist all the time.
 
     Returns:
     --------
@@ -360,7 +366,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
                                rule_classifications=rule_classifications,
                                example_idx = {c: fold.train_genome_idx[example_labels[fold.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                               rule_blacklist=None,
+                               rule_blacklist=rule_blacklist[fold.name] if isinstance(rule_blacklist, dict) else rule_blacklist,
                                tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(fold.train_genome_idx)),
                                level_callback=None,
                                split_callback=None)
@@ -371,7 +377,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
                          rule_classifications=rule_classifications,
                          example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                         rule_blacklist=None,
+                         rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
                          tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
                          level_callback=None,
                          split_callback=_split_callback)
@@ -431,8 +437,8 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name):
 
 
 def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
-               min_samples_split, n_cpu, progress_callback, warning_callback, error_callback,
-               hp_search_func, hp_search_type):
+               min_samples_split, rule_blacklist, n_cpu, progress_callback,
+               warning_callback, error_callback, hp_search_func, hp_search_type):
     """
     Train a decision tree classifier with the best hyperparameter values, which
     are selected according to hp_search_func.
@@ -444,7 +450,7 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
 
     logging.debug("Using %d CPUs." % n_cpu)
     pool = Pool(n_cpu)
-    _hp_eval_func = partial(hp_search_func, dataset_file=dataset_file, split_name=split_name)
+    _hp_eval_func = partial(hp_search_func, dataset_file=dataset_file, split_name=split_name, rule_blacklist=rule_blacklist)
     best_hps = None
     best_score = np.infty
     best_master_tree = None
@@ -485,8 +491,8 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
 
 def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split,
                class_importance, bound_delta, bound_max_genome_size,
-               parameter_selection, n_cpu, progress_callback=None,
-               warning_callback=None, error_callback=None):
+               parameter_selection, n_cpu, authorized_rules,
+               progress_callback=None, warning_callback=None, error_callback=None):
     """
     Cross-validate the best hyper-parameters (criterion, max_depth, min_samples_split and class_importance)
     to grow a pruned decision tree.
@@ -498,6 +504,26 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
 
     # Load the dataset info
     dataset = KoverDataset(dataset_file)
+
+    # Authorized rules: the only rules that are usable for the full train and each fold
+    # This is a secret argument that is not accessible to users. I only needed this
+    # for the comparison to univariate feature selection methods in my thesis.
+    if authorized_rules != "":
+        # XXX: Rule blacklist cannot be specified at the same time!
+        authorized_rules = {l.strip().split()[0]: [int(x) for x in l.strip().split()[1:]] for l in open(authorized_rules, "r")}
+
+        # Convert the authorized rules into a dict of blacklists
+        rule_blacklist = {}
+        for partition, rule_idx in authorized_rules.iteritems():
+            # XXX: As opposed to SCM, CART doesn't use 2 * kmer_count rules
+            #      since it doesn't need to distinguish presence/absence
+            blacklisted = np.ones(dataset.kmer_count, dtype=np.bool)
+            blacklisted[rule_idx] = False
+            blacklist = np.where(blacklisted)[0]
+            rule_blacklist[partition] = blacklist
+    else:
+        # No blacklist specified
+        rule_blacklist = []
 
     # Check and initialize (hyper)parameters
     if n_cpu is None:
@@ -519,6 +545,7 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
                        class_importance=class_importance,
                        max_depth=max_depth,
                        min_samples_split=min_samples_split,
+                       rule_blacklist=rule_blacklist,
                        n_cpu=n_cpu,
                        progress_callback=progress_callback,
                        warning_callback=warning_callback,
@@ -538,6 +565,7 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
                        class_importance=class_importance,
                        max_depth=max_depth,
                        min_samples_split=min_samples_split,
+                       rule_blacklist=rule_blacklist,
                        n_cpu=n_cpu,
                        progress_callback=progress_callback,
                        warning_callback=warning_callback,

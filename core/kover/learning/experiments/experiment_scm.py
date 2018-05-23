@@ -83,7 +83,7 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
     return train_predictions, test_predictions
 
 
-def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
+def _cv_score_hp(hp_values, max_rules, rule_blacklist, dataset_file, split_name):
     model_type = hp_values[0]
     p = hp_values[1]
 
@@ -126,10 +126,12 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
                                      test_example_idx=test_example_idx)
 
         predictor = SetCoveringMachine(model_type=model_type, p=p, max_rules=max_rules)
+
         predictor.fit(rules=rules,
                       rule_classifications=rule_classifications,
                       positive_example_idx=positive_example_idx,
                       negative_example_idx=negative_example_idx,
+					  rule_blacklist=rule_blacklist[fold.name] if isinstance(rule_blacklist, dict) else rule_blacklist,
                       tiebreaker=tiebreaker,
                       iteration_callback=iteration_callback)
 
@@ -145,8 +147,8 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name):
     return (model_type, p, best_model_length), best_hp_score
 
 
-def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules, n_cpu, progress_callback,
-                      warning_callback, error_callback):
+def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules, rule_blacklist,
+                      n_cpu, progress_callback, warning_callback, error_callback):
     """
     Returns the best parameter combination and its cv score
     """
@@ -158,7 +160,8 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
     hp_eval_func = partial(_cv_score_hp,
                            dataset_file=dataset_file,
                            split_name=split_name,
-                           max_rules=max_rules)
+                           max_rules=max_rules,
+						   rule_blacklist=rule_blacklist)
 
     best_hp_score = 1.0
     best_hp = {"model_type": None, "p": None, "max_rules": None}
@@ -178,7 +181,7 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
     return best_hp_score, best_hp
 
 
-def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, random_generator, progress_callback):
+def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, rule_blacklist, random_generator, progress_callback):
     full_train_progress = {"n_rules": 0.0}
 
     def _iteration_callback(iteration_infos, model_type, equivalent_rules):
@@ -227,6 +230,7 @@ def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, 
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
+				  rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
                   tiebreaker=partial(_tiebreaker,
                                      rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                            split.unique_risk_by_anti_kmer[...])),
@@ -267,8 +271,8 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta, ma
                                                  (216 * delta))))
 
 
-def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_rules, bound_delta,
-                    bound_max_genome_size, random_generator):
+def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_rules, rule_blacklist,
+					bound_delta, bound_max_genome_size, random_generator):
     model_type = hp_values[0]
     p = hp_values[1]
 
@@ -350,6 +354,7 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
+				  rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
                   tiebreaker=tiebreaker,
                   iteration_callback=iteration_callback,
                   iteration_rule_importances=True)
@@ -364,8 +369,8 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
     return (model_type, p, best_model_length), best_hp_score, best_model, best_rule_importances, best_equivalent_rules
 
 
-def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules, max_equiv_rules, bound_delta,
-                     bound_max_genome_size, n_cpu, random_generator, progress_callback, warning_callback,
+def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules, max_equiv_rules, rule_blacklist,
+					 bound_delta, bound_max_genome_size, n_cpu, random_generator, progress_callback, warning_callback,
                      error_callback):
     n_hp_combinations = len(model_types) * len(p_values)
     logging.debug("There are %d hyperparameter combinations to try." % n_hp_combinations)
@@ -377,6 +382,7 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
                            split_name=split_name,
                            max_rules=max_rules,
                            max_equiv_rules=max_equiv_rules,
+						   rule_blacklist=rule_blacklist,
                            bound_delta=bound_delta,
                            bound_max_genome_size=bound_max_genome_size,
                            random_generator=random_generator)
@@ -403,8 +409,9 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
 
-def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection, n_cpu, random_seed,
-          bound_delta=None, bound_max_genome_size=None, progress_callback=None, warning_callback=None, error_callback=None):
+def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection,
+              n_cpu, random_seed, authorized_rules, bound_delta=None, bound_max_genome_size=None,
+			  progress_callback=None, warning_callback=None, error_callback=None):
     """
     parameter_selection: bound, cv, none (use first value of each if multiple)
     """
@@ -428,6 +435,24 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
 
     dataset = KoverDataset(dataset_file)
 
+    # Authorized rules: the only rules that are usable for the full train and each fold
+    # This is a secret argument that is not accessible to users. I only needed this
+    # for the comparison to univariate feature selection methods in my thesis.
+    if authorized_rules != "":
+        # XXX: Rule blacklist cannot be specified at the same time!
+        authorized_rules = {l.strip().split()[0]: [int(x) for x in l.strip().split()[1:]] for l in open(authorized_rules, "r")}
+
+        # Convert the authorized rules into a dict of blacklists
+        rule_blacklist = {}
+        for partition, rule_idx in authorized_rules.iteritems():
+            blacklisted = np.ones(dataset.kmer_count * 2, dtype=np.bool)
+            blacklisted[rule_idx] = False
+            blacklist = np.where(blacklisted)[0]
+            rule_blacklist[partition] = blacklist
+    else:
+        # No blacklist specified
+        rule_blacklist = []
+
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
     if parameter_selection == "bound":
@@ -446,6 +471,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
                                                       p_values=p,
                                                       max_rules=max_rules,
                                                       max_equiv_rules=max_equiv_rules,
+													  rule_blacklist=rule_blacklist,
                                                       bound_delta=bound_delta,
                                                       bound_max_genome_size=bound_max_genome_size,
                                                       n_cpu=n_cpu,
@@ -463,6 +489,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
                                                    model_types=model_type,
                                                    p_values=p,
                                                    max_rules=max_rules,
+												   rule_blacklist=rule_blacklist,
                                                    n_cpu=n_cpu,
                                                    progress_callback=progress_callback,
                                                    warning_callback=warning_callback,
@@ -487,6 +514,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
                                        p=best_hp["p"],
                                        max_rules=best_hp["max_rules"],
                                        max_equiv_rules=max_equiv_rules,
+									   rule_blacklist=rule_blacklist,
                                        random_generator=random_generator,
                                        progress_callback=progress_callback)
 
