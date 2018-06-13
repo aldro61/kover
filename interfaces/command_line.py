@@ -822,7 +822,7 @@ class KoverLearningTool(object):
                 if v.endswith(":"):
                     current_class = v.replace(":", "")
                 else:
-                    class_importances[current_class].append(float(v))
+                    class_importances[phenotype_tags.index(current_class)].append(float(v))
 
             # Make a list of dictionnaries giving every possible combination of importances
             grid_classes = class_importances.keys()
@@ -847,7 +847,7 @@ class KoverLearningTool(object):
                 class_importances = parse_class_importances(tmp)
         else:
             # No class importances specified, so each has an importance of 1.0
-            class_importances = [{c: 1.0 for c in phenotype_tags}]
+            class_importances = [{c: 1.0 for c in range(len(phenotype_tags))}]
 
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
@@ -970,7 +970,7 @@ class KoverLearningTool(object):
         else:
             report += "Selection strategy: No selection\n"
         report += "Criterion: {0!s}\n".format(best_hp["criterion"])
-        report += "Class importance: {0!s}\n".format(", ".join(["class {0!s}: {1:.3f}".format(c, best_hp["class_importance"][c]) for c in phenotype_tags]))
+        report += "Class importance: {0!s}\n".format(", ".join(["class {0!s}: {1:.3f}".format(c, best_hp["class_importance"][i]) for i, c in enumerate(phenotype_tags)]))
         report += "Maximum tree depth: {0:d}\n".format(best_hp["max_depth"])
         report += "Minimum samples to split a node (examples): {0:.3f}\n".format(best_hp["min_samples_split"])
         report += "Pruning alpha: {0:.8f}\n".format(best_hp["pruning_alpha"])
@@ -1017,7 +1017,7 @@ class KoverLearningTool(object):
                    "metrics": {"train": train_metrics,
                                "test": test_metrics},
                    "model": {"n_rules": len(model.decision_tree.rules),
-                             "depth": model.decision_tree.depth,
+                             "depth": model.depth,
                              "rules": [str(r) for r in model.decision_tree.rules],
                              "rule_importances": [rule_importances[r] for r in model.decision_tree.rules],
                              "rule_identifiers": [rule_ids[r]["simple"] for r in model.decision_tree.rules]},
