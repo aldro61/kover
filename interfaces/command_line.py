@@ -923,7 +923,7 @@ class KoverLearningTool(object):
 
         # Create identifiers for each rules
         rule_ids = {}
-        id_by_node = {n: i if not n.is_leaf else "leaf___{}".format("__".join(["{0!s}_{1:.8f}".format(model.class_tags[c], p) for c, p in n.breiman_info.p_j_given_t.iteritems()])) for i, n in model.decision_tree}
+        id_by_node = {n: "{}___ex_{}".format(i, n.n_examples) if not n.is_leaf else "leaf___ex_{}___{}".format(n.n_examples, "__".join(["{0!s}_{1:d}_{2:.8f}".format(model.class_tags[c], len(n.class_examples_idx[c]), n.breiman_info.p_j_given_t[c]) for c in n.class_proportions])) for i, n in model.decision_tree}
         for node_id, node in model.decision_tree:
             if not node.is_leaf:
                 simple_rule_id = str(node_id)
