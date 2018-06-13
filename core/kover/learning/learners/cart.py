@@ -68,18 +68,13 @@ class DecisionTreeClassifier(object):
 			tiebreaker = lambda x: x
 
 		# Store important information about the training set
-		n_total_class_examples = {c:float(len(ids)) for c, ids in example_idx.items()}
-		n_total_examples = sum(n_total_class_examples.values())
+		n_total_class_examples = {c: float(len(idx)) for c, idx in example_idx.iteritems()}
 
 		# Compute the class priors based on the importance of making errors on each class.
 		# See Section "4.4 Priors and Variable Misclassification Costs" in Breiman et al. 1984.
-		priors = [1.0 * n_examples/ n_total_examples for n_examples in n_total_class_examples.values()]
-
-		denum = sum([importance * prior for importance, prior in zip(self.class_importance.values(), priors)])
-		altered_priors = {c: 1.0 * importance * prior / denum for c, importance, prior in \
-									zip(n_total_class_examples.keys(), self.class_importance.values(), priors)}
-
-		del n_total_examples, priors
+		priors = {c: 1.0 * n_examples / sum(n_total_class_examples.values()) for c, n_examples in n_total_class_examples.iteritems()}
+		denum = sum([self.class_importance[c] * priors[c] for c in priors.iterkeys()])
+		altered_priors = {c: 1.0 * self.class_importance[c] * priors[c] / denum for c in priors.iterkeys()}
 
 		# Criteria for node impurity and splitting
 
@@ -133,17 +128,30 @@ class DecisionTreeClassifier(object):
 			# if a split is made on a given k-mer rule.
 			left_n_examples_by_class = \
 				{c: np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx], dtype=np.float) \
-					if len(example_idx[c]) > 0 else 0. for c in example_idx.keys()}
+					for c in example_idx.keys()}
+
 			# Similarly, we compute the number of examples that would be sent to the right leaf (don't contain the k-mer)
 			right_n_examples_by_class = {c: np.asarray(len(example_idx[c]) - left_n_examples_by_class[c], dtype=np.float) \
 											for c in left_n_examples_by_class.keys()}
 
 			# XXX: To maximize the decrease in impurity, we can simply minimize the sum of the gini impurity of the
-			#      resulting leaves, so we only compute those quantities. The division by p_t comes
+			#      resulting leaves, so we only compute those quantities.
+
+			# We will compute the gini impurities in blocks
+			n_kmers = left_n_examples_by_class[left_n_examples_by_class.keys()[0]].shape[0]
+			BLOCK_SIZE = 100000
+			gini = np.zeros(n_kmers)
+			n_blocks = int(ceil(1.0 * n_kmers / BLOCK_SIZE))
+
 			# Left child:
-			gini = _gini_impurity(left_n_examples_by_class, multiply_by_node_proba=True)
+			for i in range(n_blocks):
+				block_examples_by_class = {c: ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in left_n_examples_by_class.iteritems()}
+				gini[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] = _gini_impurity(block_examples_by_class, multiply_by_node_proba=True)
+
 			# Right child:
-			gini += _gini_impurity(right_n_examples_by_class, multiply_by_node_proba=True)
+			for i in range(n_blocks):
+				block_examples_by_class = {c : ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in right_n_examples_by_class.iteritems()}
+				gini[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] += _gini_impurity(block_examples_by_class, multiply_by_node_proba=True)
 
 			# Don't consider rules that lead to empty nodes
 			# XXX: we minimize the sum of impurities, so setting to inf will prevent the rules from being selected
