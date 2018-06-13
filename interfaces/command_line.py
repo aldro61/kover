@@ -923,11 +923,11 @@ class KoverLearningTool(object):
 
         # Create identifiers for each rules
         rule_ids = {}
-        id_by_node = {n: "{}___ex_{}".format(i, n.n_examples) if not n.is_leaf else "leaf___ex_{}___{}".format(n.n_examples, "__".join(["{0!s}_{1:d}_{2:.8f}".format(model.class_tags[c], len(n.class_examples_idx[c]), n.breiman_info.p_j_given_t[c]) for c in n.class_proportions])) for i, n in model.decision_tree}
+        id_by_node = {n: "{}___ex_{}___eq_{}".format(i, n.n_examples, len(equivalent_rules[n.rule])) if not n.is_leaf else "leaf___ex_{}___{}".format(n.n_examples, "__".join(["{0!s}_{1:d}_{2:.8f}".format(model.class_tags[c], len(n.class_examples_idx[c]), n.breiman_info.p_j_given_t[c]) for c in n.class_proportions])) for i, n in model.decision_tree}
         for node_id, node in model.decision_tree:
             if not node.is_leaf:
                 simple_rule_id = str(node_id)
-                fasta_header = "rule_id: {}, left_child: {}, right_child: {}".format(node_id, id_by_node[node.left_child], id_by_node[node.right_child])
+                fasta_header = "rule_id: {}, left_child: {}, right_child: {}".format(id_by_node[node], id_by_node[node.left_child], id_by_node[node.right_child])
                 rule_ids[node.rule] = {"simple": simple_rule_id, "fasta": fasta_header}
         del id_by_node
 
