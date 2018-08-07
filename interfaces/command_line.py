@@ -27,6 +27,7 @@ from collections import defaultdict
 from tempfile import gettempdir
 from pkg_resources import get_distribution
 from sys import argv
+from os.path import abspath
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
 VERSION = "1.2.0"
@@ -558,7 +559,7 @@ class KoverLearningTool(object):
                                     split_name=args.split,
                                     model_type=args.model_type,
                                     p=args.p,
-                                    kmer_blacklist_file=args.kmer_blacklist,
+                                    kmer_blacklist_file=None if args.kmer_blacklist is None else abspath(args.kmer_blacklist),
                                     max_rules=args.max_rules,
                                     max_equiv_rules=args.max_equiv_rules,
                                     bound_delta=args.bound_delta,
