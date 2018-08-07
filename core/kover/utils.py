@@ -190,7 +190,8 @@ def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
     data = []
     
     # Fasta file format
-    if blacklist_path.endswith(".fasta"):
+    fasta_extensions = [".fasta", ".fa", ".fas", ".fna"]
+    if any(blacklist_path.endswith(extension) for extension in fasta_extensions):
         data = _fasta_to_sequences(blacklist_path)
             
     # Other file format (one kmer per line)
