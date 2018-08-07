@@ -441,8 +441,17 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
         if kmers_to_blacklist:
             kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
             kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
-            idx_to_blacklist = [kmer_by_rule.index(kmer_sequences.index(k)) for k in kmers_to_blacklist]
+            idx_to_blacklist = []
+            kmers_not_found = []
+            for k in kmers_to_blacklist:
+                try:
+                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
+                except ValueError:
+                    kmers_not_found.append(k)
             rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
+            
+            if(len(kmers_not_found) > 0):
+                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
 
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
