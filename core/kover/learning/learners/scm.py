@@ -81,7 +81,7 @@ class BaseSetCoveringMachine(object):
             rule_blacklist = np.unique(rule_blacklist)
             if len(rule_blacklist) == rule_classifications.shape[1]:
                 raise ValueError("The blacklist cannot include all the rules.")
-            logging.debug("Blacklisting : " + str(len(rule_blacklist)/2) + " kmers (" + str(len(rule_blacklist)) + " rules)")
+            logging.debug("Blacklisting: {0:d} kmers ({1:d} rules)".format(len(rule_blacklist) / 2, len(rule_blacklist)))
 
         training_example_idx = np.hstack((positive_example_idx, negative_example_idx))  # Needed for rule importances
         model_rules_idx = []  # Contains the index of the rules in the model

@@ -456,8 +456,9 @@ class KoverLearningTool(object):
                                  'You can specify multiple space separated values. Refer to the documentation for '
                                  'more information.',
                             default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
-        parser.add_argument('--kmer-blacklist', help='A file containing a list of kmers to blacklist from being used to create rules.'
-                                                     'File format : either a fasta file or a text file with one kmer per line', required=False) 
+        parser.add_argument('--kmer-blacklist', help='A file containing a list of k-mers to remove from the analysis.'
+                                                     'These k-mers guaranteed not to be used in the models.'
+                                                     'File format: fasta file or text file with one k-mer per line.', required=False)
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
                                                           'model.', default=10)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '

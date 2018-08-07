@@ -408,6 +408,29 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
 
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
+def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
+    dataset = KoverDataset(dataset_file)
+    
+    # Find all rules to blacklist
+    rule_blacklist = []
+    if kmer_blacklist_file is not None:
+        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file, dataset.kmer_length)
+        if kmers_to_blacklist:
+            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
+            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
+            idx_to_blacklist = []
+            kmers_not_found = []
+            for k in kmers_to_blacklist:
+                try:
+                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
+                except ValueError:
+                    kmers_not_found.append(k)
+            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
+            
+            if(len(kmers_not_found) > 0):
+                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
+    
+    return rule_blacklist
 
 def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_rules, max_equiv_rules,
               parameter_selection, n_cpu, random_seed, authorized_rules, bound_delta=None, bound_max_genome_size=None,
@@ -433,26 +456,12 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
     model_type = np.unique(model_type)
     p = np.unique(p)
 
+    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file, 
+                                          kmer_blacklist_file=kmer_blacklist_file,
+                                          warning_callback=warning_callback)
+                                          
     dataset = KoverDataset(dataset_file)
-
-    rule_blacklist = []
-    if kmer_blacklist_file is not None:
-        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file)
-        if kmers_to_blacklist:
-            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
-            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
-            idx_to_blacklist = []
-            kmers_not_found = []
-            for k in kmers_to_blacklist:
-                try:
-                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
-                except ValueError:
-                    kmers_not_found.append(k)
-            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
-            
-            if(len(kmers_not_found) > 0):
-                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
-
+    
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
     if parameter_selection == "bound":
