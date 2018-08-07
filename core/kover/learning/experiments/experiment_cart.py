@@ -33,7 +33,7 @@ from ...dataset.ds import KoverDataset
 from ..learners.cart import DecisionTreeClassifier, _prune_tree
 from ..common.models import CARTModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
-from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints
+from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints, _parse_kmer_blacklist
 from ..experiments.metrics import _get_binary_metrics, _get_multiclass_metrics
 
 
@@ -487,10 +487,42 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
 
 
     return best_score, best_hps, best_master_tree
+    
+
+def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
+    """
+    Finds the index of the rules that must be blacklisted.
+    """
+    dataset = KoverDataset(dataset_file)
+
+    # Find all rules to blacklist
+    rule_blacklist = []
+    if kmer_blacklist_file is not None:
+        kmers_to_blacklist = _parse_kmer_blacklist(kmer_blacklist_file, dataset.kmer_length)
+
+        if kmers_to_blacklist:
+            # XXX: the k-mers are upper-cased to avoid not finding a match because of the character case
+            #kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences[...]]).tolist()
+            kmer_sequences = np.array(dataset.kmer_sequences[...]).tolist()
+            kmer_by_matrix_column = dataset.kmer_by_matrix_column[...].tolist() # XXX: each k-mer is there only once (see wiki)
+            n_kmers = len(kmer_sequences)
+
+            kmers_not_found = []
+            for k in kmers_to_blacklist:
+                k = k.upper()
+                try:
+                    rule_blacklist.append(kmer_by_matrix_column.index(kmer_sequences.index(k)))
+                except ValueError:
+                    kmers_not_found.append(k)
+
+            if(len(kmers_not_found) > 0):
+                warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
+
+    return rule_blacklist
 
 
 def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split,
-               class_importance, bound_delta, bound_max_genome_size,
+               class_importance, bound_delta, bound_max_genome_size, kmer_blacklist_file,
                parameter_selection, n_cpu, authorized_rules,
                progress_callback=None, warning_callback=None, error_callback=None):
     """
@@ -501,29 +533,13 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     # Initialize callback functions
     warning_callback, error_callback, progress_callback = _init_callback_functions(warning_callback, error_callback,
                                                                                    progress_callback)
-
+    logging.debug("Searching for blacklisted rules.")
+    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file,
+                                          kmer_blacklist_file=kmer_blacklist_file,
+                                          warning_callback=warning_callback)
+                                          
     # Load the dataset info
     dataset = KoverDataset(dataset_file)
-
-    # Authorized rules: the only rules that are usable for the full train and each fold
-    # This is a secret argument that is not accessible to users. I only needed this
-    # for the comparison to univariate feature selection methods in my thesis.
-    if authorized_rules != "":
-        # XXX: Rule blacklist cannot be specified at the same time!
-        authorized_rules = {l.strip().split()[0]: [int(x) for x in l.strip().split()[1:]] for l in open(authorized_rules, "r")}
-
-        # Convert the authorized rules into a dict of blacklists
-        rule_blacklist = {}
-        for partition, rule_idx in authorized_rules.iteritems():
-            # XXX: As opposed to SCM, CART doesn't use 2 * kmer_count rules
-            #      since it doesn't need to distinguish presence/absence
-            blacklisted = np.ones(dataset.kmer_count, dtype=np.bool)
-            blacklisted[rule_idx] = False
-            blacklist = np.where(blacklisted)[0]
-            rule_blacklist[partition] = blacklist
-    else:
-        # No blacklist specified
-        rule_blacklist = []
 
     # Check and initialize (hyper)parameters
     if n_cpu is None:

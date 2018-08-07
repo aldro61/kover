@@ -714,6 +714,9 @@ class KoverLearningTool(object):
                             'set of class-specific values to try using the following syntax: "class1: v1 v2 class2: v1 v2 v3 ...". Refer to the documentation for more information. '
                             '(default: 1.0 for each class)',
                             default=None, required=False)
+        parser.add_argument('--kmer-blacklist', help='A file containing a list of k-mers to remove from the analysis.'
+                                                     'These k-mers guaranteed not to be used in the models.'
+                                                     'File format: fasta file or text file with one k-mer per line.', required=False)
         parser.add_argument('--hp-choice', choices=['bound', 'cv'],
                             help='The strategy used to select the best values for the hyperparameters. The default is '
                                  'k-fold cross-validation, where k is the number of folds defined in the split. '
@@ -889,6 +892,7 @@ class KoverLearningTool(object):
                                 class_importance=class_importances,
                                 bound_delta=args.bound_delta,
                                 bound_max_genome_size=args.bound_max_genome_size,
+                                kmer_blacklist_file=None if args.kmer_blacklist is None else abspath(args.kmer_blacklist),
                                 parameter_selection=args.hp_choice,
                                 authorized_rules=args.authorized_rules,
                                 n_cpu=args.n_cpu,
