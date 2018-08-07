@@ -32,7 +32,7 @@ from ...dataset.ds import KoverDataset
 from ..common.models import ConjunctionModel, DisjunctionModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
 from ..learners.scm import SetCoveringMachine
-from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints, _parse_blacklist
+from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints, _parse_kmer_blacklist
 from ..experiments.metrics import _get_binary_metrics
 
 
@@ -414,7 +414,7 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
     # Find all rules to blacklist
     rule_blacklist = []
     if kmer_blacklist_file is not None:
-        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file, dataset.kmer_length)
+        kmers_to_blacklist = _parse_kmer_blacklist(kmer_blacklist_file, dataset.kmer_length)
         
         if kmers_to_blacklist:
             kmer_sequences = np.array(dataset.kmer_sequences).tolist()

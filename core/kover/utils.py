@@ -27,14 +27,17 @@ from math import ceil
 def _class_to_string(instance):
     """
     Returns a string representation of the public attributes of a class.
+    
     Parameters:
     -----------
     instance: object
         An instance of any class.
+        
     Returns:
     --------
     string_rep: string
         A string representation of the class and its public attributes.
+        
     Notes:
     -----
     Private attributes must be marked with a leading underscore.
@@ -49,8 +52,29 @@ def _duplicate_last_element(l, length):
     """
     l += [l[-1]] * (length - len(l))
     return l
+    
 
-
+def _fasta_to_sequences(path):
+    """
+    Reads a FASTA file extracts all the sequences (contigs) that it contains.
+    """
+    contigs = []
+    buffer = None
+    for l in open(path, "r"):
+        if l.startswith(">"):
+            if buffer is not None:
+                contigs.append(buffer.lower())
+                buffer = ""
+        else:
+            if buffer is None:
+                buffer = l.strip()
+            else:
+                buffer += l.strip()
+    if buffer is not None and buffer != "":
+        contigs.append(buffer.lower())
+    return contigs
+    
+    
 def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     fid = h.h5f.open(filename, access_type)
     access_property_list = fid.get_access_plist()
@@ -162,30 +186,19 @@ def _unpack_binary_bytes_from_ints(a):
 
     return b
 
-def _parse_blacklist(blacklist_path, expected_kmer_len):
+def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
     data = []
     
     # Fasta file format
     if blacklist_path.endswith(".fasta"):
-        with open(blacklist_path, "r") as fasta_file:
-            #Loading data
-            data = fasta_file.read()
-            
-            # Splitting on description line
-            data = data.split('>')
-            
-            # Filtering for empty strings
-            data = [x for x in data if x]
-            
-            # Splitting after desccription line and removing empty lines under the k-mer
-            data = [(x.split('\n', 1))[1].rstrip('\n') for x in data]
+        data = _fasta_to_sequences(blacklist_path)
             
     # Other file format (one kmer per line)
     else:
         # Loading data and splitting on every line
         data = [l.rstrip('\n') for l in open(blacklist_path, "r")]
         
-        # Filtering for empty strings (empty lines)
+        # Filtering for empty strings (text file with one kmer per line)
         data = [x for x in data if x]
         
     if not(all(len(kmer) == expected_kmer_len for kmer in data)):
