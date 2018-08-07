@@ -421,8 +421,8 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
 
         if kmers_to_blacklist:
             # XXX: the k-mers are upper-cased to avoid not finding a match because of the character case
-            kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences]).tolist()
-            kmer_by_matrix_column = np.array(dataset.kmer_by_matrix_column).tolist() # XXX: each k-mer is there only once (see wiki)
+            kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences[...]]).tolist()
+            kmer_by_matrix_column = dataset.kmer_by_matrix_column[...].tolist() # XXX: each k-mer is there only once (see wiki)
             n_kmers = len(kmer_sequences)
 
             kmers_not_found = []
@@ -464,6 +464,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
     model_type = np.unique(model_type)
     p = np.unique(p)
 
+    logging.debug("Searching for blacklisted rules.")
     rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file,
                                           kmer_blacklist_file=kmer_blacklist_file,
                                           warning_callback=warning_callback)
