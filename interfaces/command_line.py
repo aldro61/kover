@@ -456,6 +456,8 @@ class KoverLearningTool(object):
                                  'You can specify multiple space separated values. Refer to the documentation for '
                                  'more information.',
                             default=[0.1, 0.316, 0.562, 1.0, 1.778, 3.162, 10.0, 999999.0])
+        parser.add_argument('--kmer-blacklist', help='A file containing a list of kmers to blacklist from being used to create rules.'
+                                                     'File format : one kmer per line ', required=False) 
         parser.add_argument('--max-rules', type=int, help='The maximum number of rules that can be included in the '
                                                           'model.', default=10)
         parser.add_argument('--max-equiv-rules', type=int, help='The maximum number of equivalent rules to report for '
@@ -555,6 +557,7 @@ class KoverLearningTool(object):
                                     split_name=args.split,
                                     model_type=args.model_type,
                                     p=args.p,
+                                    kmer_blacklist_file=args.kmer_blacklist,
                                     max_rules=args.max_rules,
                                     max_equiv_rules=args.max_equiv_rules,
                                     bound_delta=args.bound_delta,

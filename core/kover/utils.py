@@ -161,3 +161,6 @@ def _unpack_binary_bytes_from_ints(a):
         packed_rows += 1
 
     return b
+
+def _parse_blacklist(blacklist_path):
+    return [l.rstrip('\n') for l in open(blacklist_path, "r")]

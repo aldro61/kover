@@ -32,7 +32,7 @@ from ...dataset.ds import KoverDataset
 from ..common.models import ConjunctionModel, DisjunctionModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
 from ..learners.scm import SetCoveringMachine
-from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints
+from ...utils import _duplicate_last_element, _unpack_binary_bytes_from_ints, _parse_blacklist
 from ..experiments.metrics import _get_binary_metrics
 
 
@@ -83,7 +83,7 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
     return train_predictions, test_predictions
 
 
-def _cv_score_hp(hp_values, max_rules, rule_blacklist, dataset_file, split_name):
+def _cv_score_hp(hp_values, max_rules, dataset_file, split_name, rule_blacklist):
     model_type = hp_values[0]
     p = hp_values[1]
 
@@ -131,7 +131,7 @@ def _cv_score_hp(hp_values, max_rules, rule_blacklist, dataset_file, split_name)
                       rule_classifications=rule_classifications,
                       positive_example_idx=positive_example_idx,
                       negative_example_idx=negative_example_idx,
-					  rule_blacklist=rule_blacklist[fold.name] if isinstance(rule_blacklist, dict) else rule_blacklist,
+					  rule_blacklist=rule_blacklist,
                       tiebreaker=tiebreaker,
                       iteration_callback=iteration_callback)
 
@@ -230,7 +230,7 @@ def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, 
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
-				  rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
+				  rule_blacklist=rule_blacklist,
                   tiebreaker=partial(_tiebreaker,
                                      rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                            split.unique_risk_by_anti_kmer[...])),
@@ -354,7 +354,7 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
-				  rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
+				  rule_blacklist=rule_blacklist,
                   tiebreaker=tiebreaker,
                   iteration_callback=iteration_callback,
                   iteration_rule_importances=True)
@@ -409,8 +409,8 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
 
-def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rules, parameter_selection,
-              n_cpu, random_seed, authorized_rules, bound_delta=None, bound_max_genome_size=None,
+def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_rules, max_equiv_rules,
+              parameter_selection, n_cpu, random_seed, authorized_rules, bound_delta=None, bound_max_genome_size=None,
 			  progress_callback=None, warning_callback=None, error_callback=None):
     """
     parameter_selection: bound, cv, none (use first value of each if multiple)
@@ -435,23 +435,14 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
 
     dataset = KoverDataset(dataset_file)
 
-    # Authorized rules: the only rules that are usable for the full train and each fold
-    # This is a secret argument that is not accessible to users. I only needed this
-    # for the comparison to univariate feature selection methods in my thesis.
-    if authorized_rules != "":
-        # XXX: Rule blacklist cannot be specified at the same time!
-        authorized_rules = {l.strip().split()[0]: [int(x) for x in l.strip().split()[1:]] for l in open(authorized_rules, "r")}
-
-        # Convert the authorized rules into a dict of blacklists
-        rule_blacklist = {}
-        for partition, rule_idx in authorized_rules.iteritems():
-            blacklisted = np.ones(dataset.kmer_count * 2, dtype=np.bool)
-            blacklisted[rule_idx] = False
-            blacklist = np.where(blacklisted)[0]
-            rule_blacklist[partition] = blacklist
-    else:
-        # No blacklist specified
-        rule_blacklist = []
+    rule_blacklist = []
+    if kmer_blacklist_file is not None:
+        kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file)
+        if not('' in kmers_to_blacklist):
+            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
+            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
+            idx_to_blacklist = [kmer_by_rule.index(kmer_sequences.index(k)) for k in kmers_to_blacklist]
+            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
 
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
@@ -470,8 +461,8 @@ def learn_SCM(dataset_file, split_name, model_type, p, max_rules, max_equiv_rule
                                                       model_types=model_type,
                                                       p_values=p,
                                                       max_rules=max_rules,
+                                                      rule_blacklist=rule_blacklist,
                                                       max_equiv_rules=max_equiv_rules,
-													  rule_blacklist=rule_blacklist,
                                                       bound_delta=bound_delta,
                                                       bound_max_genome_size=bound_max_genome_size,
                                                       n_cpu=n_cpu,
