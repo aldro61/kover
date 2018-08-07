@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 	Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-	Copyright (C) 2015  Alexandre Drouin & Gael Letarte St-Pierre
+	Copyright (C) 2018  Alexandre Drouin & Gael Letarte
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

@@ -3,7 +3,7 @@
 
 """
     Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-    Copyright (C) 2015  Alexandre Drouin & Gael Letarte St-Pierre
+    Copyright (C) 2018  Alexandre Drouin & Gael Letarte
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -700,11 +700,11 @@ class KoverLearningTool(object):
         parser.add_argument('--split', help='The identifier of the split of the dataset to use for learning.',
                             required=True)
         parser.add_argument('--criterion', type=str, nargs='+', help='Hyperparameter: The criterion used to partition the leaves of the decision tree. '
-     'You can specify multiple space separated values. Refer to the documentation '
-     'for more information. (default: gini)',
+                            'You can specify multiple space separated values. Refer to the documentation '
+                            'for more information. (default: gini)',
                             choices=['gini', 'crossentropy'], default='gini', required=False)
         parser.add_argument('--max-depth', type=int, nargs='+', help='Hyperparameter: The maximum depth of the decision tree. You can specify multiple space separated '
-     'values. Refer to the documentation for more information. (default: 10)',
+                            'values. Refer to the documentation for more information. (default: 10)',
                             default=10, required=False)
         parser.add_argument('--min-samples-split', type=int, nargs='+',
                             help='Hyperparameter: The minimum number of genomes that a leaf must contain to be partionned into two new leaves. You can specify multiple '
@@ -720,10 +720,10 @@ class KoverLearningTool(object):
         parser.add_argument('--hp-choice', choices=['bound', 'cv'],
                             help='The strategy used to select the best values for the hyperparameters. The default is '
                                  'k-fold cross-validation, where k is the number of folds defined in the split. '
-     'Alternatively, you can use bound selection, which is much faster, but may not work '
-     'as well for smaller datasets. Also note that, even if a single value is provided '
-     'for each hyperparameter, a search will be performed as part of the tree '
-     'pruning process. Refer to the documentation for more information. (default: cv)', default='cv')
+                                 'Alternatively, you can use bound selection, which is much faster, but may not work '
+                                 'as well for smaller datasets. Also note that, even if a single value is provided '
+                                 'for each hyperparameter, a search will be performed as part of the tree '
+                                 'pruning process. Refer to the documentation for more information. (default: cv)', default='cv')
         parser.add_argument('--bound-max-genome-size', type=int, help='Specify this only if --hp-choice is bound. The '
                             'maximum size, in base pairs, of any genome in the dataset. If you are unsure about this '
                             'value, you should use an overestimation. This will only affect the tightness of the bound '

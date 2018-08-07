@@ -502,8 +502,7 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
 
         if kmers_to_blacklist:
             # XXX: the k-mers are upper-cased to avoid not finding a match because of the character case
-            #kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences[...]]).tolist()
-            kmer_sequences = np.array(dataset.kmer_sequences[...]).tolist()
+            kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences[...]]).tolist()
             kmer_by_matrix_column = dataset.kmer_by_matrix_column[...].tolist() # XXX: each k-mer is there only once (see wiki)
             n_kmers = len(kmer_sequences)
 
