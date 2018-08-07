@@ -438,7 +438,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
     rule_blacklist = []
     if kmer_blacklist_file is not None:
         kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file)
-        if not('' in kmers_to_blacklist):
+        if kmers_to_blacklist:
             kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
             kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
             idx_to_blacklist = [kmer_by_rule.index(kmer_sequences.index(k)) for k in kmers_to_blacklist]

@@ -163,4 +163,14 @@ def _unpack_binary_bytes_from_ints(a):
     return b
 
 def _parse_blacklist(blacklist_path):
-    return [l.rstrip('\n') for l in open(blacklist_path, "r")]
+    if blacklist_path.endswith(".fasta"):
+        with open(blacklist_path, "r") as fasta_file:
+            data = fasta_file.read()
+            data = data.split('>')
+            data = [x for x in data if x]
+            data= [(x.split('\n', 1))[1].rstrip('\n') for x in data]
+            return data
+    else:
+        data = [l.rstrip('\n') for l in open(blacklist_path, "r")]
+        data = [x for x in data if x]
+        return data
