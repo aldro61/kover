@@ -415,17 +415,20 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
     rule_blacklist = []
     if kmer_blacklist_file is not None:
         kmers_to_blacklist = _parse_blacklist(kmer_blacklist_file, dataset.kmer_length)
+        
         if kmers_to_blacklist:
-            kmer_sequences = (np.array(dataset.kmer_sequences)).tolist()
-            kmer_by_rule = (np.array(dataset.kmer_by_matrix_column)).tolist()
-            idx_to_blacklist = []
+            kmer_sequences = np.array(dataset.kmer_sequences).tolist()
+            kmer_by_matrix_column = np.array(dataset.kmer_by_matrix_column).tolist() # XXX: each k-mer is there only once (see wiki)
+            n_kmers = len(kmer_sequences)   
+            
             kmers_not_found = []
             for k in kmers_to_blacklist:
                 try:
-                    idx_to_blacklist.append(kmer_by_rule.index(kmer_sequences.index(k)))
+                    presence_rule_idx = kmer_by_matrix_column.index(kmer_sequences.index(k))
+                    absence_rule_idx = presence_rule_idx + n_kmers
+                    rule_blacklist += [presence_rule_idx, absence_rule_idx]
                 except ValueError:
                     kmers_not_found.append(k)
-            rule_blacklist = reduce(list.__add__, [[i, i + len(kmer_by_rule)] for i in idx_to_blacklist])
             
             if(len(kmers_not_found) > 0):
                 warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
