@@ -63,7 +63,7 @@ def _fasta_to_sequences(path):
     for l in open(path, "r"):
         if l.startswith(">"):
             if buffer is not None:
-                contigs.append(buffer.lower())
+                contigs.append(buffer.upper())
                 buffer = ""
         else:
             if buffer is None:
@@ -71,7 +71,7 @@ def _fasta_to_sequences(path):
             else:
                 buffer += l.strip()
     if buffer is not None and buffer != "":
-        contigs.append(buffer.lower())
+        contigs.append(buffer.upper())
     return contigs
     
     
@@ -203,7 +203,7 @@ def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
         data = [x for x in data if x]
         
     def is_valid_kmer(k):
-        return len(set(k).difference(["A", "C", "G", "T"])) == 0
+        return len(set(k).difference(["A", "C", "G", "T", "a", "c", "g", "t"])) == 0
     for kmer in data:
         if not is_valid_kmer(kmer):
             raise ValueError("{} is not a valid DNA sequence".format(kmer))

@@ -409,30 +409,35 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
     return best_hp_score, best_hp, best_model, best_rule_importances, best_equiv_rules
 
 def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
+    """
+    Finds the index of the rules that must be blacklisted.
+    """
     dataset = KoverDataset(dataset_file)
-    
+
     # Find all rules to blacklist
     rule_blacklist = []
     if kmer_blacklist_file is not None:
         kmers_to_blacklist = _parse_kmer_blacklist(kmer_blacklist_file, dataset.kmer_length)
-        
+
         if kmers_to_blacklist:
-            kmer_sequences = np.array(dataset.kmer_sequences).tolist()
+            # XXX: the k-mers are upper-cased to avoid not finding a match because of the character case
+            kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences]).tolist()
             kmer_by_matrix_column = np.array(dataset.kmer_by_matrix_column).tolist() # XXX: each k-mer is there only once (see wiki)
-            n_kmers = len(kmer_sequences)   
-            
+            n_kmers = len(kmer_sequences)
+
             kmers_not_found = []
             for k in kmers_to_blacklist:
+                k = k.upper()
                 try:
                     presence_rule_idx = kmer_by_matrix_column.index(kmer_sequences.index(k))
                     absence_rule_idx = presence_rule_idx + n_kmers
                     rule_blacklist += [presence_rule_idx, absence_rule_idx]
                 except ValueError:
                     kmers_not_found.append(k)
-            
+
             if(len(kmers_not_found) > 0):
                 warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
-    
+
     return rule_blacklist
 
 def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_rules, max_equiv_rules,
@@ -459,12 +464,12 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
     model_type = np.unique(model_type)
     p = np.unique(p)
 
-    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file, 
+    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file,
                                           kmer_blacklist_file=kmer_blacklist_file,
                                           warning_callback=warning_callback)
-                                          
+
     dataset = KoverDataset(dataset_file)
-    
+
     # Score the hyperparameter combinations
     # ------------------------------------------------------------------------------------------------------------------
     if parameter_selection == "bound":
