@@ -31,7 +31,7 @@ from sys import argv
 from os.path import abspath
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "1.2.0"
+VERSION = "2.0.0"
 
 class KoverDatasetCreationTool(object):
 
