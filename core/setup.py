@@ -11,18 +11,18 @@ class build_ext(_build_ext):
 
 setup(
     name = "kover",
-    version = "1.2.2",
+    version = "2.0.0",
     packages = find_packages(),
 
     cmdclass={'build_ext':build_ext},
     setup_requires = ['numpy'],
     install_requires = ['h5py>=2.4.0', 'numpy', 'pandas', 'progressbar', 'scipy'],
 
-    author = "Alexandre Drouin",
+    author = "Alexandre Drouin, Gael Letarte",
     author_email = "aldro61@gmail.com",
     description = "Kover: Learn computational phenotyping models from k-merized genomic data",
     license = "GPLv3",
-    keywords = "genomics, machine learning, set covering machine, kmer",
+    keywords = "genomics, machine learning, set covering machine, classification trees, kmer, phenotype, genotype",
     url = "http://github.com/aldro61/kover",
 
     # Cython Extension
