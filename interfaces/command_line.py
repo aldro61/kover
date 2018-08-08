@@ -277,9 +277,9 @@ The two available data sources are:
                             help='Prints the lists of splits of the dataset that are available for learning.',
                             action='store_true')
         parser.add_argument('--uuid', help='Prints the unique identifier of the dataset.', action='store_true')
-        parser.add_argument('--compression', help='Print the data compression options of the dataset.',
+        parser.add_argument('--compression', help='Prints the data compression options of the dataset.',
                             action='store_true')
-        parser.add_argument('--classification-type', help='Print the dataset classification type.',
+        parser.add_argument('--classification-type', help='Prints the dataset classification type.',
                             action='store_true')
 
         # If no argument has been specified, default to help
