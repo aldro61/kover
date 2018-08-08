@@ -6,26 +6,10 @@ last_updated: August 8, 2018
 summary: "This tutorial will walk you through the process of learning models with Set Covering Machines and Classification Trees using cross-validation and bound selection as model selection strategies."
 ---
 
-# Learning genotype-to-phenotype models with Kover
-
 This tutorial will walk you through an application of Kover to a set of genomes labelled according to their phenotypes. We use data from the paper (see [data](../data/)), but you could use your own. Specifically, we will use the CART and SCM algorithms to learn models that predict Azithromycin resistance in *Neisseria gonorrhoeae*.
 
 For an introduction to machine learning , please refer to [this tutorial](https://aldro61.github.io/microbiome-summer-school-2017/sections/basics/).
 
-## Outline
-
-- [Learning genotype-to-phenotype models with Kover](#learning-genotype-to-phenotype-models-with-kover)
-    - [Outline](#outline)
-    - [Getting the example Kover dataset](#getting-the-example-kover-dataset)
-        - [Exploring the dataset](#exploring-the-dataset)
-    - [Splitting the data into training and testing sets](#splitting-the-data-into-training-and-testing-sets)
-    - [Learning models](#learning-models)
-        - [Set Covering Machines](#set-covering-machines)
-            - [Cross-Validation](#cross-validation)
-            - [Bound selection](#bound-selection)
-        - [Classification and Regression Trees](#classification-and-regression-trees)
-            - [Cross-Validation](#cross-validation-1)
-            - [Bound selection](#bound-selection-1)
 
 ## Getting the example Kover dataset
 
