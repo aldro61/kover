@@ -17,7 +17,7 @@ The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count th
 
 ```
 usage: kover dataset create from-reads [-h] --genomic-data GENOMIC_DATA
-                                       [--phenotype-name PHENOTYPE_NAME]
+                                       [--phenotype-description PHENOTYPE_DESCRIPTION]
                                        [--phenotype-metadata PHENOTYPE_METADATA]
                                        --output OUTPUT [--kmer-size KMER_SIZE]
                                        [--kmer-min-abundance KMER_MIN_ABUNDANCE]
@@ -34,9 +34,9 @@ optional arguments:
                         format GENOME_ID{tab}PATH, where the path refers to a
                         directory containing the genome's reads in fastq(.gz)
                         files.
-  --phenotype-name PHENOTYPE_NAME
-                        An informative name that is assigned to the phenotypic
-                        metadata.
+  --phenotype-description PHENOTYPE_DESCRIPTION
+                        An informative description that is assigned to the
+                        phenotypic metadata.
   --phenotype-metadata PHENOTYPE_METADATA
                         A file containing the phenotypic metadata.
   --output OUTPUT       The Kover dataset to be created.
@@ -69,7 +69,7 @@ The [DSK k-mer counter](https://gatb.inria.fr/software/dsk/) is used to count th
 
 ```
 usage: kover dataset create from-contigs [-h] --genomic-data GENOMIC_DATA
-                                         [--phenotype-name PHENOTYPE_NAME]
+                                         [--phenotype-description PHENOTYPE_DESCRIPTION]
                                          [--phenotype-metadata PHENOTYPE_METADATA]
                                          --output OUTPUT
                                          [--kmer-size KMER_SIZE]
@@ -85,9 +85,9 @@ optional arguments:
                         A tab-separated file with one line per genome in the
                         format GENOME_ID{tab}PATH, where the path refers to a
                         fasta file containing the genome's contigs.
-  --phenotype-name PHENOTYPE_NAME
-                        An informative name that is assigned to the phenotypic
-                        metadata.
+  --phenotype-description PHENOTYPE_DESCRIPTION
+                        An informative description that is assigned to the
+                        phenotypic metadata.
   --phenotype-metadata PHENOTYPE_METADATA
                         A file containing the phenotypic metadata.
   --output OUTPUT       The Kover dataset to be created.
@@ -112,7 +112,7 @@ Use this command if the genomic data consists of a matrix giving the presence or
 
 ```
 usage: kover dataset create from-tsv [-h] --genomic-data GENOMIC_DATA
-                                     [--phenotype-name PHENOTYPE_NAME]
+                                     [--phenotype-description PHENOTYPE_DESCRIPTION]
                                      [--phenotype-metadata PHENOTYPE_METADATA]
                                      --output OUTPUT
                                      [--compression COMPRESSION] [-x] [-v]
@@ -123,9 +123,9 @@ optional arguments:
   -h, --help            show this help message and exit
   --genomic-data GENOMIC_DATA
                         A tab-separated file containing the k-mer matrix.
-  --phenotype-name PHENOTYPE_NAME
-                        An informative name that is assigned to the phenotypic
-                        metadata.
+  --phenotype-description PHENOTYPE_DESCRIPTION
+                        An informative description that is assigned to the
+                        phenotypic metadata.
   --phenotype-metadata PHENOTYPE_METADATA
                         A file containing the phenotypic metadata.
   --output OUTPUT       The Kover dataset to be created.
@@ -143,11 +143,9 @@ This must be done prior to learning models from the data.
 
 ```
 usage: kover dataset split [-h] --dataset DATASET --id ID
-                           [--train-size TRAIN_SIZE]
-                           [--train-ids TRAIN_IDS [TRAIN_IDS ...]]
-                           [--test-ids TEST_IDS [TEST_IDS ...]]
-                           [--folds FOLDS] [--random-seed RANDOM_SEED] [-v]
-                           [-x]
+                           [--train-size TRAIN_SIZE] [--train-ids TRAIN_IDS]
+                           [--test-ids TEST_IDS] [--folds FOLDS]
+                           [--random-seed RANDOM_SEED] [-v] [-x]
 
 Splits a kover dataset file into a training set, a testing set and optionally
 cross-validation folds
@@ -163,16 +161,16 @@ optional arguments:
                         Alternatively, you can specify which genomes to use
                         for training and testing by using --train-ids and
                         --test-ids.
-  --train-ids TRAIN_IDS [TRAIN_IDS ...]
-                        The identifiers of the genomes used to train the
-                        learning algorithm. If you provide a value for this
-                        argument, you must also provide a value for --test-
-                        ids.
-  --test-ids TEST_IDS [TEST_IDS ...]
-                        The identifiers of the genomes used to evaluate the
-                        accuracy of the model generated. If you provide a
-                        value for this argument, you must also provide a value
-                        for --train-ids.
+  --train-ids TRAIN_IDS
+                        File containing the identifiers of the genomes used to
+                        train the learning algorithm. If you provide a value
+                        for this argument, you must also provide a value for
+                        --test-ids. File format: one id per line
+  --test-ids TEST_IDS   File containing the identifiers of the genomes used to
+                        evaluate the accuracy of the model generated. If you
+                        provide a value for this argument, you must also
+                        provide a value for --train-ids. File format: one id
+                        per line
   --folds FOLDS         The number of k-fold cross-validation folds to create
                         (default is 0 for none, the minimum value is 2). Folds
                         are required for using k-fold cross-validation in
@@ -182,7 +180,7 @@ optional arguments:
                         specific seed will always lead to the same split. If
                         not provided, it is set randomly.
   -v, --verbose         Sets the verbosity level.
-  -x, --progress        Shows a progress bar for the execution.
+  -x, --progress        Shows a progress bar for the execution
 ```
 
 ## Listing information about a dataset
@@ -193,8 +191,9 @@ This command is used to list any information about a Kover dataset.
 usage: kover dataset info [-h] --dataset DATASET [--all] [--genome-type]
                           [--genome-source] [--genome-ids] [--genome-count]
                           [--kmers] [--kmer-len] [--kmer-count]
-                          [--phenotype-name] [--phenotype-metadata] [--splits]
-                          [--uuid] [--compression]
+                          [--phenotype-description] [--phenotype-metadata]
+                          [--phenotype-tags] [--splits] [--uuid]
+                          [--compression] [--classification-type]
 
 Prints information about the content of a dataset
 
@@ -212,12 +211,16 @@ optional arguments:
                         (fasta).
   --kmer-len            Prints the length of the k-mers in the dataset.
   --kmer-count          Prints the number of k-mers in the dataset.
-  --phenotype-name      Prints the identifier that was assigned to the
+  --phenotype-description
+                        Prints the description that was assigned to the
                         phenotype.
   --phenotype-metadata  Prints the path of the file from which the phenotypic
                         metadata was acquired.
+  --phenotype-tags      Prints the phenotype tags associated to the dataset
   --splits              Prints the lists of splits of the dataset that are
                         available for learning.
   --uuid                Prints the unique identifier of the dataset.
-  --compression         Print the data compression options of the dataset.
+  --compression         Prints the data compression options of the dataset.
+  --classification-type
+                        Prints the dataset classification type.
 ```
