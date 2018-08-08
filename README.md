@@ -1,4 +1,4 @@
-<img src="http://graal.ift.ulaval.ca/adrouin/kover.png" height="50" />
+<img src="http://graal.ift.ulaval.ca/adrouin/kover.png" height="50" />2.0
 
 [![DOI](https://zenodo.org/badge/20289/aldro61/kover.svg)](https://zenodo.org/badge/latestdoi/20289/aldro61/kover)
 
