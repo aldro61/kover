@@ -1,9 +1,9 @@
 ---
-title: Example &#58; Predicting antibiotic resistance
+title: An introduction to Kover with Set Covering Machines
 tags: [getting-started]
-keywords: start, introduction, example, kover, genomics, k-mer, machine learning
-last_updated: June 21, 2017
-summary: "This page will walk you through an example application of Kover"
+keywords: learning, set covering machine, scm, model
+last_updated: August 8, 2017
+summary: "This tutorial will show how to use Kover with the Set Covering Machine algorithm."
 ---
 
 In this example, we show how Kover can be applied to genomic data in order to obtain an interpretable model of a phenotype.
