@@ -52,8 +52,8 @@ entries:
           product: all
           version: all
 
-        - title: Example
-          url: /doc_example.html
+        - title: Tutorials
+          url: /doc_tutorials.html
           audience: writers, designers
           platform: all
           product: all
