@@ -214,4 +214,4 @@ False Negatives: 0.0
 
 That's it! You know how to use Kover to learn rule-based genotype-to-phenotype models. Now, try it on your own data.
 
-For a tutorial on interpreting the learned models using genome annotations, see [here](./doc_tut_interp.md).
+For a tutorial on interpreting the learned models using genome annotations, see [here](./doc_tut_interp.html).
