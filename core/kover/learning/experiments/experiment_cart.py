@@ -220,9 +220,8 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
         The name of the train/test split to use
     hps: dict
         A dictionnary of hyperparameter values (one value per key)
-    rule_blacklist: dict or list
-        A dictionnary giving the rules to blacklist for the full train and each fold,
-        or a list of rules to blacklist all the time.
+    rule_blacklist: list
+        A list giving the rules to blacklist all the time.
 
     Returns:
     --------
@@ -261,7 +260,7 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
                          rule_classifications=rule_classifications,
                          example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
                                            for c in range(n_classes)},
-                         rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
+                         rule_blacklist=rule_blacklist,
                          tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
                          level_callback=None,
                          split_callback=_split_callback)
@@ -310,9 +309,8 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
         The name of the train/test split to use
     hps: dict
         A dictionnary of hyperparameter values (one value per key)
-    rule_blacklist: dict or list
-        A dictionnary giving the rules to blacklist for the full train and each fold,
-        or a list of rules to blacklist all the time.
+    rule_blacklist: list
+        A dictionnary giving the rules to blacklist all the time.
 
     Returns:
     --------
@@ -366,7 +364,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
                                rule_classifications=rule_classifications,
                                example_idx = {c: fold.train_genome_idx[example_labels[fold.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                               rule_blacklist=rule_blacklist[fold.name] if isinstance(rule_blacklist, dict) else rule_blacklist,
+                               rule_blacklist=rule_blacklist,
                                tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(fold.train_genome_idx)),
                                level_callback=None,
                                split_callback=None)
@@ -377,7 +375,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
                          rule_classifications=rule_classifications,
                          example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
                                                                                             for c in range(n_classes)},
-                         rule_blacklist=rule_blacklist["train"] if isinstance(rule_blacklist, dict) else rule_blacklist,
+                         rule_blacklist=rule_blacklist,
                          tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
                          level_callback=None,
                          split_callback=_split_callback)
@@ -501,8 +499,8 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
         kmers_to_blacklist = _parse_kmer_blacklist(kmer_blacklist_file, dataset.kmer_length)
 
         if kmers_to_blacklist:
-            # XXX: the k-mers are upper-cased to avoid not finding a match because of the character case
-            kmer_sequences = np.array([x.upper() for x in dataset.kmer_sequences[...]]).tolist()
+            # XXX: the k-mers are assumed to be upper-cased in the dataset
+            kmer_sequences = dataset.kmer_sequences[...].tolist()
             kmer_by_matrix_column = dataset.kmer_by_matrix_column[...].tolist() # XXX: each k-mer is there only once (see wiki)
             n_kmers = len(kmer_sequences)
 
@@ -510,7 +508,7 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
             for k in kmers_to_blacklist:
                 k = k.upper()
                 try:
-                    rule_blacklist.append(kmer_by_matrix_column.index(kmer_sequences.index(k)))
+                    rule_blacklist.append(kmer_by_matrix_column.index(kmer_sequences.index(k))) # XXX: We only consider presence rules
                 except ValueError:
                     kmers_not_found.append(k)
 

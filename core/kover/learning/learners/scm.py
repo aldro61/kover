@@ -270,7 +270,7 @@ class SetCoveringMachine(BaseSetCoveringMachine):
             block_max_utility = np.max(block_utilities)
             if block_max_utility > best_utility or np.allclose(best_utility, block_max_utility):
                 # Find the indices of the better rules that are not blacklisted
-                block_utility_argmax = np.where(block_utilities == block_max_utility)[0] + block * UTIL_BLOCK_SIZE
+                block_utility_argmax = np.where(np.isclose(block_utilities, block_max_utility))[0] + block * UTIL_BLOCK_SIZE
 
                 # Update the best utility value and other infos
                 if np.allclose(block_max_utility, best_utility):
