@@ -7,7 +7,7 @@ last_updated: August 8, 2018
 
 The following tutorials are available:
 
-1. [Packaging your data into a Kover dataset](./doc_tut_data.md)
+1. [Packaging your data into a Kover dataset <span style="color:red">(coming soon)</span>](./doc_tut_data.md)
 2. [Quick: an introduction to Kover with Set Covering Machines](./doc_tut_scm.md)
 3. [Advanced: learning with various rule-based models and model selection strategies](./doc_tut_advanced_learning.md)
 4. [Interpretation of Kover models](./doc_interp.md)
