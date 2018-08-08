@@ -16,7 +16,7 @@ In this tutorial, we will show how the decision tree model of kanamycin resistan
 
 After each run of `kover learn`, a `model.fasta` file is created in the output directory. This file contains the sequence of each k-mer used by the model, along with an informative header that specifies how the rule participates in the model.
 
-In this tutorial, we will use the following model (see [here](../../models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model.fasta)):
+In this tutorial, we will use the following model (see [here](https://github.com/aldro61/kover2_paper/blob/master/models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model.fasta)):
 ```
 >rule_id: 0___ex_1084___eq_31, left_child: leaf___ex_179___sensitive_6_0.01704545__resistant_173_0.98295455, right_child: 2___ex_905___eq_13, importance: 0.78
 ACTTTCATGACGCGACGGGCGGTGTGTACAA
@@ -38,7 +38,7 @@ Below, we will see how we can refine this FASTA file to get deeper insight into 
 Let's start by visualizing the model. For models learned with the Set Covering Machine algorithm, simply open the `report.txt` file in the output directory to visualize the model's logic. There is no need for fancy visualizations in this case, since the structure of the model is very simple (logical-AND or logical-OR).
 However, decision tree models can be more complex and thus, it is interesting to plot the model.
 
-You can plot any decision tree model using the `plot_model.py` script (see [here](../../models/plot_model.py)) as follows:
+You can plot any decision tree model using the `plot_model.py` script (see [here](https://github.com/aldro61/kover2_paper/blob/master/models/plot_model.py)) as follows:
 ```
 python plot_model.py model.fasta
 ```
@@ -46,11 +46,11 @@ python plot_model.py model.fasta
 
 Using this script on our model yields the following visualization:
 
-<a href="./model.pdf"><img src="./images/tutorials/interpretation/model.png" width="400" height="400" /></a>
+<img src="./images/tutorials/interpretation/model.png" width="400" height="400" />
 
 Where the components can be interpreted as follows:
 
-<a href="../models/legend.pdf"><img src="./images/tutorials/interpretation/legend.png" height="180" /></a>
+<img src="./images/tutorials/interpretation/legend.png" height="180" />
 
 This already gives a good overview of the decision logic of the model.
 
@@ -62,7 +62,7 @@ Now, we want to go beyond the k-mer sequences and determine in which regions of 
 #### Step 1: Input the model into BLAST
 
 Go the [Nucleotide BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastSearch) web interface. Then, either copy/paste the content of the FASTA file into the textbox or select the file by clicking on "Choose File".
-<img src="blast1.png" />
+<img src="./images/tutorials/interpretation/blast1.png" />
 
 Press the `BLAST` button at the bottom of the page to launch the query.
 
@@ -71,37 +71,37 @@ Press the `BLAST` button at the bottom of the page to launch the query.
 
 Once you have the results, you can use the "Results for" dropdown at the top to select one of the rules in the model. Select the first one and carry on.
 
-<img src="blast2.png" />
+<img src="./images/tutorials/interpretation/blast2.png" />
 
 #### Step 3: 
 
 Scroll down and look at the hits for the k-mer in the model. We see that not all hits are for *M. tuberculosis*. Also, it looks like we are lucky and the k-mer was found in a GenBank entry specific to a gene. Click on the following hit: `Mycobacterium tuberculosis strain UKR100 16S ribosomal RNA gene, partial sequence`
 
-<img src="blast3.png" />
+<img src="./images/tutorials/interpretation/blast3.png" />
 
 #### Step 4:
 
 You are then shown more information on the hit. You see the GenBank entry in which it was found and the start and end position in the sequence. Click on the lower GenBank button.
 
-<img src="blast4.png" />
+<img src="./images/tutorials/interpretation/blast4.png" />
 
 
 #### Step 5:
 
 You are taken to a [GenBank page](https://www.ncbi.nlm.nih.gov/nucleotide/MG995565.1?report=genbank&log$=nuclalign&blast_rank=8&RID=P9Z2SGYN015&from=1383&to=1413) where more information is available regarding the region in which the k-mer was found:
 
-<img src="blast5.png" />
+<img src="./images/tutorials/interpretation/blast5.png" />
 
 Scroll down to the bottom of the page:
 
-<img src="blast6.png" />
+<img src="./images/tutorials/interpretation/blast6.png" />
 
 We see that the k-mer is located in the 16S ribosomal RNA, which is the target of [kanamycin](https://www.drugbank.ca/drugs/DB01172#targets). Hence, we have reason to believe that the algorithm has correctly recovered a confirmed mechanism of antibiotic resistance. Nonetheless, we still don't know what in the 16S rRNA is being detected by the model.
 
 
 ### Analyzing equivalent rules
 
-In this part of the tutorial, we will go further in our interpretation of the first rule of the model. We will use the equivalent rules (see paper) to determine the nature of the genomic variation identified by the learning algorithm. The equivalent rules are given in several files in the output directory that are labelled according to the rule to which they are equivalent. Here, we will use the [model_rule_0_equiv.fasta](../../models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model_rule_0_equiv.fasta) file, which contains the sequence of 31 k-mers who's presence was found to be equally predictive of the phenotype.
+In this part of the tutorial, we will go further in our interpretation of the first rule of the model. We will use the equivalent rules (see paper) to determine the nature of the genomic variation identified by the learning algorithm. The equivalent rules are given in several files in the output directory that are labelled according to the rule to which they are equivalent. Here, we will use the [model_rule_0_equiv.fasta](https://github.com/aldro61/kover2_paper/blob/master/models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model_rule_0_equiv.fasta) file, which contains the sequence of 31 k-mers who's presence was found to be equally predictive of the phenotype.
 
 #### Step 1:
 
@@ -109,43 +109,43 @@ Go back to the GenBank entry where the k-mer was found ([here](https://www.ncbi.
 
 In the upper right corner, you will find a form called "Change region shown". Tick the "Whole sequence" box and click on the "Update View" button. This will update the page to shown the entire sequence instead of only the region in which your k-mer was found.
 
-<img src="ugene1.png" />
+<img src="./images/tutorials/interpretation/ugene1.png" />
 
 
 #### Step 2:
 
 Click on the "Send to" button, tick "File" and select the "Genbank (full)" format. Then click on the "Create File" button. This will download the GenBank entry onto your computer.
 
-<img src="ugene2.png" />
+<img src="./images/tutorials/interpretation/ugene2.png" />
 
 
 #### Step 3:
 
 Open the downloaded file using the [Unipro UGENE](http://ugene.net/) software.
 
-<img src="ugene3.png" />
+<img src="./images/tutorials/interpretation/ugene3.png" />
 
 
 #### Step 4:
 
 Click on the "Find pattern" button in the toolbar:
 
-<img src="ugene4.png" />
+<img src="./images/tutorials/interpretation/ugene4.png" />
 
-The following menu will appear. Select "Load patterns from file" and select the [model_rule_0_equiv.fasta](../../models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model_rule_0_equiv.fasta) file. For the group name, use "Equivalent k-mers" and tick "Use pattern name". Then, click the "Create annotations" button.
+The following menu will appear. Select "Load patterns from file" and select the [model_rule_0_equiv.fasta](https://github.com/aldro61/kover2_paper/blob/master/models/cart_b/mycobacterium%20tuberculosis/kanamycin/repeat_1/model_rule_0_equiv.fasta) file. For the group name, use "Equivalent k-mers" and tick "Use pattern name". Then, click the "Create annotations" button.
 
-<img src="ugene5.png" />
+<img src="./images/tutorials/interpretation/ugene5.png" />
 
 
 #### Step 5:
 
 Look at where the equivalent k-mers are located in the gene's sequence. We see that they all overlap one concise region.
 
-<img src="ugene6.png" />
+<img src="./images/tutorials/interpretation/ugene6.png" />
 
 Zoom in and observe that there is only a single base pair at which all the k-mers overlap:
 
-<img src="ugene7.png" />
+<img src="./images/tutorials/interpretation/ugene7.png" />
 
 This is base pair 1401 of the gene. Interestingly, other studies have found that the mutation A1401G is associated with kanamycin resistance in M. tuberculosis [[1](https://www.ncbi.nlm.nih.gov/pubmed/15700953), [2](https://www.ncbi.nlm.nih.gov/pubmed/9574680), [3](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0033275)]. Given that we observe a guanine at this locus and that it is the presence of the k-mers that leads to a "resistance" prediction in the model, we can conclude that the model correctly detects the presence of this mutation.
 
