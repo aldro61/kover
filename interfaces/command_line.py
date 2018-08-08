@@ -22,6 +22,7 @@
 import argparse
 import logging
 import numpy as np
+import warnings; warnings.filterwarnings("ignore")
 
 from collections import defaultdict
 from tempfile import gettempdir
