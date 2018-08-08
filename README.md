@@ -24,9 +24,9 @@ Interpretable Models of Antibiotic Resistance with the Set Covering Machine Algo
 
 For installation instructions, see: http://aldro61.github.io/kover/doc_installation.html
 
-## Example
+## Tutorials
 
-For an example of use, see: http://aldro61.github.io/kover/doc_example.html
+For tutorials on how to use Kover with your data, see: http://aldro61.github.io/kover/doc_tutorials.html
 
 ## Documentation
 
