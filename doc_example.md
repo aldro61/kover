@@ -3,11 +3,11 @@ title: Example &#58; Predicting antibiotic resistance
 tags: [getting-started]
 keywords: start, introduction, example, kover, genomics, k-mer, machine learning
 last_updated: June 21, 2017
-summary: "This page will walk you through an example application of Kover!"
+summary: "This page will walk you through an example application of Kover"
 ---
 
 In this example, we show how Kover can be applied to genomic data in order to obtain an interpretable model of a phenotype.
-Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*!
+Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*.
 
 ## Example data
 
@@ -31,7 +31,7 @@ Before using Kover to learn a model, we must package the genomic and phenotypic 
 To create a dataset, use the following command:
 
 ```
-kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
+kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-name "Rifampicin resistance" --phenotype-description metadata.tsv --output example.kover --progress
 ```
 
 This produces a dataset file called "example.kover". From now on, you no longer need the original data files.
@@ -83,7 +83,7 @@ hyperparameter (see [hyperparameters](doc_learning.html#understanding-the-hyperp
 Moreover, it distributes the cross-validation on 2 CPUs.
 
 ```
-kover learn --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 5 --hp-choice cv --n-cpu 2 --progress
+kover learn scm --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 5 --hp-choice cv --n-cpu 2 --progress
 ```
 
 Kover then uses the obtained model to predict the phenotype of the genomes in the testing set and computes various metrics.
