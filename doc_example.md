@@ -7,7 +7,7 @@ summary: "This page will walk you through an example application of Kover."
 ---
 
 In this example, we show how Kover can be applied to genomic data in order to obtain an interpretable model of a phenotype.
-Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*.
+Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*!
 
 ## Example data
 
