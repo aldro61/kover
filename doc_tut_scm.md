@@ -6,7 +6,7 @@ last_updated: August 8, 2017
 summary: "This tutorial will show how to use Kover with the Set Covering Machine algorithm."
 ---
 
-In this example, we show how Kover can be applied to genomic data in order to obtain an interpretable model of a phenotype.
+In this example, we show how the Set Covering Machine algorithm, implemeted in Kover, can be applied to genomic data in order to obtain an interpretable model of a phenotype.
 Specifically, we will learn a model that predicts rifampicin resistance in *Mycobacterium tuberculosis*.
 
 ## Example data
@@ -61,8 +61,8 @@ In order to measure the accuracy of the model obtained using Kover, we must spli
 testing set. The training set will be used to learn a model and the testing set will be used to estimate its accuracy.
 A Kover dataset can contain multiple splits of the data. The command used for splitting a dataset is [kover dataset split](doc_dataset.html#splitting-a-dataset).
 
-Kover implements a machine learning algorithm and thus has [hyperparameters](doc_learning.html#understanding-the-hyperparameters),
-which are free parameters that must be tuned to the data at hand. The most widely used method for setting hyperparameter values
+The Set Covering Machine algorithm has [hyperparameters](doc_learning.html#understanding-the-hyperparameters),
+which are free parameters that control its behavior and that must be tuned to the data. The most widely used method for setting hyperparameter values
 is [k-fold cross-validation](doc_learning.html#k-fold-cross-validation).
 In this example, we will use 5-fold cross-validation.
 
@@ -133,7 +133,9 @@ beta subunit ([see here](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=
 
 ![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
 
+For a detailed tutorial on model interpretation, see [here](./doc_tut_interp.html).
+
 ## Predicting with the obtained model
 
-You could use any k-mer counting tool, such as [Jellyfish](https://github.com/gmarcais/Jellyfish), to extract the k-mers present in a contig or read file and then, easily apply the model to new isolates.
+You could use any k-mer counting tool, such as [Jellyfish](https://github.com/gmarcais/Jellyfish), [DSK](https://github.com/GATB/dsk), or [KMC](https://github.com/refresh-bio/KMC) to extract the k-mers present in a contig or read file and then, easily apply the model to new isolates.
 This feature is currently not included in Kover, but will be added in future releases.
