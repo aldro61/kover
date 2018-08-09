@@ -90,7 +90,6 @@ optional arguments:
 ```
 
 ### Understanding the hyperparameters
-<a name="#hp-scm"></a>
 
 A [hyperparameter](https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning)) is a parameter of the learning algorithm that controls its behavior and that must be set by the user prior to learning.
 Generally, the user defines a set of candidate values for each hyperparameter and uses a strategy, such as
@@ -140,7 +139,7 @@ Again, the optimal value is problem specific and many values must be tried. For 
 
 ## Classification trees
 
-The Classification and Regression Trees (CART) algorithm learns decision tree models. The classification trees part of this algorithm is implemented in Kover. It can be used for any discrete phenotype (i.e, it supports more than two groups of individuals). Its models are generally more complex than those of SCM, but can sometimes be more accurate.
+The Classification and Regression Trees (CART) algorithm learns decision tree models. The classification trees part of this algorithm is implemented in Kover. It can be used for any discrete phenotype (i.e, it supports more than two groups of individuals). Its models are generally more complex than those of SCM, but can sometimes be more accurate. Of note, our tree implementation uses [minimum cost-complexity pruning](http://mlwiki.org/index.php/Cost-Complexity_Pruning) to reduce the complexity of its models.
 
 
 ### Command line interface
@@ -229,9 +228,47 @@ optional arguments:
 ```
 
 ### Understanding the hyperparameters
-<a name="#hp-cart"></a>
 
-*If you don't know what a hyperparameter is, see [here](#hp-scm)*
+*If you don't know what a hyperparameter is, see [here](#understanding-the-hyperparameters)*
+
+The hyperparameters of the CART algorithm are:
+* The rule-selection criterion (option --criterion)
+* The maximum depth of the tree (option --max-depth)
+* The minimum number of examples required to partition a leaf (option --min-samples-split)
+* The class importances (option --class-importance)
+
+#### Rule-selection criterion
+
+Decision tree are grown by recursively partitionning leaves using rules based on the presence/absence of k-mers. These rules are chosen according to a predefined criterion.
+A typical choice is the *gini impurity* (default value) that favors rules that lead to pure leaves (i.e., that contain a single class). Kover implements two criteria: the gini impurity and the cross-entropy. We often use the latter:
+
+```
+--criterion gini
+```
+
+#### Maximum depth of the tree
+
+The decision tree will be grown until the maximum depth is reached or there are no more leaves that can be partitionned. Subsequently, it will be pruned, using minimum cost-complexity pruning, before being outputted by Kover. Since we use pruning, there is no need to try a list of values for this parameter. We often set it to 20 (or less depending on the available compute time):
+
+```
+--max-depth 20
+```
+
+#### Minimum number of examples required to partition a leaf
+
+This parameter limits the complexity of the resulting model by requiring that leaves contain at least a certain amount of examples to be partitionned. Since we use pruning, there is no need in doing extensive search for good values of this parameter. We typically set it to 2 (or less if we want the results faster):
+
+```
+--min-samples-split 2
+```
+
+#### Class importances
+
+This reweights the importance of the classes in the learning process. Hence, if a class is less abundant than the other, it may be useful to upweight it, so that it is considered equally when building the model. We typically try a range of values for this parameter:
+
+```
+--class-importance 0.25 0.5 0.75 1.0
+```
 
 
 ## Hyperparameter selection strategies
