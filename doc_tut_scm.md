@@ -76,8 +76,8 @@ kover dataset split --dataset example.kover --id example_split --train-size 0.66
 ## Learning a model
 
 Now that we have created and split the dataset, we are ready to learn a predictive model of Rifampicin resistance in *Mycobacterium tuberculosis*.
-The [kover learn](doc_learning.html#learning-models) command is used to learn models.
-The following command tells Kover to learn a model containing at most 5 rules, to try both
+The [kover learn](doc_learning.html#command-line-interface) command is used to learn models.
+The following command tells Kover to use the Set Covering Machine algorithm to learn a model containing at most 5 rules, to try both
 conjunction (logical-AND) and disjunction (logical-OR) models and the values 0.1, 1.0 and 10.0 for the *p*
 hyperparameter (see [hyperparameters](doc_learning.html#understanding-the-hyperparameters)), while using cross-validation as the [hyperparameter selection strategy](doc_learning.html#hyperparameter-selection-strategies).
 Moreover, it distributes the cross-validation on 2 CPUs.
@@ -133,7 +133,7 @@ beta subunit ([see here](https://www.ncbi.nlm.nih.gov/nucleotide/746590776?from=
 
 ![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Note:** Notice that the model will classify an isolate as being *resistant* to rifampicin if at least one of the k-mers is absent in its genome. In fact, the rules capture the absence of the wild-type sequence, since all the variants at this locus were associated with resistance. Hence, to maximize the conciseness of the model, a single absence rule was used instead of using a presence rule for each variant.
 
-For a detailed tutorial on model interpretation, see [here](./doc_tut_interp.html).
+For a detailed tutorial on model interpretation, see [here](./doc_interp.html).
 
 ## Predicting with the obtained model
 
