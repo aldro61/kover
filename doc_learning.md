@@ -1,12 +1,14 @@
 ---
 title: Machine Learning Module
 tags:
-keywords: learning, engine, set covering machine, SCM, kover, genomics, k-mer, machine learning
-last_updated: May 30, 2016
+keywords: learning, engine, set covering machine, SCM, decision tree, classification tree, CART, kover, genomics, k-mer, machine learning
+last_updated: August 8, 2018
 summary: "Overview of the machine learning functionality"
 ---
 
-## Learning models
+## Set Covering Machine
+
+### Command line interface
 
 This command is used to learn a model from a Kover dataset. It provides an interface on the Set Covering Machine algorithm.
 
@@ -123,7 +125,16 @@ Again, the optimal value is problem specific and many values must be tried. For 
 --p 0.1 0.178 0.316 0.562 1.0 1.778 3.162 5.623 10.0 999999.0
 ```
 
-### Hyperparameter selection strategies
+
+## Classification trees
+
+The models learned by this algorithm are typically more complex than those of SCM, but can sometimes perform better. Moreover, they can discriminate more than two groups of genomes, which makes them ideal for phenotypes with more than two states.
+
+### Command line interface
+
+### Understanding the hyperparameters
+
+## Hyperparameter selection strategies
 
 The are many strategies to select the values of hyperparameters. Kover implements two of them, which are described below:
 
