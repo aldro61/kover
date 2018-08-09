@@ -67,7 +67,7 @@ Let start by training the Set Covering Machine algorithm on this dataset. We wil
 
 #### Cross-Validation
 
-The following command tells Kover to use the SCM algorithm and cross-validation as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#k-fold-cross-validation).
+The following command tells Kover to use the SCM algorithm and cross-validation as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies).
 Moreover, it distributes the cross-validation on 4 CPUs and outputs the result files into the *results/scm_cv* directory.
 
 ```
@@ -105,7 +105,7 @@ False Negatives: 0.0
 
 #### Bound selection
 
-Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#risk-bound-selection) and compare it to cross-validation. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/scm_b*.
+Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies) and compare it to cross-validation. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/scm_b*.
 
 ```
 kover learn scm --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 10 --hp-choice bound  --output-dir results/scm_b --progress
@@ -148,7 +148,7 @@ Let's now learn a decision tree model using the Classification and Regression Tr
 
 #### Cross-Validation
 
-The following command tells Kover to learn a tree model, using cross-validation as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#k-fold-cross-validation).
+The following command tells Kover to learn a tree model, using cross-validation as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies).
 Moreover, it distributes the cross-validation on 4 CPUs and outputs the result files into the *results/cart_cv* directory.
 
 ```
@@ -182,7 +182,7 @@ False Negatives: 0.0
 ```
 #### Bound selection
 
-Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#risk-bound-selection) and see how it affect the learning for CART. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/cart_b*.
+Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies) and see how it affect the learning for CART. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/cart_b*.
 
 ```
 kover learn tree --dataset example.kover --split example_split --criterion gini --max-depth 20 --min-samples-split 2 --hp-choice bound --n-cpu 4 --output-dir results/cart_b --progress
