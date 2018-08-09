@@ -50,7 +50,7 @@ Kover is open-source software released under the [GPLv3 licence](http://www.gnu.
 
 ## Getting started
 
-To get started, see these two topics:
+To get started, take a look at the following pages:
 
-1. {{site.data.urls.doc_installation.link}}
-2. {{site.data.urls.doc_tutorials.link}}
+1. [Installation](./doc_installation.html)
+2. [Tutorials](./doc_tutorials.html)
