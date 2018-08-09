@@ -97,8 +97,8 @@ Generally, the user defines a set of candidate values for each hyperparameter an
 
 SCM has 2 hyperparameters:
 
-* The model type (option --model-type)
-* The trade-off parameter (option --p)
+* The model type (option `--model-type`)
+* The trade-off parameter (option `--p`)
 
 *Note: Below, the term example refers to a (genome, phenotype) pair in the dataset.
 
@@ -232,10 +232,10 @@ optional arguments:
 *If you don't know what a hyperparameter is, see [here](#understanding-the-hyperparameters)*
 
 The hyperparameters of the CART algorithm are:
-* The rule-selection criterion (option --criterion)
-* The maximum depth of the tree (option --max-depth)
-* The minimum number of examples required to partition a leaf (option --min-samples-split)
-* The class importances (option --class-importance)
+* The rule-selection criterion (option `--criterion`)
+* The maximum depth of the tree (option `--max-depth`)
+* The minimum number of examples required to partition a leaf (option `--min-samples-split`)
+* The class importances (option `--class-importance`)
 
 #### Rule-selection criterion
 
