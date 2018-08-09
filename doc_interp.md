@@ -10,7 +10,7 @@ One particularity of models learned with Kover is that they are highly interpret
 
 ![#1589F0](https://placehold.it/10/1589F0/000000?text=+) **Disclaimer:** It is always possible to visualize Kover models and access the sequences of k-mers that are used for prediction. However, going further and annotating the sequences is highly dependent on the quality of available genome annotations. Below, we provide an example where well-annotated genomes were available, enabling a detailed interpretation of the model.
 
-In this tutorial, we will show how the decision tree model of kanamycin resistance in *M. tuberculosis* (Figure 3a of the paper) was processed in order to extract a biological interpretation.
+In this tutorial, we will show how the decision tree model of kanamycin resistance in *M. tuberculosis* (Figure 3a of the Drouin et al. (2018) paper) was processed in order to extract a biological interpretation.
 
 ### Accessing the model
 

@@ -182,7 +182,7 @@ False Negatives: 0.0
 ```
 #### Bound selection
 
-Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#bound-selection) and see how it affect the learning for CART. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/cart_b*.
+Let's now use bound selection as the [model selection strategy](doc_learning.html#hyperparameter-selection-strategies#risk-bound-selection) and see how it affect the learning for CART. We only have to modify the previous command to specify `--hp-choice bound` and output the result files in another directory, *results/cart_b*.
 
 ```
 kover learn tree --dataset example.kover --split example_split --criterion gini --max-depth 20 --min-samples-split 2 --hp-choice bound --n-cpu 4 --output-dir results/cart_b --progress
