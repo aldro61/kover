@@ -8,9 +8,12 @@ summary: "Overview of the machine learning functionality"
 
 ## Set Covering Machine
 
+The Set Covering Machine (SCM) algorithm produces models that are conjunctions (logical-AND) or disjunctions (logical-OR) of rules. It can be used for binary phenotypes, i.e., two groups of individuals.
+
+
 ### Command line interface
 
-This command is used to learn a model from a Kover dataset. It provides an interface on the Set Covering Machine algorithm.
+This command is used to train the SCM on a Kover dataset:
 
 ```
 usage: kover learn scm [-h] --dataset DATASET --split SPLIT
@@ -87,12 +90,13 @@ optional arguments:
 ```
 
 ### Understanding the hyperparameters
+<a name="#hp-scm"></a>
 
-A hyperparameter is a free parameter of a learning algorithm that must be set by the user, prior to learning the model.
+A [hyperparameter](https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning)) is a parameter of the learning algorithm that controls its behavior and that must be set by the user prior to learning.
 Generally, the user defines a set of candidate values for each hyperparameter and uses a strategy, such as
-[cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)), to select the best value.
+[cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)), to select the best value (see [below](#hyperparameter-selection-strategies)).
 
-The SCM algorithm has 2 hyperparameters:
+SCM has 2 hyperparameters:
 
 * The model type (option --model-type)
 * The trade-off parameter (option --p)
@@ -112,7 +116,7 @@ This is achieved by using:
 #### The trade-off parameter (p)
 
 SCM selects the rules to include in the model based on a scoring function that is applied to each rule. This function
-consists of a trade-off between the number of errors incurred on each class of examples (i.e., phenotype = 0 and phenotype = 1).
+consists of a trade-off between the number of errors incurred on each class of examples (e.g., case and control).
 
 For example, when learning a conjunction, the score of each rule is given by:
 
@@ -121,8 +125,8 @@ $$ S_i = N_i - p \times \overline{P_i}$$
 where:
 
 * $S_i$ is the score of rule i
-* $N_i$ is the number of negative (phenotype=0) examples that are correctly classified by the rule
-* $\overline{P_i}$ is the number of positive (phenotype = 1) examples that are incorrectly classified by the rule
+* $N_i$ is the number of negative (e.g., control) examples that are correctly classified by the rule
+* $\overline{P_i}$ is the number of positive (e.g., case) examples that are incorrectly classified by the rule
 
 Hence, larger values of p increase the importance of errors made on negative examples, while smaller values will increase
 the importance of errors made on the positive examples.
@@ -136,9 +140,12 @@ Again, the optimal value is problem specific and many values must be tried. For 
 
 ## Classification trees
 
-The models learned by this algorithm are typically more complex than those of SCM, but can sometimes perform better. Moreover, they can discriminate more than two groups of genomes, which makes them ideal for phenotypes with more than two states.
+The Classification and Regression Trees (CART) algorithm learns decision tree models. The classification trees part of this algorithm is implemented in Kover. It can be used for any discrete phenotype (i.e, it supports more than two groups of individuals). Its models are generally more complex than those of SCM, but can sometimes be more accurate.
+
 
 ### Command line interface
+
+This command is used to train CART on a Kover dataset:
 
 ```
 usage: kover learn tree [-h] --dataset DATASET --split SPLIT
@@ -222,6 +229,10 @@ optional arguments:
 ```
 
 ### Understanding the hyperparameters
+<a name="#hp-cart"></a>
+
+*If you don't know what a hyperparameter is, see [here](#hp-scm)*
+
 
 ## Hyperparameter selection strategies
 

@@ -54,3 +54,4 @@ To get started, take a look at the following pages:
 
 1. [Installation](./doc_installation.html)
 2. [Tutorials](./doc_tutorials.html)
+3. [A brief introduction to machine learning](https://aldro61.github.io/microbiome-summer-school-2017/sections/basics/)
