@@ -31,7 +31,7 @@ Presence(AAGTCGCCCTTTTTTAAGGATACGGCGGTAT)
 
 For more examples, please see the following articles:
 
-> Drouin, A., Letarte, G., Raymond, F., Marchand, M., Corbeil, J. & Laviolette, F. (2018). Interpretable genotype-to-phenotype classifiers with performance guarantees. *Submitted*
+> Drouin, A., Letarte, G., Raymond, F., Marchand, M., Corbeil, J., & Laviolette, F. (2019). Interpretable genotype-to-phenotype classifiers with performance guarantees. Scientific Reports, 9(1), 4071. [[PDF]](https://www.nature.com/articles/s41598-019-40561-2)
 
 > Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2016). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. BMC Genomics, 17(1), 754. [[PDF]](http://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-016-2889-6)
 
