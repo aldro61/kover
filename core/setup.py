@@ -11,12 +11,12 @@ class build_ext(_build_ext):
 
 setup(
     name = "kover",
-    version = "2.0.0",
+    version = "2.0.2",
     packages = find_packages(),
 
     cmdclass={'build_ext':build_ext},
     setup_requires = ['numpy'],
-    install_requires = ['h5py>=2.4.0', 'numpy', 'pandas', 'progressbar', 'scipy'],
+    install_requires = ['cython', 'h5py>=2.4.0', 'numpy', 'pandas', 'progressbar', 'scipy'],
 
     author = "Alexandre Drouin, Gael Letarte",
     author_email = "aldro61@gmail.com",
