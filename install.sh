@@ -39,7 +39,7 @@ pip install setuptools
 echo -e "\n\n"
 
 echo -e "Installing Kover\n-----------------"
-pip install -e .
+pip install .
 echo -e "\n\n"
 
 # Create executable
