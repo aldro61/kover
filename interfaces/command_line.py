@@ -31,7 +31,7 @@ from sys import argv
 from os.path import abspath
 
 KOVER_DESCRIPTION = "Kover: Learn interpretable computational phenotyping models from k-merized genomic data"
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 
 class KoverDatasetCreationTool(object):
 
@@ -1078,7 +1078,7 @@ class CommandLineInterface(object):
                 print \
 """
 Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-Copyright (C) 2015  Alexandre Drouin
+Copyright (C) 2019  Alexandre Drouin
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1099,12 +1099,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             elif args.cite:
                 print \
-"""If you used Kover in your work, please cite our paper:
+"""If you used Kover in your work, please cite our papers:
+
+Drouin, A., Letarte, G., Raymond, F., Marchand, M., Corbeil, J., & Laviolette, F. (2019). Interpretable genotype-to-phenotype classifiers with performance guarantees. Scientific reports, 9(1), 4071.
 
 Drouin, A., Giguère, S., Déraspe, M., Marchand, M., Tyers, M., Loo, V. G., Bourgault, A. M., Laviolette, F. & Corbeil, J. (2016). Predictive computational phenotyping and biomarker discovery using reference-free genome comparisons. BMC Genomics, 17(1), 754.
 
 
 Bibtex:
+
+@article{Drouin2019,
+  title={Interpretable genotype-to-phenotype classifiers with performance guarantees},
+  author={Drouin, Alexandre and Letarte, Ga{\"e}l and Raymond, Fr{\'e}d{\'e}ric and Marchand, Mario and Corbeil, Jacques and Laviolette, Fran{\c{c}}ois},
+  journal={Scientific reports},
+  volume={9},
+  number={1},
+  pages={4071},
+  year={2019},
+  publisher={Nature Publishing Group}
+}
 
 @article{Drouin2016,
 author="Drouin, Alexandre
