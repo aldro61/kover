@@ -40,3 +40,6 @@ cd ..
 cd thirdparty
 rm -rf gatb-core
 cd ..
+
+echo "* Copying binaries to their target location"
+mv build/bin/* .
