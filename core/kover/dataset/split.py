@@ -56,7 +56,7 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
                 ids_not_in_ds.append(id)
         if len(ids_not_in_ds) > 0:
             error_callback(Exception("The %s genome identifiers contain IDs that are not in the dataset: %s" %
-                                     (learning_sep, ", ".join(idsnot_in_ds))))
+                                     (learning_step, ", ".join(idsnot_in_ds))))
         return ids
 
     # Parse and validate training and testing ids
