@@ -22,9 +22,11 @@ script:
   - kover --version
 
   # Tutorial 1
+  - mkdir tutorial_1
+  - cd tutorial_1
   - wget http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip
-  - unzip kover-example-data
-  - cd kover-example-data
+  - unzip kover-example-data.zip
+  - cd kover-example
   - kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-description "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
   - kover dataset info --dataset example.kover --genome-count --kmer-count
   - kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 72 --progress
