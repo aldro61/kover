@@ -1,1 +1,1 @@
-include kover/dataset/tools/kmer_tools/*
+include dataset/tools/kmer_tools/*
