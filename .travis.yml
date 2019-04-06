@@ -30,4 +30,4 @@ script:
   - kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-description "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
   - kover dataset info --dataset example.kover --genome-count --kmer-count
   - kover dataset split --dataset example.kover --id example_split --train-size 0.666 --folds 5 --random-seed 72 --progress
-  - kover learn scm --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 5 --hp-choice cv --n-cpu 2 --progress
+  - kover learn scm --dataset example.kover --split example_split --model-type conjunction disjunction --p 0.1 1.0 10.0 --max-rules 5 --hp-choice cv --n-cpu 1 --progress
