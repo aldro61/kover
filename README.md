@@ -1,6 +1,7 @@
 <img src="http://graal.ift.ulaval.ca/adrouin/kover.png" height="50" />2.0
 
 [![DOI](https://zenodo.org/badge/20289/aldro61/kover.svg)](https://zenodo.org/badge/latestdoi/20289/aldro61/kover)
+[![Build Status](https://travis-ci.org/aldro61/kover.svg?branch=kover2)](https://travis-ci.org/aldro61/kover)
 
 Kover is an *out-of-core* implementation of rule-based machine learning algorithms that has been tailored for genomic biomarker discovery. It produces highly interpretable models, based on k-mers, that explicitly highlight genotype-to-phenotype associations.
 
