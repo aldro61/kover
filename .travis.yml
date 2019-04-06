@@ -1,0 +1,29 @@
+language: python
+
+python:
+  - "2.7"
+
+install:
+  sudo apt-get update
+  sudo apt-get -y install cmake git hdf5-tools python2.7 python-pip unzip wget zlib1g-dev
+
+  pip install --upgrade pip
+  pip install cython numpy scipy
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+
+
+script:
+  sh ./install.sh
+
+  export PATH=$PATH:~/bin
+
+  kover --version
+
+  # Tutorial 1
+  wget http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip && \
+  unzip kover-example-data && \
+  cd kover-example-data
