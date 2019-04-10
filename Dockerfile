@@ -9,6 +9,7 @@ RUN pip install --upgrade pip
 RUN pip install cython numpy scipy
 
 # Install Kover
-RUN git clone https://github.com/aldro61/kover.git
+ADD https://github.com/aldro61/kover/zipball/kover2 kover.zip
+RUN unzip kover.zip && mv aldro61* kover
 RUN cd kover; sh ./install.sh
 ENV PATH="/kover/bin:${PATH}"
