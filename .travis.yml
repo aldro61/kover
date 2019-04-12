@@ -20,6 +20,11 @@ script:
   - sh ./install.sh
   - export PATH=$PATH:/home/travis/build/aldro61/kover/bin/
   - kover --version
+  
+  # Make sure that the k-mer tools exist and are in the correct directory
+  - ls /home/travis/build/aldro61/kover/dataset/tools/kmer_tools/dsk
+  - ls /home/travis/build/aldro61/kover/dataset/tools/kmer_tools/dsk2kover
+  - ls /home/travis/build/aldro61/kover/dataset/tools/kmer_tools/multidsk
 
   # Tutorial 1
   - mkdir tutorial_1
