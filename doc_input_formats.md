@@ -62,6 +62,8 @@ genome identifiers. For example, for a study based on 100 genomes, there should 
 k-mer sequence and the remaining columns contain a 0 if the k-mer is absent in the genome or a 1 if it is
 present.
 
+* **Important note:** The k-mer sequences (kmer_1, ..., kmer_2) are assumed to be of the same length. This allows for fast counting of the number of lines in the matrix file. If you use k-mers of variable lengths, simply pad the sequences to make them the same length.
+
 | kmers | GenomeID_1 | GenomeID_2 | ... | GenomeID_m |
 | :-: | :-: | :-: | :-: | :-: |
 | kmer_1 | 1 | 0 | ... | 0 |
