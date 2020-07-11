@@ -17,7 +17,7 @@ Nonetheless, genotype-to-phenotype prediction comes with great challenges for ma
 ### Video lecture:
 The Set Covering Machine implementation in Kover was featured in the following video lecture:
 
-Interpretable Models of Antibiotic Resistance with the Set Covering Machine Algorithm, Google, Cambridge, Massachusetts (February 2017) [ [slides](http://graal.ift.ulaval.ca/adrouin/talks/google_feb2017.pdf) ]
+Interpretable Models of Antibiotic Resistance with the Set Covering Machine Algorithm, Google, Cambridge, Massachusetts (February 2017)
 
 [![Google tech talk](https://img.youtube.com/vi/uomMdBdEwnk/0.jpg)](https://www.youtube.com/watch?v=uomMdBdEwnk)
 
