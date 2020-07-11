@@ -13,7 +13,7 @@ For an introduction to machine learning , please refer to [this tutorial](https:
 
 ## Getting the example Kover dataset
 
-First download the [pre-created dataset](https://graal.ift.ulaval.ca/public/kover2_example_created.zip) (~100 Mb) which contains the genome of 392 *Neisseria gonorrhoeae* isolates, along with their susceptibility to Azithromycin. Next, unzip the file and then change into the resulting directory.
+First download the [pre-created dataset](https://github.com/aldro61/kover-tutorial-data/releases/download/1.0.0/kover2_example_created.zip) (~100 Mb) which contains the genome of 392 *Neisseria gonorrhoeae* isolates, along with their susceptibility to Azithromycin. Next, unzip the file and then change into the resulting directory.
 
 ```
 cd kover-example
