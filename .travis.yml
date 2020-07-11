@@ -29,7 +29,7 @@ script:
   # Tutorial 1
   - mkdir tutorial_1
   - cd tutorial_1
-  - wget http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip
+  - wget https://github.com/aldro61/kover-tutorial-data/releases/download/1.0.0/kover-example-data.zip
   - unzip kover-example-data.zip
   - cd kover-example
   - kover dataset create from-tsv --genomic-data KmerMatrix.tsv --phenotype-description "Rifampicin resistance" --phenotype-metadata metadata.tsv --output example.kover --progress
