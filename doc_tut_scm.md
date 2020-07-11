@@ -11,7 +11,7 @@ Specifically, we will learn a model that predicts rifampicin resistance in *Myco
 
 ## Example data
 
-First, download the [example data](http://graal.ift.ulaval.ca/adrouin/kover-example-data.zip) (~180 Mb), which contains the genome of 141 *Mycobacterium
+First, download the [example data](https://github.com/aldro61/kover-tutorial-data/releases/download/1.0.0/kover-example-data.zip) (~180 Mb), which contains the genome of 141 *Mycobacterium
 tuberculosis* isolates, along with their susceptibility to rifampicin. There should be two files: KmerMatrix.tsv and metadata.tsv.
 
 The genomes were assembled using the [SPades](http://bioinf.spbau.ru/spades) and split into k-mers of length 31 using
