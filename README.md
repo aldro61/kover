@@ -37,4 +37,4 @@ The documentation can be found at: http://aldro61.github.io/kover/
 
 ## Contact
 
-If you need help using Kover or to report any bug, please use [Biostars](https://www.biostars.org/p/194520/).
+If you need help using Kover, please use [Biostars](https://www.biostars.org/p/194520/). To report a bug, please create an issue on GitHub.
