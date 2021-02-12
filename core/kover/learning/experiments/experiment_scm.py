@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 """
-		Kover: Learn interpretable computational phenotyping models from k-merized genomic data
-		Copyright (C) 2015  Alexandre Drouin
+        Kover: Learn interpretable computational phenotyping models from k-merized genomic data
+        Copyright (C) 2015  Alexandre Drouin
 
-		This program is free software: you can redistribute it and/or modify
-		it under the terms of the GNU General Public License as published by
-		the Free Software Foundation, either version 3 of the License, or
-		(at your option) any later version.
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
 
-		This program is distributed in the hope that it will be useful,
-		but WITHOUT ANY WARRANTY; without even the implied warranty of
-		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-		GNU General Public License for more details.
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
 
-		You should have received a copy of the GNU General Public License
-		along with this program.  If not, see <http://www.gnu.org/licenses/>.
+        You should have received a copy of the GNU General Public License
+        along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
@@ -62,22 +62,27 @@ def _predictions(model, kmer_matrix, train_example_idx, test_example_idx, progre
 
     progress_callback("Testing", 0.0)
 
-    # We use h5py to load only the columns of the k-mer matrix targeted by the model. The indices passed to h5py need
-    # to be sorted. We change the kmer_idx of the rules in the model to be 0 ... n_rules, with the rule that initially had
-    # the smallest kmer_idx pointing to 0 and the one with the largest kmer_idx pointing to n_rules. We then load only
-    # the appropriate columns and apply the readdressed model to the data (in RAM).
-    columns_to_load = []
-    readdressed_model = deepcopy(model)
-    for i, rule_idx in enumerate(np.argsort([r.kmer_index for r in model.rules])):
-        rule = readdressed_model.rules[rule_idx]
-        columns_to_load.append(rule.kmer_index)
-        rule.kmer_index = i
+    if len(model) == 0:
+        train_predictions = model.predict(np.zeros(len(train_example_idx)))
+        test_predictions = model.predict(np.zeros(len(test_example_idx)))
+    else:
+        # We use h5py to load only the columns of the k-mer matrix targeted by the model. The indices passed to h5py
+        # need to be sorted. We change the kmer_idx of the rules in the model to be 0 ... n_rules, with the rule that
+        # initially had the smallest kmer_idx pointing to 0 and the one with the largest kmer_idx pointing to n_rules.
+        # We then load only the appropriate columns and apply the readdressed model to the data (in RAM).
+        columns_to_load = []
+        readdressed_model = deepcopy(model)
+        for i, rule_idx in enumerate(np.argsort([r.kmer_index for r in model.rules])):
+            rule = readdressed_model.rules[rule_idx]
+            columns_to_load.append(rule.kmer_index)
+            rule.kmer_index = i
 
-    # Load the columns targeted by the model and make predictions using the readdressed model
-    X = _unpack_binary_bytes_from_ints(kmer_matrix[:, columns_to_load])
-    train_predictions = readdressed_model.predict(X[train_example_idx])
-    progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
-    test_predictions = readdressed_model.predict(X[test_example_idx])
+        # Load the columns targeted by the model and make predictions using the readdressed model
+        X = _unpack_binary_bytes_from_ints(kmer_matrix[:, columns_to_load])
+        train_predictions = readdressed_model.predict(X[train_example_idx])
+        progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
+        test_predictions = readdressed_model.predict(X[test_example_idx])
+
     progress_callback("Testing", 1.0)
 
     return train_predictions, test_predictions
@@ -131,7 +136,7 @@ def _cv_score_hp(hp_values, max_rules, dataset_file, split_name, rule_blacklist)
                       rule_classifications=rule_classifications,
                       positive_example_idx=positive_example_idx,
                       negative_example_idx=negative_example_idx,
-					  rule_blacklist=rule_blacklist,
+                      rule_blacklist=rule_blacklist,
                       tiebreaker=tiebreaker,
                       iteration_callback=iteration_callback)
 
@@ -161,7 +166,7 @@ def _cross_validation(dataset_file, split_name, model_types, p_values, max_rules
                            dataset_file=dataset_file,
                            split_name=split_name,
                            max_rules=max_rules,
-						   rule_blacklist=rule_blacklist)
+                           rule_blacklist=rule_blacklist)
 
     best_hp_score = 1.0
     best_hp = {"model_type": None, "p": None, "max_rules": None}
@@ -230,7 +235,7 @@ def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, 
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
-				  rule_blacklist=rule_blacklist,
+                  rule_blacklist=rule_blacklist,
                   tiebreaker=partial(_tiebreaker,
                                      rule_risks=np.hstack((split.unique_risk_by_kmer[...],
                                                            split.unique_risk_by_anti_kmer[...])),
@@ -245,13 +250,14 @@ def _full_train(dataset, split_name, model_type, p, max_rules, max_equiv_rules, 
 def _bound(train_predictions, train_answers, train_example_idx, model, delta, max_genome_size, rule_classifications):
     # Construct the smallest possible compression set (Chvatal greedy approx for minimum set cover)
     logging.debug("Constructing the compression set.")
-    presence_by_example = rule_classifications.get_columns([r.kmer_index for r in model])[train_example_idx]
     compression_set = []
-    while presence_by_example.shape[1] != 0:
-        score = presence_by_example.sum(axis=1)
-        best_example_relative_idx = np.argmax(score)
-        compression_set.append(best_example_relative_idx)
-        presence_by_example = presence_by_example[:, presence_by_example[best_example_relative_idx] == 0]
+    if len(model) > 0:
+        presence_by_example = rule_classifications.get_columns([r.kmer_index for r in model])[train_example_idx]
+        while presence_by_example.shape[1] != 0:
+            score = presence_by_example.sum(axis=1)
+            best_example_relative_idx = np.argmax(score)
+            compression_set.append(best_example_relative_idx)
+            presence_by_example = presence_by_example[:, presence_by_example[best_example_relative_idx] == 0]
     logging.debug("The compression set contains %d examples." % len(compression_set))
 
     # Compute the bound value
@@ -260,10 +266,11 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta, ma
     Z_card = float(len(compression_set) * max_genome_size)
     m = float(len(train_answers))
     mz = float(len(compression_set))
-    r = float((train_predictions != train_answers).sum() - (train_predictions[compression_set] != train_answers[compression_set]).sum())
+    r = float((train_predictions != train_answers).sum() -
+              (train_predictions[compression_set] != train_answers[compression_set]).sum())
     return 1.0 - exp((-1.0 / (m - mz - r)) * (ln(comb(m, mz, exact=True)) +
                                               ln(comb(m - mz, r, exact=True)) +
-                                              h_card * ln(2 * Z_card) +
+                                              0 if h_card == 0 else (h_card * ln(2 * Z_card)) +
                                               ln(pi**6 *
                                                  (h_card + 1)**2 *
                                                  (r + 1)**2 *
@@ -272,7 +279,7 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta, ma
 
 
 def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_rules, rule_blacklist,
-					bound_delta, bound_max_genome_size, random_generator):
+                    bound_delta, bound_max_genome_size, random_generator):
     model_type = hp_values[0]
     p = hp_values[1]
 
@@ -354,23 +361,39 @@ def _bound_score_hp(hp_values, max_rules, dataset_file, split_name, max_equiv_ru
                   rule_classifications=rule_classifications,
                   positive_example_idx=positive_example_idx,
                   negative_example_idx=negative_example_idx,
-				  rule_blacklist=rule_blacklist,
+                  rule_blacklist=rule_blacklist,
                   tiebreaker=tiebreaker,
                   iteration_callback=iteration_callback,
                   iteration_rule_importances=True)
 
-    best_score_idx = np.argmin(score_by_length)
-    best_hp_score = score_by_length[best_score_idx]
-    best_model = model_by_length[best_score_idx]
-    best_rule_importances = rule_importances[best_score_idx]
-    best_equivalent_rules = equivalent_rules[: best_score_idx + 1]
-    best_model_length = best_score_idx + 1
+    # Handle edge case where no rules were added to the model
+    if len(tmp_model) == 0:
+        _, train_predictions = _predictions(tmp_model, dataset.kmer_matrix, [], train_example_idx)
+        bound_value = _bound(train_predictions=train_predictions,
+                             train_answers=train_answers,
+                             train_example_idx=train_example_idx,
+                             model=tmp_model,
+                             delta=bound_delta,
+                             max_genome_size=bound_max_genome_size,
+                             rule_classifications=rule_classifications)
+        best_model_length = 0
+        best_hp_score = bound_value
+        best_model = tmp_model
+        best_rule_importances = np.array([])
+        best_equivalent_rules = np.array([])
+    else:
+        best_score_idx = np.argmin(score_by_length)
+        best_hp_score = score_by_length[best_score_idx]
+        best_model = model_by_length[best_score_idx]
+        best_rule_importances = rule_importances[best_score_idx]
+        best_equivalent_rules = equivalent_rules[: best_score_idx + 1]
+        best_model_length = best_score_idx + 1
 
     return (model_type, p, best_model_length), best_hp_score, best_model, best_rule_importances, best_equivalent_rules
 
 
 def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules, max_equiv_rules, rule_blacklist,
-					 bound_delta, bound_max_genome_size, n_cpu, random_generator, progress_callback, warning_callback,
+                     bound_delta, bound_max_genome_size, n_cpu, random_generator, progress_callback, warning_callback,
                      error_callback):
     n_hp_combinations = len(model_types) * len(p_values)
     logging.debug("There are %d hyperparameter combinations to try." % n_hp_combinations)
@@ -382,7 +405,7 @@ def _bound_selection(dataset_file, split_name, model_types, p_values, max_rules,
                            split_name=split_name,
                            max_rules=max_rules,
                            max_equiv_rules=max_equiv_rules,
-						   rule_blacklist=rule_blacklist,
+                           rule_blacklist=rule_blacklist,
                            bound_delta=bound_delta,
                            bound_max_genome_size=bound_max_genome_size,
                            random_generator=random_generator)
@@ -442,7 +465,7 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
 
 def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_rules, max_equiv_rules,
               parameter_selection, n_cpu, random_seed, authorized_rules, bound_delta=None, bound_max_genome_size=None,
-			  progress_callback=None, warning_callback=None, error_callback=None):
+              progress_callback=None, warning_callback=None, error_callback=None):
     """
     parameter_selection: bound, cv, none (use first value of each if multiple)
     """
@@ -507,7 +530,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
                                                    model_types=model_type,
                                                    p_values=p,
                                                    max_rules=max_rules,
-												   rule_blacklist=rule_blacklist,
+                                                   rule_blacklist=rule_blacklist,
                                                    n_cpu=n_cpu,
                                                    progress_callback=progress_callback,
                                                    warning_callback=warning_callback,
@@ -532,7 +555,7 @@ def learn_SCM(dataset_file, split_name, model_type, p, kmer_blacklist_file,max_r
                                        p=best_hp["p"],
                                        max_rules=best_hp["max_rules"],
                                        max_equiv_rules=max_equiv_rules,
-									   rule_blacklist=rule_blacklist,
+                                       rule_blacklist=rule_blacklist,
                                        random_generator=random_generator,
                                        progress_callback=progress_callback)
 
