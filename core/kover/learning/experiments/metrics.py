@@ -39,7 +39,7 @@ def _get_binary_metrics(predictions, answers):
     if len(predictions.shape) == 1:
 	    predictions = predictions.reshape(1, -1)
     metrics = defaultdict(list)
-    for i in xrange(predictions.shape[0]):
+    for i in range(predictions.shape[0]):
 	p = predictions[i]
 	risk = 1.0 * len(p[p != answers]) / len(answers)
 	tp = len(np.where(p[answers == 1] == 1)[0])
@@ -80,7 +80,7 @@ def _get_multiclass_metrics(predictions, answers, nb_class):
     if len(predictions.shape) == 1:
 	    predictions = predictions.reshape(1, -1)
     metrics = defaultdict(list)
-    for i in xrange(predictions.shape[0]):
+    for i in range(predictions.shape[0]):
 	    p = predictions[i]
 	    risk = 1.0 * len(p[p != answers]) / len(answers)
 	    confusion_matrix = []

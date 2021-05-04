@@ -43,7 +43,7 @@ def _class_to_string(instance):
     Private attributes must be marked with a leading underscore.
     """
     return instance.__class__.__name__ + "(" + ",".join(
-        [str(k) + "=" + str(v) for k, v in instance.__dict__.iteritems() if str(k[0]) != "_"]) + ")"
+        [str(k) + "=" + str(v) for k, v in instance.__dict__.items() if str(k[0]) != "_"]) + ")"
 
 
 def _duplicate_last_element(l, length):
@@ -144,7 +144,7 @@ def _pack_binary_bytes_to_ints(a, pack_size):
     b = np.zeros((int(ceil(1.0 * a.shape[0] / pack_size)), a.shape[1]), dtype=type)
     packed_rows = 0
     packing_row = 0
-    for i in xrange(a.shape[0]):
+    for i in range(a.shape[0]):
         if packed_rows == pack_size:
             packed_rows = 0
             packing_row += 1
@@ -175,7 +175,7 @@ def _unpack_binary_bytes_from_ints(a):
 
     packed_rows = 0
     packing_row = 0
-    for i in xrange(b.shape[0]):
+    for i in range(b.shape[0]):
         if packed_rows == pack_size:
             packed_rows = 0
             packing_row += 1

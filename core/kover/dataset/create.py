@@ -67,7 +67,7 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 	Parses metadata (genome_id{tab}label)
 	"""
     logging.debug("Parsing metadata.")
-    md_genome_ids, md_genome_labels = zip(*(l.split() for l in open(metadata_path, "r")))
+    md_genome_ids, md_genome_labels = list(zip(*(l.split() for l in open(metadata_path, "r"))))
     md_unique_labels, indices = np.unique(md_genome_labels, return_inverse=True)
 
     # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
@@ -109,9 +109,9 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
             len(genomes_only_in_metadata), ", ".join(genomes_only_in_metadata)))
     del genomes_only_in_metadata
 
-    keep_genome_ids, keep_genome_labels = zip(
-        *((md_genome_ids[i], md_genome_labels[i]) for i in xrange(len(md_genome_ids)) if
-          md_genome_ids[i] in matrix_genome_ids))
+    keep_genome_ids, keep_genome_labels = list(zip(
+        *((md_genome_ids[i], md_genome_labels[i]) for i in range(len(md_genome_ids)) if
+          md_genome_ids[i] in matrix_genome_ids)))
 
     return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), md_unique_labels, classification_type
 
@@ -120,7 +120,7 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
              error_callback=None, progress_callback=None):
     def get_kmer_length(tsv_path):
         with open(tsv_path, "r") as f:
-            f.next()
+            next(f)
             kmer_len = len(f.next().split("\t")[0])
         return kmer_len
 
@@ -129,8 +129,8 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
         #      Assumes that each line has the format kmer_seq\tV\tV\t...V\n with one binary V per genome
         total_size = getsize(tsv)
         with open(tsv, "r") as f:
-            header_size = len(f.next())
-            line_size = len(f.next())
+            header_size = len(next(f))
+            line_size = len(next(f))
         content_size = float(total_size) - header_size
         if content_size % line_size != 0:
             raise Exception()
@@ -300,12 +300,12 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # Find the contig file for each genome and verify that it exists
     contig_file_by_genome_id = dict(l.split() for l in open(contig_list_path, "r"))
-    for g_id, contig_file in contig_file_by_genome_id.iteritems():
+    for g_id, contig_file in contig_file_by_genome_id.items():
         if not exists(contig_file):
             error_callback(IOError("The contig file for genome %s cannot be found: %s" % (str(g_id), contig_file)))
 
     logging.debug("The k-mer matrix contains %d genomes." % len(contig_file_by_genome_id))
-    if len(set(contig_file_by_genome_id.keys())) < len(contig_file_by_genome_id.keys()):
+    if len(set(contig_file_by_genome_id.keys())) < len(list(contig_file_by_genome_id.keys())):
         error_callback(Exception("The genomic data contains genomes with the same identifier."))
 
     h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
@@ -323,7 +323,7 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     if phenotype_description is not None:
         genome_ids, labels,\
         labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=contig_file_by_genome_id.keys(),
+                                                           matrix_genome_ids=list(contig_file_by_genome_id.keys()),
                                                            warning_callback=warning_callback,
                                                            error_callback=error_callback)
 
@@ -422,12 +422,12 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
 
     # Find the read folder for each genome and verify that it exists
     reads_folder_by_genome_id = dict(l.split() for l in open(reads_folders_list_path, "r"))
-    for g_id, read_dir in reads_folder_by_genome_id.iteritems():
+    for g_id, read_dir in reads_folder_by_genome_id.items():
         if not exists(read_dir):
             error_callback(IOError("The read directory for genome %s cannot be found: %s" % (str(g_id), read_dir)))
 
     logging.debug("The k-mer matrix contains %d genomes." % len(reads_folder_by_genome_id))
-    if len(set(reads_folder_by_genome_id.keys())) < len(reads_folder_by_genome_id.keys()):
+    if len(set(reads_folder_by_genome_id.keys())) < len(list(reads_folder_by_genome_id.keys())):
         error_callback(Exception("The genomic data contains genomes with the same identifier."))
 
     h5py_file = _create_hdf5_file_no_chunk_caching(output_path)
@@ -445,7 +445,7 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     if phenotype_description is not None:
         genome_ids, labels,\
         labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=reads_folder_by_genome_id.keys(),
+                                                           matrix_genome_ids=list(reads_folder_by_genome_id.keys()),
                                                            warning_callback=warning_callback,
                                                            error_callback=error_callback)
 

@@ -58,7 +58,7 @@ class BaseSetCoveringMachine(object):
         """
         utility_function_additional_args = {}
         if kwargs != None:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if key[:9] == "utility__":
                     utility_function_additional_args[key[9:]] = value
 
@@ -259,7 +259,7 @@ class SetCoveringMachine(BaseSetCoveringMachine):
         best_utility_idx = np.array([])
         best_utility_pos_error_count = np.array([])
         best_utility_neg_cover_count = np.array([])
-        for block in xrange(int(ceil(1.0 * rule_classifications.shape[1] / UTIL_BLOCK_SIZE))):
+        for block in range(int(ceil(1.0 * rule_classifications.shape[1] / UTIL_BLOCK_SIZE))):
             block_utilities = negative_cover_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE] - \
                               float(self.p) * positive_error_counts[block * UTIL_BLOCK_SIZE : (block + 1) * UTIL_BLOCK_SIZE]
 

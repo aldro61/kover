@@ -47,11 +47,11 @@ class BetweenDict(dict):
     Source: http://joshuakugler.com/archives/30-BetweenDict,-a-Python-dict-for-value-ranges.html
     """
     def __init__(self, d = {}):
-        for k,v in d.items():
+        for k,v in list(d.items()):
             self[k] = v
 
     def __getitem__(self, key):
-        for k, v in self.items():
+        for k, v in list(self.items()):
             if k[0] <= key < k[1] or (k[0] <= key and k[1] == np.infty) or (k[0] == -np.infty and key < k[1]):
                 return v
         raise KeyError("Key '%s' is not between any values in the BetweenDict" % key)
@@ -344,7 +344,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
                                               max_depth=hps["max_depth"],
                                               min_samples_split=hps["min_samples_split"],
                                               class_importance=hps["class_importance"])
-                                              for _ in xrange(len(split.folds))]
+                                              for _ in range(len(split.folds))]
 
     master_predictor = DecisionTreeClassifier(criterion=hps["criterion"],
                                               max_depth=hps["max_depth"],
@@ -384,7 +384,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
     master_alphas, master_pruned_trees = _prune_tree(master_predictor.decision_tree)
     fold_alphas = []
     fold_pruned_trees = []
-    for i in xrange(len(split.folds)):
+    for i in range(len(split.folds)):
         alphas, trees = _prune_tree(fold_predictors[i].decision_tree)
         fold_alphas.append(alphas)
         fold_pruned_trees.append(trees)
@@ -423,7 +423,7 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
         else:
             geo_mean_alpha_k = np.infty
 
-        cv_score = np.mean([fold_scores_by_alpha[j][geo_mean_alpha_k] for j in xrange(len(split.folds))])
+        cv_score = np.mean([fold_scores_by_alpha[j][geo_mean_alpha_k] for j in range(len(split.folds))])
 
         if cv_score <= min_score:  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
             min_score = cv_score
@@ -478,7 +478,7 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
             #      2. Pick the tree with the least variance in the class importances
             #      Note: max_depth and min_samples_split are not specified as they are implied by rule 1
             if (master_tree_length < best_master_tree_length) or \
-               (master_tree_length == best_master_tree_length and np.var(hps["class_importance"].values()) < np.var(best_hps["class_importance"].values())):
+               (master_tree_length == best_master_tree_length and np.var(list(hps["class_importance"].values())) < np.var(list(best_hps["class_importance"].values()))):
                 best_hps = hps
                 best_master_tree = best_master_tree
                 best_score = score

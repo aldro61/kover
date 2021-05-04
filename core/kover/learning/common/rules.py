@@ -149,8 +149,8 @@ class KmerRuleClassifications(BaseRuleClassifications):
             columns = list(columns)
 
         # Detect where an inversion is needed (columns corresponding to absence rules)
-        columns, invert_result = zip(* (((column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
-                                         (True if column > self.dataset.shape[1] else False)) for column in columns))
+        columns, invert_result = list(zip(* (((column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
+                                         (True if column > self.dataset.shape[1] else False)) for column in columns)))
         columns = list(columns)
         invert_result = np.array(invert_result)
 
@@ -244,10 +244,10 @@ class KmerRuleClassifications(BaseRuleClassifications):
         rows_to_load = np.where(row_mask != 0)[0]
         n_row_blocks = int(ceil(1.0 * len(rows_to_load) / self.block_size[0]))
 
-        for row_block in xrange(n_row_blocks):
+        for row_block in range(n_row_blocks):
             block_row_mask = row_mask[rows_to_load[row_block * self.block_size[0]:(row_block + 1) * self.block_size[0]]]
 
-            for col_block in xrange(n_col_blocks):
+            for col_block in range(n_col_blocks):
 
                 # Load the appropriate rows/columns based on the block sizes
                 block = self.dataset[rows_to_load[row_block * self.block_size[0]:(row_block + 1) * self.block_size[0]],
