@@ -30,13 +30,13 @@ class BreimanInfo(object):
 
 		# Eq. 2.2 Probability that an example is in class j and falls into node t
 		self.p_j_t = {c: class_priors[c] * node_n_examples_by_class[c] / total_n_examples_by_class[c]
-					     for c in class_priors.iterkeys()}
+					     for c in class_priors.keys()}
 
 		# Eq. 2.3 Probability that any example falls in node t
 		self.p_t = sum(self.p_j_t.values())
 
 		# Eq. 2.4 Probability that an example is in class j given that it falls in node t
-		self.p_j_given_t = {c: self.p_j_t[c] / self.p_t for c in class_priors.iterkeys()}
+		self.p_j_given_t = {c: self.p_j_t[c] / self.p_t for c in class_priors.keys()}
 
 		# Def. 2.10 Probability of misclassification given that an example falls into node t
 		self.r_t = 1.0 - max(self.p_j_given_t.values())
@@ -61,7 +61,7 @@ class TreeNode(BaseModel):
 		assert isinstance(total_n_examples_by_class, dict)
 		assert isinstance(class_priors, dict)
 
-		n_examples_by_class = {c: len(c_idx) for c, c_idx in class_examples_idx.iteritems()}
+		n_examples_by_class = {c: len(c_idx) for c, c_idx in class_examples_idx.items()}
 		self.breiman_info = BreimanInfo(node_n_examples_by_class=n_examples_by_class,
 										class_priors=class_priors,
 										total_n_examples_by_class=total_n_examples_by_class)
@@ -88,7 +88,7 @@ class TreeNode(BaseModel):
 		Returns the number of examples in the node
 
 		"""
-		return  sum(len(c_idx) for c_idx in self.class_examples_idx.itervalues())
+		return  sum(len(c_idx) for c_idx in self.class_examples_idx.values())
 
 	@property
 	def class_proportions(self):
@@ -97,7 +97,7 @@ class TreeNode(BaseModel):
 
 		"""
 		n_examples = self.n_examples
-		return {c: float(len(c_idx)) / n_examples for c, c_idx in self.class_examples_idx.iteritems()}
+		return {c: float(len(c_idx)) / n_examples for c, c_idx in self.class_examples_idx.items()}
 
 	@property
 	def class_prediction(self):
@@ -105,7 +105,7 @@ class TreeNode(BaseModel):
 		Returns the class predicted by this node as a leaf
 
 		"""
-		return self.breiman_info.p_j_given_t.keys()[np.argmax(self.breiman_info.p_j_given_t.values())]
+		return list(self.breiman_info.p_j_given_t.keys())[np.argmax(list(self.breiman_info.p_j_given_t.values()))]
 
 	@property
 	def rules(self):
@@ -144,7 +144,7 @@ class TreeNode(BaseModel):
 			return nodes
 		nodes = _preorder(self)
 
-		for node_id, node in zip(range(len(nodes)), nodes):
+		for node_id, node in zip(list(range(len(nodes))), nodes):
 			yield node_id, node
 
 	def __len__(self):
@@ -241,7 +241,7 @@ class ProbabilisticTreeNode(TreeNode):
 		"""
 		X = np.ascontiguousarray(X)
 
-		class_probabilities = np.zeros((len(self.class_examples_idx.keys()), X.shape[0]))
+		class_probabilities = np.zeros((len(list(self.class_examples_idx.keys())), X.shape[0]))
 
 		# Push each example down the tree (an example is a row of X)
 		for i, x in enumerate(X):
@@ -258,7 +258,7 @@ class ProbabilisticTreeNode(TreeNode):
 				 current_node = current_node.right_child
 
 			# A leaf has been reached. Use the leaf class proportions as the the class probabilities.
-			for c in self.class_examples_idx.iterkeys():
+			for c in self.class_examples_idx.keys():
 			  class_probabilities[c][i] = current_node.breiman_info.p_j_given_t[c]
 
 		return class_probabilities

@@ -68,13 +68,13 @@ class DecisionTreeClassifier(object):
 			tiebreaker = lambda x: x
 
 		# Store important information about the training set
-		n_total_class_examples = {c: float(len(idx)) for c, idx in example_idx.iteritems()}
+		n_total_class_examples = {c: float(len(idx)) for c, idx in example_idx.items()}
 
 		# Compute the class priors based on the importance of making errors on each class.
 		# See Section "4.4 Priors and Variable Misclassification Costs" in Breiman et al. 1984.
-		priors = {c: 1.0 * n_examples / sum(n_total_class_examples.values()) for c, n_examples in n_total_class_examples.iteritems()}
-		denum = sum([self.class_importance[c] * priors[c] for c in priors.iterkeys()])
-		altered_priors = {c: 1.0 * self.class_importance[c] * priors[c] / denum for c in priors.iterkeys()}
+		priors = {c: 1.0 * n_examples / sum(n_total_class_examples.values()) for c, n_examples in n_total_class_examples.items()}
+		denum = sum([self.class_importance[c] * priors[c] for c in priors.keys()])
+		altered_priors = {c: 1.0 * self.class_importance[c] * priors[c] / denum for c in priors.keys()}
 
 		# Criteria for node impurity and splitting
 
@@ -97,15 +97,15 @@ class DecisionTreeClassifier(object):
 
 			"""
 			p_j_t = {c: 1.0 * altered_priors[c] * n_examples_by_class[c] / n_total_class_examples[c] \
-						for c in n_examples_by_class.keys()}  # Equation (2.2)
+						for c in list(n_examples_by_class.keys())}  # Equation (2.2)
 
 			p_t = sum(p_j_t.values())  # Equation (2.3)
 
 			with np.errstate(divide='ignore', invalid='ignore'):
-				p_j_given_t = {c: np.divide(p_j_t[c], p_t) for c in p_j_t.keys()}
+				p_j_given_t = {c: np.divide(p_j_t[c], p_t) for c in list(p_j_t.keys())}
 
 			gini_diversity_index = sum([p_j_given_t[i] * p_j_given_t[j] \
-									for i in p_j_given_t.keys() for j in p_j_given_t.keys() if i != j])
+									for i in list(p_j_given_t.keys()) for j in list(p_j_given_t.keys()) if i != j])
 
 			return gini_diversity_index * (p_t if multiply_by_node_proba else 1.0)
 
@@ -128,29 +128,29 @@ class DecisionTreeClassifier(object):
 			# if a split is made on a given k-mer rule.
 			left_n_examples_by_class = \
 				{c: np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx], dtype=np.float) \
-					for c in example_idx.keys()}
+					for c in list(example_idx.keys())}
 
 			# Similarly, we compute the number of examples that would be sent to the right leaf (don't contain the k-mer)
 			right_n_examples_by_class = {c: np.asarray(len(example_idx[c]) - left_n_examples_by_class[c], dtype=np.float) \
-											for c in left_n_examples_by_class.keys()}
+											for c in list(left_n_examples_by_class.keys())}
 
 			# XXX: To maximize the decrease in impurity, we can simply minimize the sum of the gini impurity of the
 			#      resulting leaves, so we only compute those quantities.
 
 			# We will compute the gini impurities in blocks
-			n_kmers = left_n_examples_by_class[left_n_examples_by_class.keys()[0]].shape[0]
+			n_kmers = left_n_examples_by_class[list(left_n_examples_by_class.keys())[0]].shape[0]
 			BLOCK_SIZE = 100000
 			gini = np.zeros(n_kmers)
 			n_blocks = int(ceil(1.0 * n_kmers / BLOCK_SIZE))
 
 			# Left child:
 			for i in range(n_blocks):
-				block_examples_by_class = {c: ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in left_n_examples_by_class.iteritems()}
+				block_examples_by_class = {c: ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in left_n_examples_by_class.items()}
 				gini[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] = _gini_impurity(block_examples_by_class, multiply_by_node_proba=True)
 
 			# Right child:
 			for i in range(n_blocks):
-				block_examples_by_class = {c : ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in right_n_examples_by_class.iteritems()}
+				block_examples_by_class = {c : ex[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] for c, ex in right_n_examples_by_class.items()}
 				gini[i * BLOCK_SIZE : (i + 1) * BLOCK_SIZE] += _gini_impurity(block_examples_by_class, multiply_by_node_proba=True)
 
 			# Don't consider rules that lead to empty nodes
@@ -166,13 +166,13 @@ class DecisionTreeClassifier(object):
 
 		def _cross_entropy(n_class_examples, multiply_by_node_proba=False):
 			p_class_node = {c: 1.0*altered_priors[c]*n_class_examples[c]/n_total_class_examples[c] \
-											for c in n_class_examples.keys()}
+											for c in list(n_class_examples.keys())}
 
 			node_resubstitution_estimate = sum(p_class_node.values())
 			with np.errstate(divide='ignore', invalid='ignore'):
-				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in p_class_node.keys()}
+				p_class_given_node = {c: np.divide(p_class_node[c], node_resubstitution_estimate) for c in list(p_class_node.keys())}
 				diversity_index = -1.0 * sum([np.nan_to_num(p_class_given_node[c]*np.log(p_class_given_node[c])) \
-																						for c in p_class_given_node.keys()])
+																						for c in list(p_class_given_node.keys())])
 			return diversity_index * (node_resubstitution_estimate if multiply_by_node_proba else 1.0)
 
 		def _cross_entropy_rule_score(example_idx):
@@ -192,8 +192,8 @@ class DecisionTreeClassifier(object):
 			last_presence_rule_idx = int(1.0 * len(rules) / 2)  # Just because sum_rows returns pres/abs rules
 
 			left_count = {c:np.asarray(rule_classifications.sum_rows(example_idx[c])[: last_presence_rule_idx],dtype=np.float) \
-						for c in example_idx.keys() if example_idx[c].size}
-			right_count = {c:np.asarray(example_idx[c].shape[0] - left_count[c], dtype=np.float) for c in left_count.keys()}
+						for c in list(example_idx.keys()) if example_idx[c].size}
+			right_count = {c:np.asarray(example_idx[c].shape[0] - left_count[c], dtype=np.float) for c in list(left_count.keys())}
 
 			# Left child:
 			cross_entropy = _cross_entropy(left_count, multiply_by_node_proba=True)
@@ -244,8 +244,8 @@ class DecisionTreeClassifier(object):
 			# Dispatch the examples to the children nodes based on the splitting rule's predictions
 			rule_preds = rule_classifications.get_columns(selected_rule_idx)
 
-			left_child_example_idx_by_class = {c: example_idx[c][rule_preds[example_idx[c]] == 1] for c in example_idx.keys()}
-			right_child_example_idx_by_class = {c: example_idx[c][rule_preds[example_idx[c]] == 0] for c in example_idx.keys()}
+			left_child_example_idx_by_class = {c: example_idx[c][rule_preds[example_idx[c]] == 1] for c in list(example_idx.keys())}
+			right_child_example_idx_by_class = {c: example_idx[c][rule_preds[example_idx[c]] == 0] for c in list(example_idx.keys())}
 
 			return selected_rule_idx, best_rules_idx, left_child_example_idx_by_class, right_child_example_idx_by_class
 
@@ -282,7 +282,7 @@ class DecisionTreeClassifier(object):
 					break  # We have reached the nodes of the last level, which must remain leaves
 
 			# Check if the node to split is a pure leaf
-			if 1.0 in node.class_proportions.values():
+			if 1.0 in list(node.class_proportions.values()):
 				logging.debug("The leaf is pure. It will not be split.")
 				continue
 
@@ -305,8 +305,8 @@ class DecisionTreeClassifier(object):
 
 			# Perform the split
 			node.rule = rules[selected_rule_idx]
-			left_child_n_class_example = {c: len(idx) for c, idx in left_child_example_idx_by_class.items()}
-			right_child_n_class_example = {c: len(idx) for c, idx in right_child_example_idx_by_class.items()}
+			left_child_n_class_example = {c: len(idx) for c, idx in list(left_child_example_idx_by_class.items())}
+			right_child_n_class_example = {c: len(idx) for c, idx in list(right_child_example_idx_by_class.items())}
 
 			node.left_child = node_type(parent=node,
 										class_examples_idx=left_child_example_idx_by_class,
@@ -465,6 +465,6 @@ def _prune_tree(tree):
 	tree = deepcopy(tree)
 
 	logging.debug("Generating the sequence of pruned trees")
-	alphas, trees = zip(*_sequential_prune(tree))
+	alphas, trees = list(zip(*_sequential_prune(tree)))
 
 	return alphas, trees

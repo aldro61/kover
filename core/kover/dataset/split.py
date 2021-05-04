@@ -44,7 +44,7 @@ def split_with_ids(input, split_name, train_ids_file, test_ids_file, random_seed
     random_generator = np.random.RandomState(random_seed)
 
     dataset = KoverDataset(input)
-    idx_by_genome_id = dict(zip(dataset.genome_identifiers[...], range(dataset.genome_count)))
+    idx_by_genome_id = dict(list(zip(dataset.genome_identifiers[...], list(range(dataset.genome_count)))))
 
     # Validate that the genome identifiers refer to genomes in the dataset
     def _parse_ids(ids_file, learning_step):
@@ -198,7 +198,7 @@ def _split(dataset, split_name, random_generator, random_seed, train_idx, test_i
         fold_by_training_set_genome = np.arange(len(train_idx)) % n_folds
         random_generator.shuffle(fold_by_training_set_genome)
 
-        for fold in xrange(n_folds):
+        for fold in range(n_folds):
             logging.debug("Fold %d" % (fold + 1))
 
             fold_group = folds.create_group("fold_%d" % (fold + 1))

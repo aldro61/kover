@@ -144,7 +144,7 @@ class KoverDataset(object):
 														fold["test_genome_idx"],
 														fold["unique_risks"],
 														fold["unique_risk_by_kmer"],
-														fold["unique_risk_by_anti_kmer"]) for fold_name, fold in split["folds"].iteritems()],
+														fold["unique_risk_by_anti_kmer"]) for fold_name, fold in split["folds"].items()],
 								 split.attrs["random_seed"])
 
 class KoverDatasetPhenotype(object):

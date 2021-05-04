@@ -62,7 +62,7 @@ class KoverDatasetCreationTool(object):
         # Input validation logic
         if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
                         args.phenotype_description is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype description and metadata file must be specified."
+            print("Error: The phenotype description and metadata file must be specified.")
             exit()
 
         # Package imports
@@ -132,7 +132,7 @@ class KoverDatasetCreationTool(object):
         # Input validation logic
         if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
                         args.phenotype_description is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype description and metadata file must be specified."
+            print("Error: The phenotype description and metadata file must be specified.")
             exit()
 
         if args.verbose:
@@ -196,7 +196,7 @@ class KoverDatasetCreationTool(object):
         # Input validation logic
         if (args.phenotype_description is not None and args.phenotype_metadata is None) or (
                         args.phenotype_description is None and args.phenotype_metadata is not None):
-            print "Error: The phenotype description and metadata file must be specified."
+            print("Error: The phenotype description and metadata file must be specified.")
             exit()
 
         if args.verbose:
@@ -295,57 +295,57 @@ The two available data sources are:
         dataset = KoverDataset(dataset)
         #TODO check dataset version for new info types
         if args.genome_type or args.all:
-            print "Genome type:", dataset.genome_source_type
-            print
+            print("Genome type:", dataset.genome_source_type)
+            print()
         if args.genome_source or args.all:
-            print "Genome source:", dataset.genome_source
-            print
+            print("Genome source:", dataset.genome_source)
+            print()
         if args.genome_ids or args.all:
-            print "Genome IDs:"
+            print("Genome IDs:")
             for id in dataset.genome_identifiers:
-                print id
-            print
+                print(id)
+            print()
         if args.genome_count:
-            print "Genome count:", dataset.genome_count
-            print
+            print("Genome count:", dataset.genome_count)
+            print()
         if args.kmers or args.all:
-            print "Kmer sequences (fasta):"
+            print("Kmer sequences (fasta):")
             for i, k in enumerate(dataset.kmer_sequences):
-                print ">k%d" % (i + 1)
-                print k
-            print
+                print(">k%d" % (i + 1))
+                print(k)
+            print()
         if args.kmer_len or args.all:
-            print "K-mer length:", dataset.kmer_length
-            print
+            print("K-mer length:", dataset.kmer_length)
+            print()
         if args.kmer_count or args.all:
-            print "K-mer count:", dataset.kmer_count
-            print
+            print("K-mer count:", dataset.kmer_count)
+            print()
         if args.phenotype_description or args.all:
-            print "Phenotype description:", dataset.phenotype.description
-            print
+            print("Phenotype description:", dataset.phenotype.description)
+            print()
         if args.phenotype_metadata or args.all:
             if dataset.phenotype.description != "NA":
-                print "Phenotype metadata source:", dataset.phenotype.metadata_source
+                print("Phenotype metadata source:", dataset.phenotype.metadata_source)
             else:
-                print "No phenotype metadata."
-            print
+                print("No phenotype metadata.")
+            print()
         if args.phenotype_tags or args.all:
-            print "Phenotype tags: ", ", ".join(dataset.phenotype.tags)
-            print
+            print("Phenotype tags: ", ", ".join(dataset.phenotype.tags))
+            print()
         if args.compression or args.all:
-            print "Compression:", dataset.compression
-            print
+            print("Compression:", dataset.compression)
+            print()
         if args.classification_type or args.all:
-            print "Classification type:", dataset.classification_type
-            print
+            print("Classification type:", dataset.classification_type)
+            print()
         if args.splits or args.all:
             splits = dataset.splits
             if len(splits) > 0:
-                print "The following splits are available for learning:"
+                print("The following splits are available for learning:")
                 for split in splits:
-                    print split
+                    print(split)
             else:
-                print "There are no splits available for learning."
+                print("There are no splits available for learning.")
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
@@ -383,13 +383,13 @@ The two available data sources are:
 
         # Validate the number of cross-validation folds
         if args.folds == 1:
-            print "Error: The number of cross-validation folds must be 0 or >= 2."
+            print("Error: The number of cross-validation folds must be 0 or >= 2.")
             exit()
 
         # Validate that training and testing genome ids are both specified if one of them is specified
         if (args.train_ids is not None and args.test_ids is None) or \
                 (args.test_ids is not None and args.train_ids is None):
-            print "Error: Training and testing genome identifiers must be specified simultaneously."
+            print("Error: Training and testing genome identifiers must be specified simultaneously.")
             exit()
 
         # Package imports
@@ -513,19 +513,19 @@ class KoverLearningTool(object):
 
         # Check if the dataset is compatible
         if classification_type != "binary":
-                print "Error: The SCM cannot learn a multi-class classifier"
+                print("Error: The SCM cannot learn a multi-class classifier")
                 exit()
 
         # - Check that the split exists
         try:
             pre_dataset.get_split(args.split)
         except:
-            print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
+            print("Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split)
             exit()
         # - Must have at least 2 folds to perform cross-validation
         if args.hp_choice == "cv" and len(pre_dataset.get_split(args.split).folds) < 2:
-            print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
-                  "Use 'kover dataset split' to create folds."
+            print("Error: The split must contain at least 2 folds in order to perform cross-validation. " \
+                  "Use 'kover dataset split' to create folds.")
             exit()
         del pre_dataset
 
@@ -649,7 +649,7 @@ class KoverLearningTool(object):
         report += "\n"
 
         # Show the report
-        print report
+        print(report)
 
         # Create the output directory
         if not exists(args.output_dir):
@@ -681,7 +681,7 @@ class KoverLearningTool(object):
             json_dump(results, f)
 
         # Save command line arguments to json
-        config = dict((k, v) for k, v in args.__dict__.iteritems())
+        config = dict((k, v) for k, v in args.__dict__.items())
         config["dataset"] = abspath(config['dataset'])
         with open(join(args.output_dir, 'config.json'), 'w') as f:
             json_dump(config, f)
@@ -764,14 +764,14 @@ class KoverLearningTool(object):
         try:
             pre_dataset.get_split(args.split)
         except:
-            print "Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split
+            print("Error: The split (%s) does not exist in the dataset. Use 'kover dataset split' to create it." % args.split)
             exit()
 
 
         # - Must have at least 2 folds to perform cross-validation
         if args.hp_choice == "cv" and len(pre_dataset.get_split(args.split).folds) < 2:
-            print "Error: The split must contain at least 2 folds in order to perform cross-validation. " \
-                  "Use 'kover dataset split' to create folds."
+            print("Error: The split must contain at least 2 folds in order to perform cross-validation. " \
+                  "Use 'kover dataset split' to create folds.")
             exit()
 
         # Load classification task specifications
@@ -794,7 +794,7 @@ class KoverLearningTool(object):
                 try:
                     class_importance_input.index(class_name + ":")
                 except ValueError:
-                    print "Error: no class importances defined for class \"{}\" which is in the dataset.".format(class_name)
+                    print("Error: no class importances defined for class \"{}\" which is in the dataset.".format(class_name))
                     exit()
 
             # Check that no unknown classes were used
@@ -802,16 +802,16 @@ class KoverLearningTool(object):
                 try:
                     phenotype_tags.index(class_name)
                 except ValueError:
-                    print "Error: unknown class \"{}\" in class importances.".format(class_name)
+                    print("Error: unknown class \"{}\" in class importances.".format(class_name))
                     exit()
 
             # Check that there is at least one importance value for each class
-            for i in xrange(len(class_importance_input)):
+            for i in range(len(class_importance_input)):
                 if class_importance_input[i].endswith(":"):
                     try:
                         assert not class_importance_input[i + 1].endswith(":")
                     except:
-                        print "Error: no class importances defined for class {} which is in the dataset.".format(class_importance_input[i].replace(":", ""))
+                        print("Error: no class importances defined for class {} which is in the dataset.".format(class_importance_input[i].replace(":", "")))
                         exit()
 
             # Check that all importances specified are valid floats
@@ -820,7 +820,7 @@ class KoverLearningTool(object):
                     try:
                         float(v)
                     except ValueError:
-                        print "Error: invalid value \"{}\" encountered in class importances.".format(v)
+                        print("Error: invalid value \"{}\" encountered in class importances.".format(v))
                         exit()
 
             # ---- Input is valid ----
@@ -834,8 +834,8 @@ class KoverLearningTool(object):
                     class_importances[phenotype_tags.index(current_class)].append(float(v))
 
             # Make a list of dictionnaries giving every possible combination of importances
-            grid_classes = class_importances.keys()
-            grid = product(*class_importances.values())
+            grid_classes = list(class_importances.keys())
+            grid = product(*list(class_importances.values()))
             class_importances = [{c: importance for c, importance in zip(grid_classes, grid_row)} for grid_row in grid]
 
             return np.unique(class_importances)
@@ -1006,7 +1006,7 @@ class KoverLearningTool(object):
         report += str(model) + "\n"
         report += "\n"
 
-        print report
+        print(report)
 
         if not exists(args.output_dir):
             mkdir(args.output_dir)
@@ -1075,8 +1075,7 @@ class CommandLineInterface(object):
             args = parser.parse_args([argv[1], "learn"])
 
             if args.license:
-                print \
-"""
+                print("""
 Kover: Learn interpretable computational phenotyping models from k-merized genomic data
 Copyright (C) 2019  Alexandre Drouin
 
@@ -1092,14 +1091,13 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+""")
             elif args.version:
-                print "cli-%s" % VERSION
-                print "core-%s" % get_distribution('kover').version
+                print("cli-%s" % VERSION)
+                print("core-%s" % get_distribution('kover').version)
 
             elif args.cite:
-                print \
-"""If you used Kover in your work, please cite our papers:
+                print("""If you used Kover in your work, please cite our papers:
 
 Drouin, A., Letarte, G., Raymond, F., Marchand, M., Corbeil, J., & Laviolette, F. (2019). Interpretable genotype-to-phenotype classifiers with performance guarantees. Scientific reports, 9(1), 4071.
 
@@ -1139,11 +1137,11 @@ issn="1471-2164",
 doi="10.1186/s12864-016-2889-6",
 url="http://dx.doi.org/10.1186/s12864-016-2889-6"
 }
-"""
+""")
         else:
             args = parser.parse_args(argv[1:2])
             if not hasattr(self, args.command):
-                print 'kover: \'%s\' is not a kover command. See \'%s --help\'.' % (args.command, argv[0])
+                print('kover: \'%s\' is not a kover command. See \'%s --help\'.' % (args.command, argv[0]))
 
                 parser.print_help()
                 exit(1)
