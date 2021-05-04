@@ -121,7 +121,7 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     def get_kmer_length(tsv_path):
         with open(tsv_path, "r") as f:
             next(f)
-            kmer_len = len(f.next().split("\t")[0])
+            kmer_len = len(next(f).split("\t")[0])
         return kmer_len
 
     def get_kmer_count(tsv):
