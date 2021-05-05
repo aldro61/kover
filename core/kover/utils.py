@@ -76,14 +76,14 @@ def _fasta_to_sequences(path):
     
     
 def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
-    fid = h.h5f.open(filename, access_type)
+    fid = h.h5f.open(bytes(filename, encoding="utf-8"), access_type)
     access_property_list = fid.get_access_plist()
     cache_properties = list(access_property_list.get_cache())
     fid.close()
     # Disable chunk caching
     cache_properties[2] = 0  # No chunk caching
     access_property_list.set_cache(*cache_properties)
-    file_id = h.h5f.open(filename, access_type, fapl=access_property_list)
+    file_id = h.h5f.open(bytes(filename, encoding="utf-8"), access_type, fapl=access_property_list)
     return h.File(file_id)
 
 

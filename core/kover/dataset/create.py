@@ -46,7 +46,7 @@ def _create_hdf5_file_no_chunk_caching(path):
     h5py_file = h.File(path, "w")
 
     # Get the default cache properties
-    access_property_list = h5py_file.fid.get_access_plist()
+    access_property_list = h5py_file._id.get_access_plist()
     cache_properties = list(access_property_list.get_cache())
 
     h5py_file.close()
@@ -54,7 +54,7 @@ def _create_hdf5_file_no_chunk_caching(path):
     # Disable chunk caching
     cache_properties[2] = 0  # No chunk caching
     access_property_list.set_cache(*cache_properties)
-    file_id = h.h5f.open(path, h.h5f.ACC_RDWR, fapl=access_property_list)
+    file_id = h.h5f.open(bytes(path, encoding="utf-8"), h.h5f.ACC_RDWR, fapl=access_property_list)
 
     # Reopen the file without a chunk cache
     h5py_file = h.File(file_id)
@@ -200,14 +200,14 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     # Write genome ids
     logging.debug("Creating the genome identifier dataset.")
     h5py_file.create_dataset("genome_identifiers",
-                             data=genome_ids,
+                             data=genome_ids.astype(h.string_dtype(length=len(genome_ids[0]))),
                              compression=compression,
                              compression_opts=compression_opts)
 
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
     h5py_file.create_dataset("phenotype_tags",
-                             data=labels_tags,
+                             data=labels_tags.astype(h.string_dtype()),
                              compression=compression,
                              compression_opts=compression_opts)
 

@@ -56,7 +56,8 @@ class KoverDataset(object):
 	@property
 	def genome_identifiers(self):
 		dataset = self.dataset_open()
-		return dataset["genome_identifiers"]
+		for gid in dataset["genome_identifiers"]:
+			yield gid.decode("utf-8")
 
 	@property
 	def genome_source(self):
@@ -91,7 +92,8 @@ class KoverDataset(object):
 	@property
 	def kmer_sequences(self):
 		dataset = self.dataset_open()
-		return dataset["kmer_sequences"]
+		for km in dataset["kmer_sequences"]:
+			yield km.decode("utf-8")
 
 	@property
 	def phenotype(self):
@@ -103,7 +105,7 @@ class KoverDataset(object):
 			description = dataset.attrs["phenotype_name"]
 
 		try:
-			tags = dataset["phenotype_tags"]
+			tags = dataset["phenotype_tags"][...].astype(np.str)
 		except:
 			tags = np.array(['0', '1'])
 
