@@ -1,15 +1,21 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install system requirements
 RUN apt-get update
-RUN apt-get -y install cmake git hdf5-tools python2.7 python-pip unzip wget zlib1g-dev
+RUN apt-get -y install build-essential cmake curl git hdf5-tools nano software-properties-common unzip wget zlib1g-dev
 
-# Install python requirements
-RUN pip install --upgrade pip
-RUN pip install cython numpy scipy
+# Install Python 2 (needed for Kover)
+RUN add-apt-repository universe && \
+    apt-get -y install python2.7 python-dev && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python2.7 30 && \
+    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py && \
+    python ./get-pip.py
 
-# Install Kover
-ADD https://github.com/aldro61/kover/zipball/kover2 kover.zip
-RUN unzip kover.zip && mv aldro61* kover
-RUN cd kover; sh ./install.sh
+# Install Kover and requirements
+COPY . kover
+RUN pip install --upgrade pip cython numpy scipy
+    cd kover && \
+    sh ./install.sh
 ENV PATH="/kover/bin:${PATH}"
