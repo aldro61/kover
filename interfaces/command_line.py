@@ -346,6 +346,8 @@ The two available data sources are:
                     print(split)
             else:
                 print("There are no splits available for learning.")
+        if args.uuid or args.all:
+            print("UUID:", dataset.uuid)
 
     def split(self):
         parser = argparse.ArgumentParser(prog="kover dataset split",
