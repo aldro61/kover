@@ -27,7 +27,7 @@ from functools import partial
 from itertools import product
 from math import ceil, exp, log as ln, pi, sqrt
 from multiprocessing import Pool, cpu_count
-from scipy.misc import comb
+from scipy.special import comb
 
 from ...dataset.ds import KoverDataset
 from ..learners.cart import DecisionTreeClassifier, _prune_tree

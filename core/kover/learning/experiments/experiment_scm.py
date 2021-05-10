@@ -26,7 +26,7 @@ from functools import partial
 from itertools import product
 from math import exp, log as ln, pi
 from multiprocessing import Pool, cpu_count
-from scipy.misc import comb
+from scipy.special import comb
 
 from ...dataset.ds import KoverDataset
 from ..common.models import ConjunctionModel, DisjunctionModel
