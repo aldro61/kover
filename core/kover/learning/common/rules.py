@@ -215,11 +215,11 @@ class KmerRuleClassifications(BaseRuleClassifications):
             masks = [0] * n_masks
 
             for idx in example_idx:
-                example_mask = idx / mask_n_bits
+                example_mask = idx // mask_n_bits
                 example_mask_idx = mask_n_bits - (idx - mask_n_bits * example_mask) - 1
                 masks[example_mask] |= 1 << example_mask_idx
 
-            return np.array(masks, dtype="u" + str(mask_n_bits / 8))
+            return np.array(masks, dtype="u" + str(mask_n_bits // 8))
 
         # Find the rows that occur in each dataset and their relative index
         rows = np.sort(rows)
