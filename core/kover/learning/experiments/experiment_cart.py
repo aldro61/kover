@@ -33,7 +33,12 @@ from ...dataset.ds import KoverDataset
 from ..learners.cart import DecisionTreeClassifier, _prune_tree
 from ..common.models import CARTModel
 from ..common.rules import LazyKmerRuleList, KmerRuleClassifications
-from ...utils import _duplicate_last_element, _init_callback_functions, _unpack_binary_bytes_from_ints, _parse_kmer_blacklist
+from ...utils import (
+    _duplicate_last_element,
+    _init_callback_functions,
+    _unpack_binary_bytes_from_ints,
+    _parse_kmer_blacklist,
+)
 from ..experiments.metrics import _get_binary_metrics, _get_multiclass_metrics
 
 
@@ -46,8 +51,9 @@ class BetweenDict(dict):
     By: Joshua Kugler
     Source: http://joshuakugler.com/archives/30-BetweenDict,-a-Python-dict-for-value-ranges.html
     """
-    def __init__(self, d = {}):
-        for k,v in list(d.items()):
+
+    def __init__(self, d={}):
+        for k, v in list(d.items()):
             self[k] = v
 
     def __getitem__(self, key):
@@ -62,15 +68,15 @@ class BetweenDict(dict):
                 if key[0] < key[1]:
                     dict.__setitem__(self, (key[0], key[1]), value)
                 else:
-                    raise RuntimeError('First element of a BetweenDict key '
-                                       'must be strictly less than the '
-                                       'second element. Got [%.6f, %.6f]' % (key[0], key[1]))
+                    raise RuntimeError(
+                        "First element of a BetweenDict key "
+                        "must be strictly less than the "
+                        "second element. Got [%.6f, %.6f]" % (key[0], key[1])
+                    )
             else:
-                raise ValueError('Key of a BetweenDict must be an iterable '
-                                 'with length two')
+                raise ValueError("Key of a BetweenDict must be an iterable " "with length two")
         except TypeError:
-            raise TypeError('Key of a BetweenDict must be an iterable '
-                             'with length two')
+            raise TypeError("Key of a BetweenDict must be an iterable " "with length two")
 
     def __contains__(self, key):
         try:
@@ -112,6 +118,7 @@ def _readdress_tree(tree, rule_new_idx_by_kmer_seq):
             node.rule.kmer_index = kmer_idx[node.rule.kmer_sequence]
             _readdress(node.left_child, kmer_idx)
             _readdress(node.right_child, kmer_idx)
+
     new_tree = deepcopy(tree)
     _readdress(new_tree, rule_new_idx_by_kmer_seq)
     return new_tree
@@ -136,7 +143,9 @@ def _predictions(decision_tree, kmer_matrix, train_example_idx, test_example_idx
         kmer_idx_by_rule = kmer_idx_by_rule[sort_by_idx]
         kmer_sequence_by_rule = kmer_sequence_by_rule[sort_by_idx]
         readdressed_kmer_idx_by_rule = dict((s, i) for i, s in enumerate(kmer_sequence_by_rule))
-        readdressed_decision_tree = _readdress_tree(tree=decision_tree, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule)
+        readdressed_decision_tree = _readdress_tree(
+            tree=decision_tree, rule_new_idx_by_kmer_seq=readdressed_kmer_idx_by_rule
+        )
         X = np.vstack((_unpack_binary_bytes_from_ints(kmer_matrix[:, idx]) for idx in kmer_idx_by_rule)).T
         train_predictions = readdressed_decision_tree.predict(X[train_example_idx])
         progress_callback("Testing", 1.0 * len(train_example_idx) / (len(train_example_idx) + len(test_example_idx)))
@@ -152,8 +161,9 @@ def _predictions(decision_tree, kmer_matrix, train_example_idx, test_example_idx
     return train_predictions, test_predictions
 
 
-def _bound(train_predictions, train_answers, train_example_idx, model, delta,
-           max_genome_size, rule_classifications, n_classes):
+def _bound(
+    train_predictions, train_answers, train_example_idx, model, delta, max_genome_size, rule_classifications, n_classes
+):
     """
     Calculate the value of the sample compression bound for a given decision tree
 
@@ -189,20 +199,24 @@ def _bound(train_predictions, train_answers, train_example_idx, model, delta,
     Z_card = float(len(compression_set))  # Number of examples in the compression set
     N_Z = Z_card * max_genome_size  # Number of nucleotides in the compression set
     # Number of errors on examples not in the compression set
-    r = float((train_predictions != train_answers).sum() - (train_predictions[compression_set] != train_answers[compression_set]).sum())
+    r = float(
+        (train_predictions != train_answers).sum()
+        - (train_predictions[compression_set] != train_answers[compression_set]).sum()
+    )
     n = float(len(model.rules))
 
     # Sample-compression bound value
-    return 1.0 - exp((-1.0 / (m - Z_card - r)) * (ln(comb(m, Z_card, exact=True)) +
-                                                  ln(comb(m - Z_card, r, exact=True)) +
-                                                  (n * ln(N_Z) if n > 0 else 0.) +
-                                                  (n + 1) * ln(n_classes) +
-                                                  ln(comb(2 * n + 1, n, exact=True)) +
-                                                  ln(pi**6 *
-                                                  (n + 1)**2 *
-                                                  (r + 1)**2 *
-                                                  (Z_card + 1)**2 /
-                                                  (216 * delta))))
+    return 1.0 - exp(
+        (-1.0 / (m - Z_card - r))
+        * (
+            ln(comb(m, Z_card, exact=True))
+            + ln(comb(m - Z_card, r, exact=True))
+            + (n * ln(N_Z) if n > 0 else 0.0)
+            + (n + 1) * ln(n_classes)
+            + ln(comb(2 * n + 1, n, exact=True))
+            + ln(pi ** 6 * (n + 1) ** 2 * (r + 1) ** 2 * (Z_card + 1) ** 2 / (216 * delta))
+        )
+    )
 
 
 def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_size, rule_blacklist):
@@ -249,42 +263,51 @@ def _learn_pruned_tree_bound(hps, dataset_file, split_name, delta, max_genome_si
     rule_classifications = KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count)
 
     # Initialize the tree to be grown
-    master_predictor = DecisionTreeClassifier(criterion=hps["criterion"],
-                                              max_depth=hps["max_depth"],
-                                              min_samples_split=hps["min_samples_split"],
-                                              class_importance=hps["class_importance"])
+    master_predictor = DecisionTreeClassifier(
+        criterion=hps["criterion"],
+        max_depth=hps["max_depth"],
+        min_samples_split=hps["min_samples_split"],
+        class_importance=hps["class_importance"],
+    )
 
     # Build an overgrown decision tree on the entire dataset
     logging.debug("Growing the overgrown master tree")
-    master_predictor.fit(rules=rules,
-                         rule_classifications=rule_classifications,
-                         example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
-                                           for c in range(n_classes)},
-                         rule_blacklist=rule_blacklist,
-                         tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
-                         level_callback=None,
-                         split_callback=_split_callback)
+    master_predictor.fit(
+        rules=rules,
+        rule_classifications=rule_classifications,
+        example_idx={c: split.train_genome_idx[example_labels[split.train_genome_idx] == c] for c in range(n_classes)},
+        rule_blacklist=rule_blacklist,
+        tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
+        level_callback=None,
+        split_callback=_split_callback,
+    )
 
     logging.debug("Pruning the master tree using minimum cost-complexity pruning and the sample-compression bound")
     min_score = np.infty
     min_score_tree = None
     train_answers = example_labels[split.train_genome_idx]
     for alpha, tree in zip(*_prune_tree(master_predictor.decision_tree)):
-        train_predictions = _predictions(decision_tree=tree,
-                                         kmer_matrix=dataset.kmer_matrix,
-                                         train_example_idx=split.train_genome_idx,
-                                         test_example_idx=[])[0]
+        train_predictions = _predictions(
+            decision_tree=tree,
+            kmer_matrix=dataset.kmer_matrix,
+            train_example_idx=split.train_genome_idx,
+            test_example_idx=[],
+        )[0]
 
-        bound_value = _bound(train_predictions=train_predictions,
-                             train_answers=train_answers,
-                             train_example_idx=split.train_genome_idx,
-                             model=tree,
-                             delta=delta,
-                             max_genome_size=max_genome_size,
-                             rule_classifications=KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count),
-                             n_classes=len(dataset.phenotype.tags))
+        bound_value = _bound(
+            train_predictions=train_predictions,
+            train_answers=train_answers,
+            train_example_idx=split.train_genome_idx,
+            model=tree,
+            delta=delta,
+            max_genome_size=max_genome_size,
+            rule_classifications=KmerRuleClassifications(dataset.kmer_matrix, dataset.genome_count),
+            n_classes=len(dataset.phenotype.tags),
+        )
 
-        if bound_value <= min_score:  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
+        if (
+            bound_value <= min_score
+        ):  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
             min_score = bound_value
             min_score_tree = tree
             hps["pruning_alpha"] = alpha  # Save the best value of alpha
@@ -340,16 +363,22 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
 
     # Initialize the trees to be grown
     logging.debug("Planting seeds")
-    fold_predictors = [DecisionTreeClassifier(criterion=hps["criterion"],
-                                              max_depth=hps["max_depth"],
-                                              min_samples_split=hps["min_samples_split"],
-                                              class_importance=hps["class_importance"])
-                                              for _ in range(len(split.folds))]
+    fold_predictors = [
+        DecisionTreeClassifier(
+            criterion=hps["criterion"],
+            max_depth=hps["max_depth"],
+            min_samples_split=hps["min_samples_split"],
+            class_importance=hps["class_importance"],
+        )
+        for _ in range(len(split.folds))
+    ]
 
-    master_predictor = DecisionTreeClassifier(criterion=hps["criterion"],
-                                              max_depth=hps["max_depth"],
-                                              min_samples_split=hps["min_samples_split"],
-                                              class_importance=hps["class_importance"])
+    master_predictor = DecisionTreeClassifier(
+        criterion=hps["criterion"],
+        max_depth=hps["max_depth"],
+        min_samples_split=hps["min_samples_split"],
+        class_importance=hps["class_importance"],
+    )
 
     # For each fold, build an overgrown decision tree
     logging.debug("Growing the cross-validation fold trees")
@@ -360,25 +389,29 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
         fold.test_genome_idx = fold.test_genome_idx[...]
 
         # Fit the decision tree
-        fold_predictors[i].fit(rules=rules,
-                               rule_classifications=rule_classifications,
-                               example_idx = {c: fold.train_genome_idx[example_labels[fold.train_genome_idx] == c]\
-                                                                                            for c in range(n_classes)},
-                               rule_blacklist=rule_blacklist,
-                               tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(fold.train_genome_idx)),
-                               level_callback=None,
-                               split_callback=None)
+        fold_predictors[i].fit(
+            rules=rules,
+            rule_classifications=rule_classifications,
+            example_idx={
+                c: fold.train_genome_idx[example_labels[fold.train_genome_idx] == c] for c in range(n_classes)
+            },
+            rule_blacklist=rule_blacklist,
+            tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(fold.train_genome_idx)),
+            level_callback=None,
+            split_callback=None,
+        )
 
     # Also build an overgrown decision tree on the entire dataset
     logging.debug("Growing the master tree")
-    master_predictor.fit(rules=rules,
-                         rule_classifications=rule_classifications,
-                         example_idx = {c: split.train_genome_idx[example_labels[split.train_genome_idx] == c]\
-                                                                                            for c in range(n_classes)},
-                         rule_blacklist=rule_blacklist,
-                         tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
-                         level_callback=None,
-                         split_callback=_split_callback)
+    master_predictor.fit(
+        rules=rules,
+        rule_classifications=rule_classifications,
+        example_idx={c: split.train_genome_idx[example_labels[split.train_genome_idx] == c] for c in range(n_classes)},
+        rule_blacklist=rule_blacklist,
+        tiebreaker=partial(_tiebreaker, rule_kmer_occurrences=rule_classifications.sum_rows(split.train_genome_idx)),
+        level_callback=None,
+        split_callback=_split_callback,
+    )
 
     # Get the pruned master and cross-validation trees
     master_alphas, master_pruned_trees = _prune_tree(master_predictor.decision_tree)
@@ -397,11 +430,15 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
         fold_test_risks = []
         bro = BetweenDict()
         for j, t in enumerate(fold_pruned_trees[i]):
-            fold_test_risk = _get_binary_metrics(predictions=_predictions(decision_tree=t,
-                                                                          kmer_matrix=dataset.kmer_matrix,
-                                                                          train_example_idx=[],
-                                                                          test_example_idx=fold_test_example_idx)[1],
-                                                 answers=fold_example_labels)["risk"][0]
+            fold_test_risk = _get_binary_metrics(
+                predictions=_predictions(
+                    decision_tree=t,
+                    kmer_matrix=dataset.kmer_matrix,
+                    train_example_idx=[],
+                    test_example_idx=fold_test_example_idx,
+                )[1],
+                answers=fold_example_labels,
+            )["risk"][0]
 
             fold_test_risks.append(fold_test_risk)
             if j < len(fold_alphas[i]) - 1:
@@ -425,7 +462,9 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
 
         cv_score = np.mean([fold_scores_by_alpha[j][geo_mean_alpha_k] for j in range(len(split.folds))])
 
-        if cv_score <= min_score:  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
+        if (
+            cv_score <= min_score
+        ):  # Note: assumes that alphas are sorted in increasing order (so we are always preferring trees that are more pruned)
             min_score = cv_score
             min_score_tree = t
             hps["pruning_alpha"] = geo_mean_alpha_k  # Save the best value of alpha
@@ -434,9 +473,21 @@ def _learn_pruned_tree_cv(hps, dataset_file, split_name, rule_blacklist):
     return hps, min_score, min_score_tree
 
 
-def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
-               min_samples_split, rule_blacklist, n_cpu, progress_callback,
-               warning_callback, error_callback, hp_search_func, hp_search_type):
+def train_tree(
+    dataset_file,
+    split_name,
+    criterion,
+    class_importance,
+    max_depth,
+    min_samples_split,
+    rule_blacklist,
+    n_cpu,
+    progress_callback,
+    warning_callback,
+    error_callback,
+    hp_search_func,
+    hp_search_type,
+):
     """
     Train a decision tree classifier with the best hyperparameter values, which
     are selected according to hp_search_func.
@@ -448,20 +499,22 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
 
     logging.debug("Using %d CPUs." % n_cpu)
     pool = Pool(n_cpu)
-    _hp_eval_func = partial(hp_search_func, dataset_file=dataset_file, split_name=split_name, rule_blacklist=rule_blacklist)
+    _hp_eval_func = partial(
+        hp_search_func, dataset_file=dataset_file, split_name=split_name, rule_blacklist=rule_blacklist
+    )
     best_hps = None
     best_score = np.infty
     best_master_tree = None
 
     n_completed = 0.0
     progress_callback(hp_search_type.title(), 0.0)
-    for hps, score, master_tree in pool.imap_unordered(_hp_eval_func,
-                                                ({"criterion": hps[0],
-                                                  "class_importance": hps[1],
-                                                  "max_depth": hps[2],
-                                                  "min_samples_split": hps[3]}
-                                                  for hps in product(criterion, class_importance, max_depth,
-                                                                     min_samples_split))):
+    for hps, score, master_tree in pool.imap_unordered(
+        _hp_eval_func,
+        (
+            {"criterion": hps[0], "class_importance": hps[1], "max_depth": hps[2], "min_samples_split": hps[3]}
+            for hps in product(criterion, class_importance, max_depth, min_samples_split)
+        ),
+    ):
 
         # XXX: master_tree is the pruned decision tree learned on the entire training set (no need to retrain later)
         n_completed += 1
@@ -477,15 +530,16 @@ def train_tree(dataset_file, split_name, criterion, class_importance, max_depth,
             #      1. Pick the smallest tree
             #      2. Pick the tree with the least variance in the class importances
             #      Note: max_depth and min_samples_split are not specified as they are implied by rule 1
-            if (master_tree_length < best_master_tree_length) or \
-               (master_tree_length == best_master_tree_length and np.var(list(hps["class_importance"].values())) < np.var(list(best_hps["class_importance"].values()))):
+            if (master_tree_length < best_master_tree_length) or (
+                master_tree_length == best_master_tree_length
+                and np.var(list(hps["class_importance"].values())) < np.var(list(best_hps["class_importance"].values()))
+            ):
                 best_hps = hps
                 best_master_tree = best_master_tree
                 best_score = score
 
-
     return best_score, best_hps, best_master_tree
-    
+
 
 def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
     """
@@ -501,40 +555,58 @@ def _find_rule_blacklist(dataset_file, kmer_blacklist_file, warning_callback):
         if kmers_to_blacklist:
             # XXX: the k-mers are assumed to be upper-cased in the dataset
             kmer_sequences = dataset.kmer_sequences[...].tolist()
-            kmer_by_matrix_column = dataset.kmer_by_matrix_column[...].tolist() # XXX: each k-mer is there only once (see wiki)
+            kmer_by_matrix_column = dataset.kmer_by_matrix_column[
+                ...
+            ].tolist()  # XXX: each k-mer is there only once (see wiki)
             n_kmers = len(kmer_sequences)
 
             kmers_not_found = []
             for k in kmers_to_blacklist:
                 k = k.upper()
                 try:
-                    rule_blacklist.append(kmer_by_matrix_column.index(kmer_sequences.index(k))) # XXX: We only consider presence rules
+                    rule_blacklist.append(
+                        kmer_by_matrix_column.index(kmer_sequences.index(k))
+                    )  # XXX: We only consider presence rules
                 except ValueError:
                     kmers_not_found.append(k)
 
-            if(len(kmers_not_found) > 0):
+            if len(kmers_not_found) > 0:
                 warning_callback("The following kmers could not be found in the dataset: " + ", ".join(kmers_not_found))
 
     return rule_blacklist
 
 
-def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split,
-               class_importance, bound_delta, bound_max_genome_size, kmer_blacklist_file,
-               parameter_selection, n_cpu, authorized_rules,
-               progress_callback=None, warning_callback=None, error_callback=None):
+def learn_CART(
+    dataset_file,
+    split_name,
+    criterion,
+    max_depth,
+    min_samples_split,
+    class_importance,
+    bound_delta,
+    bound_max_genome_size,
+    kmer_blacklist_file,
+    parameter_selection,
+    n_cpu,
+    authorized_rules,
+    progress_callback=None,
+    warning_callback=None,
+    error_callback=None,
+):
     """
     Cross-validate the best hyper-parameters (criterion, max_depth, min_samples_split and class_importance)
     to grow a pruned decision tree.
 
     """
     # Initialize callback functions
-    warning_callback, error_callback, progress_callback = _init_callback_functions(warning_callback, error_callback,
-                                                                                   progress_callback)
+    warning_callback, error_callback, progress_callback = _init_callback_functions(
+        warning_callback, error_callback, progress_callback
+    )
     logging.debug("Searching for blacklisted rules.")
-    rule_blacklist = _find_rule_blacklist(dataset_file=dataset_file,
-                                          kmer_blacklist_file=kmer_blacklist_file,
-                                          warning_callback=warning_callback)
-                                          
+    rule_blacklist = _find_rule_blacklist(
+        dataset_file=dataset_file, kmer_blacklist_file=kmer_blacklist_file, warning_callback=warning_callback
+    )
+
     # Load the dataset info
     dataset = KoverDataset(dataset_file)
 
@@ -547,42 +619,43 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     min_samples_split = np.unique(min_samples_split)
 
     if parameter_selection == "bound":
-        func = partial(_learn_pruned_tree_bound, delta=bound_delta,
-                                                 max_genome_size=bound_max_genome_size)
-        best_hp_score, best_hps, best_master_tree = \
-            train_tree(hp_search_func=func,
-                       hp_search_type="bound selection",
-                       dataset_file=dataset_file,
-                       split_name=split_name,
-                       criterion=criterion,
-                       class_importance=class_importance,
-                       max_depth=max_depth,
-                       min_samples_split=min_samples_split,
-                       rule_blacklist=rule_blacklist,
-                       n_cpu=n_cpu,
-                       progress_callback=progress_callback,
-                       warning_callback=warning_callback,
-                       error_callback=error_callback)
+        func = partial(_learn_pruned_tree_bound, delta=bound_delta, max_genome_size=bound_max_genome_size)
+        best_hp_score, best_hps, best_master_tree = train_tree(
+            hp_search_func=func,
+            hp_search_type="bound selection",
+            dataset_file=dataset_file,
+            split_name=split_name,
+            criterion=criterion,
+            class_importance=class_importance,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            rule_blacklist=rule_blacklist,
+            n_cpu=n_cpu,
+            progress_callback=progress_callback,
+            warning_callback=warning_callback,
+            error_callback=error_callback,
+        )
 
     elif parameter_selection == "cv":
         n_folds = len(dataset.get_split(split_name).folds)
         if n_folds < 1:
             error_callback(Exception("Cross-validation cannot be performed on a split with no folds."))
 
-        best_hp_score, best_hps, best_master_tree = \
-            train_tree(hp_search_func=_learn_pruned_tree_cv,
-                       hp_search_type="cross-validation",
-                       dataset_file=dataset_file,
-                       split_name=split_name,
-                       criterion=criterion,
-                       class_importance=class_importance,
-                       max_depth=max_depth,
-                       min_samples_split=min_samples_split,
-                       rule_blacklist=rule_blacklist,
-                       n_cpu=n_cpu,
-                       progress_callback=progress_callback,
-                       warning_callback=warning_callback,
-                       error_callback=error_callback)
+        best_hp_score, best_hps, best_master_tree = train_tree(
+            hp_search_func=_learn_pruned_tree_cv,
+            hp_search_type="cross-validation",
+            dataset_file=dataset_file,
+            split_name=split_name,
+            criterion=criterion,
+            class_importance=class_importance,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            rule_blacklist=rule_blacklist,
+            n_cpu=n_cpu,
+            progress_callback=progress_callback,
+            warning_callback=warning_callback,
+            error_callback=error_callback,
+        )
 
     else:
         error_callback(ValueError("Unknown hyperparameter selection strategy specified."))
@@ -597,11 +670,13 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     phenotype_tags = dataset.phenotype.tags[...]
 
     # Using the best hyperparameters, compute predictions and metrics
-    train_predictions, test_predictions = _predictions(decision_tree=best_master_tree,
-                                                       kmer_matrix=dataset.kmer_matrix,
-                                                       train_example_idx=split.train_genome_idx,
-                                                       test_example_idx=split.test_genome_idx,
-                                                       progress_callback=progress_callback)
+    train_predictions, test_predictions = _predictions(
+        decision_tree=best_master_tree,
+        kmer_matrix=dataset.kmer_matrix,
+        train_example_idx=split.train_genome_idx,
+        test_example_idx=split.test_genome_idx,
+        progress_callback=progress_callback,
+    )
 
     train_answers = example_labels[split.train_genome_idx]
     test_answers = example_labels[split.test_genome_idx]
@@ -620,15 +695,27 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
 
     # Get the idx of the training/testing examples that are correctly/incorrectly classified by the model
     classifications = defaultdict(list)
-    classifications["train_correct"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions == \
-                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] < 1.0 else []
-    classifications["train_errors"] = dataset.genome_identifiers[split.train_genome_idx[train_predictions != \
-                                                train_answers].tolist()].tolist() if train_metrics["risk"][0] > 0 else []
+    classifications["train_correct"] = (
+        dataset.genome_identifiers[split.train_genome_idx[train_predictions == train_answers].tolist()].tolist()
+        if train_metrics["risk"][0] < 1.0
+        else []
+    )
+    classifications["train_errors"] = (
+        dataset.genome_identifiers[split.train_genome_idx[train_predictions != train_answers].tolist()].tolist()
+        if train_metrics["risk"][0] > 0
+        else []
+    )
     if len(split.test_genome_idx) > 0:
-        classifications["test_correct"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions == \
-                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] < 1.0 else []
-        classifications["test_errors"] = dataset.genome_identifiers[split.test_genome_idx[test_predictions != \
-                                                test_answers].tolist()].tolist() if test_metrics["risk"][0] > 0 else []
+        classifications["test_correct"] = (
+            dataset.genome_identifiers[split.test_genome_idx[test_predictions == test_answers].tolist()].tolist()
+            if test_metrics["risk"][0] < 1.0
+            else []
+        )
+        classifications["test_errors"] = (
+            dataset.genome_identifiers[split.test_genome_idx[test_predictions != test_answers].tolist()].tolist()
+            if test_metrics["risk"][0] > 0
+            else []
+        )
 
     best_model = CARTModel(class_tags=phenotype_tags)
     best_model.decision_tree = best_master_tree
@@ -641,6 +728,13 @@ def learn_CART(dataset_file, split_name, criterion, max_depth, min_samples_split
     rule_importance_sum = float(sum(r.importance for r in best_master_tree.rules))
     rule_importances = {r: r.importance / rule_importance_sum for r in best_master_tree.rules}
 
-    return best_hps, best_hp_score, train_metrics, test_metrics, best_model,\
-           rule_importances, model_equivalent_rules, \
-           classifications
+    return (
+        best_hps,
+        best_hp_score,
+        train_metrics,
+        test_metrics,
+        best_model,
+        rule_importances,
+        model_equivalent_rules,
+        classifications,
+    )

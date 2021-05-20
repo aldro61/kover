@@ -64,17 +64,17 @@ def _create_hdf5_file_no_chunk_caching(path):
 
 def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_callback):
     """
-	Parses metadata (genome_id{tab}label)
-	"""
+    Parses metadata (genome_id{tab}label)
+    """
     logging.debug("Parsing metadata.")
     md_genome_ids, md_genome_labels = list(zip(*(l.split() for l in open(metadata_path, "r"))))
     md_unique_labels, indices = np.unique(md_genome_labels, return_inverse=True)
 
     # Check case label are 0 and 1 (To be backward compatible with Kover previous dataset creation version)
-    if not(len(md_unique_labels) == 2 and '0' in md_unique_labels and '1' in md_unique_labels):
+    if not (len(md_unique_labels) == 2 and "0" in md_unique_labels and "1" in md_unique_labels):
         # Sorting labels alphabetically for consistent indices assignement across multiple datasets
         md_unique_labels.sort()
-        label_to_indice = {md_unique_labels[l]:l for l in range(len(md_unique_labels))}
+        label_to_indice = {md_unique_labels[l]: l for l in range(len(md_unique_labels))}
         indices = np.array([label_to_indice[l] for l in md_genome_labels])
 
     if len(md_unique_labels) < 2:
@@ -99,25 +99,48 @@ def _parse_metadata(metadata_path, matrix_genome_ids, warning_callback, error_ca
 
     genomes_only_in_matrix = set(matrix_genome_ids) - set(md_genome_ids)
     if len(genomes_only_in_matrix) > 0:
-        warning_callback("Missing metadata for %d genomes (%s). These genomes will be discarded." % (
-            len(genomes_only_in_matrix), ", ".join(genomes_only_in_matrix)))
+        warning_callback(
+            "Missing metadata for %d genomes (%s). These genomes will be discarded."
+            % (len(genomes_only_in_matrix), ", ".join(genomes_only_in_matrix))
+        )
     del genomes_only_in_matrix
 
     genomes_only_in_metadata = set(md_genome_ids) - set(matrix_genome_ids)
     if len(genomes_only_in_metadata) > 0:
-        warning_callback("The metadata contains values for %d genomes that are not in the genomic data (%s)." % (
-            len(genomes_only_in_metadata), ", ".join(genomes_only_in_metadata)))
+        warning_callback(
+            "The metadata contains values for %d genomes that are not in the genomic data (%s)."
+            % (len(genomes_only_in_metadata), ", ".join(genomes_only_in_metadata))
+        )
     del genomes_only_in_metadata
 
-    keep_genome_ids, keep_genome_labels = list(zip(
-        *((md_genome_ids[i], md_genome_labels[i]) for i in range(len(md_genome_ids)) if
-          md_genome_ids[i] in matrix_genome_ids)))
+    keep_genome_ids, keep_genome_labels = list(
+        zip(
+            *(
+                (md_genome_ids[i], md_genome_labels[i])
+                for i in range(len(md_genome_ids))
+                if md_genome_ids[i] in matrix_genome_ids
+            )
+        )
+    )
 
-    return np.array(keep_genome_ids), np.array(keep_genome_labels, dtype=np.uint8), md_unique_labels, classification_type
+    return (
+        np.array(keep_genome_ids),
+        np.array(keep_genome_labels, dtype=np.uint8),
+        md_unique_labels,
+        classification_type,
+    )
 
 
-def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_path, gzip, warning_callback=None,
-             error_callback=None, progress_callback=None):
+def from_tsv(
+    tsv_path,
+    output_path,
+    phenotype_description,
+    phenotype_metadata_path,
+    gzip,
+    warning_callback=None,
+    error_callback=None,
+    progress_callback=None,
+):
     def get_kmer_length(tsv_path):
         with open(tsv_path, "r") as f:
             next(f)
@@ -140,6 +163,7 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     if warning_callback is None:
         warning_callback = lambda w: logging.warning(w)
     if error_callback is None:
+
         def normal_raise(exception):
             raise exception
 
@@ -148,13 +172,14 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
         progress_callback = lambda t, p: None
 
     if (phenotype_description is None and phenotype_metadata_path is not None) or (
-                    phenotype_description is not None and phenotype_metadata_path is None):
+        phenotype_description is not None and phenotype_metadata_path is None
+    ):
         raise ValueError("If a phenotype is specified, it must have a description and a metadata file.")
 
     kmer_len = get_kmer_length(tsv_path)
     kmer_count = get_kmer_count(tsv_path)
 
-    kmer_dtype = 'S' + str(kmer_len)
+    kmer_dtype = "S" + str(kmer_len)
     kmer_by_matrix_column_dtype = _minimum_uint_size(kmer_count)
     compression = "gzip" if gzip > 0 else None
     compression_opts = gzip if gzip > 0 else None
@@ -166,12 +191,13 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     h5py_file.attrs["genome_source_type"] = "tsv"
     h5py_file.attrs["genomic_data"] = tsv_path
     h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
-    h5py_file.attrs[
-        "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    h5py_file.attrs["phenotype_metadata_source"] = (
+        phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    )
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Read list of genome identifiers
-    reader = pd.read_table(tsv_path, sep='\t', index_col=0, iterator=True, engine="c")
+    reader = pd.read_table(tsv_path, sep="\t", index_col=0, iterator=True, engine="c")
     genome_ids = reader.get_chunk(1).columns.values
     del reader
     logging.debug("The k-mer matrix contains %d genomes." % len(genome_ids))
@@ -180,11 +206,12 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
 
     # Extract/write the metadata
     if phenotype_description is not None:
-        genome_ids, labels,\
-        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=genome_ids,
-                                                           warning_callback=warning_callback,
-                                                           error_callback=error_callback)
+        genome_ids, labels, labels_tags, classification_type = _parse_metadata(
+            metadata_path=phenotype_metadata_path,
+            matrix_genome_ids=genome_ids,
+            warning_callback=warning_callback,
+            error_callback=error_callback,
+        )
 
         h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
@@ -199,48 +226,57 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
 
     # Write genome ids
     logging.debug("Creating the genome identifier dataset.")
-    h5py_file.create_dataset("genome_identifiers",
-                             data=genome_ids.astype(h.string_dtype(length=len(genome_ids[0]))),
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "genome_identifiers",
+        data=genome_ids.astype(h.string_dtype(length=len(genome_ids[0]))),
+        compression=compression,
+        compression_opts=compression_opts,
+    )
 
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
-    h5py_file.create_dataset("phenotype_tags",
-                             data=labels_tags.astype(h.string_dtype()),
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "phenotype_tags",
+        data=labels_tags.astype(h.string_dtype()),
+        compression=compression,
+        compression_opts=compression_opts,
+    )
 
     # Initialize kmers (kmer_list) dataset
     logging.debug("Creating the kmer sequence dataset.")
-    kmers = h5py_file.create_dataset("kmer_sequences",
-                                     shape=(kmer_count,),
-                                     dtype=kmer_dtype,
-                                     compression=compression,
-                                     compression_opts=compression_opts)
+    kmers = h5py_file.create_dataset(
+        "kmer_sequences",
+        shape=(kmer_count,),
+        dtype=kmer_dtype,
+        compression=compression,
+        compression_opts=compression_opts,
+    )
 
     # Initialize kmer_matrix dataset
     logging.debug("Creating the kmer matrix dataset.")
-    kmer_matrix = h5py_file.create_dataset("kmer_matrix",
-                                           shape=(
-                                               int(ceil(1.0 * len(genome_ids) / KMER_MATRIX_PACKING_SIZE)), kmer_count),
-                                           dtype=KMER_MATRIX_DTYPE,
-                                           compression=compression,
-                                           compression_opts=compression_opts,
-                                           chunks=(1, tsv_block_size))
+    kmer_matrix = h5py_file.create_dataset(
+        "kmer_matrix",
+        shape=(int(ceil(1.0 * len(genome_ids) / KMER_MATRIX_PACKING_SIZE)), kmer_count),
+        dtype=KMER_MATRIX_DTYPE,
+        compression=compression,
+        compression_opts=compression_opts,
+        chunks=(1, tsv_block_size),
+    )
 
     # Initialize kmer_by_matrix_column dataset
     logging.debug("Creating the kmer sequence/matrix column mapping dataset.")
-    kmer_by_matrix_column = h5py_file.create_dataset("kmer_by_matrix_column",
-                                                     shape=(kmer_count,),
-                                                     dtype=kmer_by_matrix_column_dtype,
-                                                     compression=compression,
-                                                     compression_opts=compression_opts)
+    kmer_by_matrix_column = h5py_file.create_dataset(
+        "kmer_by_matrix_column",
+        shape=(kmer_count,),
+        dtype=kmer_by_matrix_column_dtype,
+        compression=compression,
+        compression_opts=compression_opts,
+    )
 
     logging.debug("Transferring the data from TSV to HDF5.")
-    tsv_reader = pd.read_table(tsv_path, index_col='kmers', sep='\t', chunksize=tsv_block_size)
+    tsv_reader = pd.read_table(tsv_path, index_col="kmers", sep="\t", chunksize=tsv_block_size)
     n_blocks = int(ceil(1.0 * kmer_count / tsv_block_size))
-    n_copied_blocks = 0.
+    n_copied_blocks = 0.0
     for i, chunk in enumerate(tsv_reader):
         logging.debug("Block %d/%d." % (i + 1, n_blocks))
         progress_callback("Creating", n_copied_blocks / n_blocks)
@@ -260,8 +296,9 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
         attribute_classification_sorted_by_strains = chunk[genome_ids]
         attribute_classification_data = attribute_classification_sorted_by_strains.T.values.astype(np.uint8)
         logging.debug("Packing the data.")
-        kmer_matrix[:, block_start:block_stop] = _pack_binary_bytes_to_ints(attribute_classification_data,
-                                                                            pack_size=KMER_MATRIX_PACKING_SIZE)
+        kmer_matrix[:, block_start:block_stop] = _pack_binary_bytes_to_ints(
+            attribute_classification_data, pack_size=KMER_MATRIX_PACKING_SIZE
+        )
         n_copied_blocks += 0.5
         progress_callback("Creating", n_copied_blocks / n_blocks)
 
@@ -275,9 +312,21 @@ def from_tsv(tsv_path, output_path, phenotype_description, phenotype_metadata_pa
     logging.debug("Dataset creation completed.")
 
 
-def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phenotype_description, phenotype_metadata_path,
-                 gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
-                 error_callback=None):
+def from_contigs(
+    contig_list_path,
+    output_path,
+    kmer_size,
+    filter_singleton,
+    phenotype_description,
+    phenotype_metadata_path,
+    gzip,
+    temp_dir,
+    nb_cores,
+    verbose,
+    progress,
+    warning_callback=None,
+    error_callback=None,
+):
     compression = "gzip" if gzip > 0 else None
     compression_opts = gzip if gzip > 0 else None
 
@@ -285,8 +334,10 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     if warning_callback is None:
         warning_callback = lambda w: logging.warning(w)
     if error_callback is None:
+
         def normal_raise(exception):
             raise exception
+
         error_callback = normal_raise
 
     # Make sure that the tmp data is unique to the current process
@@ -295,7 +346,8 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
         mkdir(temp_dir)
 
     if (phenotype_description is None and phenotype_metadata_path is not None) or (
-                    phenotype_description is not None and phenotype_metadata_path is None):
+        phenotype_description is not None and phenotype_metadata_path is None
+    ):
         error_callback(ValueError("If a phenotype is specified, it must have a description and a metadata file."))
 
     # Find the contig file for each genome and verify that it exists
@@ -314,18 +366,20 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     h5py_file.attrs["genome_source_type"] = "contigs"
     h5py_file.attrs["genomic_data"] = contig_list_path
     h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
-    h5py_file.attrs[
-        "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    h5py_file.attrs["phenotype_metadata_source"] = (
+        phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    )
     h5py_file.attrs["filter"] = filter_singleton
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Extract/write the metadata
     if phenotype_description is not None:
-        genome_ids, labels,\
-        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=list(contig_file_by_genome_id.keys()),
-                                                           warning_callback=warning_callback,
-                                                           error_callback=error_callback)
+        genome_ids, labels, labels_tags, classification_type = _parse_metadata(
+            metadata_path=phenotype_metadata_path,
+            matrix_genome_ids=list(contig_file_by_genome_id.keys()),
+            warning_callback=warning_callback,
+            error_callback=error_callback,
+        )
 
         h5py_file.attrs["classification_type"] = classification_type
 
@@ -341,17 +395,15 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # Write genome ids
     logging.debug("Creating the genome identifier dataset.")
-    h5py_file.create_dataset("genome_identifiers",
-                             data=genome_ids,
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "genome_identifiers", data=genome_ids, compression=compression, compression_opts=compression_opts
+    )
 
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
-    h5py_file.create_dataset("phenotype_tags",
-                             data=labels_tags,
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "phenotype_tags", data=labels_tags, compression=compression, compression_opts=compression_opts
+    )
 
     h5py_file.close()
 
@@ -362,13 +414,15 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     open(join(temp_dir, "list_contigs_files"), "w").writelines(files_sorted)
 
     # Calling multidsk
-    contigs_count_kmers(file_path=join(temp_dir, "list_contigs_files"),
-                        out_dir=temp_dir,
-                        kmer_size=kmer_size,
-                        out_compress=gzip,
-                        nb_cores=nb_cores,
-                        verbose=int(verbose),
-                        progress=progress)
+    contigs_count_kmers(
+        file_path=join(temp_dir, "list_contigs_files"),
+        out_dir=temp_dir,
+        kmer_size=kmer_size,
+        out_compress=gzip,
+        nb_cores=nb_cores,
+        verbose=int(verbose),
+        progress=progress,
+    )
     logging.debug("K-mers counting completed.")
 
     # Preparing input file for dsk2kover
@@ -380,14 +434,16 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
 
     # Calling dsk2kover
     logging.debug("Initializing DSK2Kover.")
-    contigs_pack_kmers(file_path=join(temp_dir, "list_h5"),
-                       out_path=output_path,
-                       filter_singleton=filter_singleton,
-                       kmer_length=kmer_size,
-                       compression=gzip,
-                       chunk_size=BLOCK_SIZE,
-                       nb_genomes=len(genome_ids),
-                       progress=progress)
+    contigs_pack_kmers(
+        file_path=join(temp_dir, "list_h5"),
+        out_path=output_path,
+        filter_singleton=filter_singleton,
+        kmer_length=kmer_size,
+        compression=gzip,
+        chunk_size=BLOCK_SIZE,
+        nb_genomes=len(genome_ids),
+        progress=progress,
+    )
 
     logging.debug("Removing temporary files.")
     rmtree(temp_dir)
@@ -396,10 +452,23 @@ def from_contigs(contig_list_path, output_path, kmer_size, filter_singleton, phe
     logging.debug("Dataset creation completed.")
 
 
-def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, filter_singleton, phenotype_description,
-               phenotype_metadata_path, gzip, temp_dir, nb_cores, verbose, progress, warning_callback=None,
-                 error_callback=None):
-    supported_extensions = ['.fastq','.fastq.gz']
+def from_reads(
+    reads_folders_list_path,
+    output_path,
+    kmer_size,
+    abundance_min,
+    filter_singleton,
+    phenotype_description,
+    phenotype_metadata_path,
+    gzip,
+    temp_dir,
+    nb_cores,
+    verbose,
+    progress,
+    warning_callback=None,
+    error_callback=None,
+):
+    supported_extensions = [".fastq", ".fastq.gz"]
     compression = "gzip" if gzip > 0 else None
     compression_opts = gzip if gzip > 0 else None
 
@@ -407,8 +476,10 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     if warning_callback is None:
         warning_callback = lambda w: logging.warning(w)
     if error_callback is None:
+
         def normal_raise(exception):
             raise exception
+
         error_callback = normal_raise
 
     # Make sure that the tmp data is unique to the current process
@@ -417,7 +488,8 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
         mkdir(temp_dir)
 
     if (phenotype_description is None and phenotype_metadata_path is not None) or (
-                    phenotype_description is not None and phenotype_metadata_path is None):
+        phenotype_description is not None and phenotype_metadata_path is None
+    ):
         error_callback(ValueError("If a phenotype is specified, it must have a description and a metadata file."))
 
     # Find the read folder for each genome and verify that it exists
@@ -436,18 +508,20 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     h5py_file.attrs["genome_source_type"] = "reads"
     h5py_file.attrs["genomic_data"] = reads_folders_list_path
     h5py_file.attrs["phenotype_description"] = phenotype_description if phenotype_description is not None else "NA"
-    h5py_file.attrs[
-        "phenotype_metadata_source"] = phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    h5py_file.attrs["phenotype_metadata_source"] = (
+        phenotype_metadata_path if phenotype_metadata_path is not None else "NA"
+    )
     h5py_file.attrs["filter"] = filter_singleton
     h5py_file.attrs["compression"] = "gzip (level %d)" % gzip
 
     # Extract/write the metadata
     if phenotype_description is not None:
-        genome_ids, labels,\
-        labels_tags, classification_type = _parse_metadata(metadata_path=phenotype_metadata_path,
-                                                           matrix_genome_ids=list(reads_folder_by_genome_id.keys()),
-                                                           warning_callback=warning_callback,
-                                                           error_callback=error_callback)
+        genome_ids, labels, labels_tags, classification_type = _parse_metadata(
+            metadata_path=phenotype_metadata_path,
+            matrix_genome_ids=list(reads_folder_by_genome_id.keys()),
+            warning_callback=warning_callback,
+            error_callback=error_callback,
+        )
 
         h5py_file.attrs["classification_type"] = classification_type
         # Sort the genomes by label for optimal better performance
@@ -462,17 +536,15 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
 
     # Write genome ids
     logging.debug("Creating the genome identifier dataset.")
-    h5py_file.create_dataset("genome_identifiers",
-                             data=genome_ids,
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "genome_identifiers", data=genome_ids, compression=compression, compression_opts=compression_opts
+    )
 
     # Write labels tags
     logging.debug("Creating the phenotype tags dataset.")
-    h5py_file.create_dataset("phenotype_tags",
-                             data=labels_tags,
-                             compression=compression,
-                             compression_opts=compression_opts)
+    h5py_file.create_dataset(
+        "phenotype_tags", data=labels_tags, compression=compression, compression_opts=compression_opts
+    )
 
     h5py_file.close()
 
@@ -482,21 +554,26 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
     files_sorted = []
     list_reads_dsk_output = []
     for id in genome_ids:
-        files = [join(reads_folder_by_genome_id[id], file) for file in listdir(reads_folder_by_genome_id[id])
-                 if file.endswith(tuple(supported_extensions))]  # Supported extensions
+        files = [
+            join(reads_folder_by_genome_id[id], file)
+            for file in listdir(reads_folder_by_genome_id[id])
+            if file.endswith(tuple(supported_extensions))
+        ]  # Supported extensions
         files_sorted.append(",".join(files) + "\n")
         list_reads_dsk_output.append(join(temp_dir, basename(splitext(files[-1])[0]) + ".h5"))
     open(join(temp_dir, "list_reads_files"), "w").writelines(files_sorted)
 
     # Calling multidsk
-    reads_count_kmers(file_path=join(temp_dir, "list_reads_files"),
-                      out_dir=temp_dir,
-                      kmer_size=kmer_size,
-                      abundance_min=abundance_min,
-                      out_compress=gzip,
-                      nb_cores=nb_cores,
-                      verbose=int(verbose),
-                      progress=progress)
+    reads_count_kmers(
+        file_path=join(temp_dir, "list_reads_files"),
+        out_dir=temp_dir,
+        kmer_size=kmer_size,
+        abundance_min=abundance_min,
+        out_compress=gzip,
+        nb_cores=nb_cores,
+        verbose=int(verbose),
+        progress=progress,
+    )
     logging.debug("K-mers counting completed.")
 
     # Preparing input file for dsk2kover
@@ -507,14 +584,16 @@ def from_reads(reads_folders_list_path, output_path, kmer_size, abundance_min, f
 
     # Calling dsk2kover
     logging.debug("Initializing DSK2Kover.")
-    reads_pack_kmers(file_path=join(temp_dir, "list_h5"),
-                     out_path=output_path,
-                     filter_singleton=filter_singleton,
-                     kmer_length=kmer_size,
-                     compression=gzip,
-                     chunk_size=BLOCK_SIZE,
-                     nb_genomes=len(genome_ids),
-                     progress=progress)
+    reads_pack_kmers(
+        file_path=join(temp_dir, "list_h5"),
+        out_path=output_path,
+        filter_singleton=filter_singleton,
+        kmer_length=kmer_size,
+        compression=gzip,
+        chunk_size=BLOCK_SIZE,
+        nb_genomes=len(genome_ids),
+        progress=progress,
+    )
 
     logging.debug("Removing temporary files.")
     rmtree(temp_dir)

@@ -24,6 +24,7 @@ from math import ceil
 from .popcount import inplace_popcount_32, inplace_popcount_64
 from ...utils import _minimum_uint_size, _unpack_binary_bytes_from_ints
 
+
 class KmerRule(object):
     def __init__(self, kmer_index, kmer_sequence, type):
         """
@@ -49,16 +50,22 @@ class KmerRule(object):
             return (X[:, self.kmer_index] == 1).astype(np.uint8)
 
     def inverse(self):
-        return KmerRule(kmer_index=self.kmer_index, kmer_sequence=self.kmer_sequence, type="absence" if self.type == "presence" else "presence")
+        return KmerRule(
+            kmer_index=self.kmer_index,
+            kmer_sequence=self.kmer_sequence,
+            type="absence" if self.type == "presence" else "presence",
+        )
 
     def __str__(self):
         return ("Absence(" if self.type == "absence" else "Presence(") + self.kmer_sequence + ")"
+
 
 class LazyKmerRuleList(object):
     """
     By convention, the first half of the list contains presence rules and the second half contains the absence rules in
     the same order.
     """
+
     def __init__(self, kmer_sequences, kmer_by_rule):
         self.n_rules = kmer_by_rule.shape[0] * 2
         self.kmer_sequences = kmer_sequences
@@ -77,6 +84,7 @@ class LazyKmerRuleList(object):
 
     def __len__(self):
         return self.n_rules
+
 
 class BaseRuleClassifications(object):
     def __init__(self):
@@ -100,6 +108,7 @@ class KmerRuleClassifications(BaseRuleClassifications):
     """
     Methods involving columns account for presence and absence rules
     """
+
     # TODO: Clean up. Get rid of the code to handle deleted rows. We don't need this.
     def __init__(self, dataset, n_rows, block_size=None):
         self.dataset = dataset
@@ -127,8 +136,10 @@ class KmerRuleClassifications(BaseRuleClassifications):
             self.dataset_pack_size = 64
             self.inplace_popcount = inplace_popcount_64
         else:
-            raise ValueError("Unsupported data type for packed attribute classifications array. The supported data" +
-                             " types are np.uint32 and np.uint64.")
+            raise ValueError(
+                "Unsupported data type for packed attribute classifications array. The supported data"
+                + " types are np.uint32 and np.uint64."
+            )
 
         super(BaseRuleClassifications, self).__init__()
 
@@ -136,7 +147,7 @@ class KmerRuleClassifications(BaseRuleClassifications):
         """
         Columns can be an integer (or any object that implements __index__) or a sorted list/ndarray.
         """
-        #TODO: Support slicing, make this more efficient than getting the columns individually.
+        # TODO: Support slicing, make this more efficient than getting the columns individually.
         columns_is_int = False
         if hasattr(columns, "__index__"):  # All int types implement the __index__ method (PEP 357)
             columns = [columns.__index__()]
@@ -149,14 +160,23 @@ class KmerRuleClassifications(BaseRuleClassifications):
             columns = list(columns)
 
         # Detect where an inversion is needed (columns corresponding to absence rules)
-        columns, invert_result = list(zip(* (((column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
-                                         (True if column > self.dataset.shape[1] else False)) for column in columns)))
+        columns, invert_result = list(
+            zip(
+                *(
+                    (
+                        (column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
+                        (True if column > self.dataset.shape[1] else False),
+                    )
+                    for column in columns
+                )
+            )
+        )
         columns = list(columns)
         invert_result = np.array(invert_result)
 
         # Don't return rows that have been deleted
         row_mask = np.ones(self.dataset.shape[0] * self.dataset_pack_size, dtype=np.bool)
-        row_mask[self.dataset_initial_n_rows:] = False
+        row_mask[self.dataset_initial_n_rows :] = False
         row_mask[self.dataset_removed_rows] = False
 
         # h5py requires that the column indices are sorted
@@ -245,13 +265,17 @@ class KmerRuleClassifications(BaseRuleClassifications):
         n_row_blocks = int(ceil(1.0 * len(rows_to_load) / self.block_size[0]))
 
         for row_block in range(n_row_blocks):
-            block_row_mask = row_mask[rows_to_load[row_block * self.block_size[0]:(row_block + 1) * self.block_size[0]]]
+            block_row_mask = row_mask[
+                rows_to_load[row_block * self.block_size[0] : (row_block + 1) * self.block_size[0]]
+            ]
 
             for col_block in range(n_col_blocks):
 
                 # Load the appropriate rows/columns based on the block sizes
-                block = self.dataset[rows_to_load[row_block * self.block_size[0]:(row_block + 1) * self.block_size[0]],
-                                     col_block * self.block_size[1]:(col_block + 1) * self.block_size[1]]
+                block = self.dataset[
+                    rows_to_load[row_block * self.block_size[0] : (row_block + 1) * self.block_size[0]],
+                    col_block * self.block_size[1] : (col_block + 1) * self.block_size[1],
+                ]
 
                 # Popcount
                 if len(block.shape) == 1:
@@ -259,9 +283,11 @@ class KmerRuleClassifications(BaseRuleClassifications):
                 self.inplace_popcount(block, block_row_mask)
 
                 # Increment the sum
-                result[col_block * self.block_size[1]:min((col_block + 1) * self.block_size[1], self.dataset.shape[1])] += np.sum(block, axis=0)
+                result[
+                    col_block * self.block_size[1] : min((col_block + 1) * self.block_size[1], self.dataset.shape[1])
+                ] += np.sum(block, axis=0)
 
         # Compute the sum for absence rules
-        result[self.dataset.shape[1] : ] = len(rows) - result[: self.dataset.shape[1]]
+        result[self.dataset.shape[1] :] = len(rows) - result[: self.dataset.shape[1]]
 
         return result

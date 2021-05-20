@@ -21,23 +21,24 @@ import numpy as np
 
 from collections import defaultdict
 
+
 def _get_binary_metrics(predictions, answers):
     """
     Compute metrics for binary predictions.
     Parameters:
     -----------
     predictions: numpy_array, shape=(n_predictions, n_examples)
-	    The predictions array.
+            The predictions array.
     answers: numpy_array, shape=(n_examples,)
-	    The labels vector associated to the examples.
+            The labels vector associated to the examples.
     Returns:
     --------
     metrics: dictionary
-	    A dictionary containing for each metric key,
-	    a vector of values associated to the predictions.
+            A dictionary containing for each metric key,
+            a vector of values associated to the predictions.
     """
     if len(predictions.shape) == 1:
-	    predictions = predictions.reshape(1, -1)
+        predictions = predictions.reshape(1, -1)
     metrics = defaultdict(list)
     for i in range(predictions.shape[0]):
         p = predictions[i]
@@ -62,31 +63,33 @@ def _get_binary_metrics(predictions, answers):
         metrics["f1_score"].append(f1_score)
     return metrics
 
+
 def _get_multiclass_metrics(predictions, answers, nb_class):
     """
     Compute metrics for multi-class predictions.
     Parameters:
     -----------
     predictions: numpy_array, shape=(n_predictions, n_examples)
-	    The predictions array.
+            The predictions array.
     answers: numpy_array, shape=(n_examples,)
-	    The labels vector associated to the examples.
+            The labels vector associated to the examples.
     Returns:
     --------
     metrics: dictionary
-	    A dictionary containing for each metric key,
-	    a vector of values associated to the predictions.
+            A dictionary containing for each metric key,
+            a vector of values associated to the predictions.
     """
     if len(predictions.shape) == 1:
-	    predictions = predictions.reshape(1, -1)
+        predictions = predictions.reshape(1, -1)
     metrics = defaultdict(list)
     for i in range(predictions.shape[0]):
-	    p = predictions[i]
-	    risk = 1.0 * len(p[p != answers]) / len(answers)
-	    confusion_matrix = []
-	    for actual_class in range(nb_class):
-		    confusion_matrix.append([len(np.where(p[answers == actual_class] == predicted_class)[0]) \
-										for predicted_class in range(nb_class)])
-	    metrics["risk"].append(risk)
-	    metrics["confusion_matrix"].append(confusion_matrix)
+        p = predictions[i]
+        risk = 1.0 * len(p[p != answers]) / len(answers)
+        confusion_matrix = []
+        for actual_class in range(nb_class):
+            confusion_matrix.append(
+                [len(np.where(p[answers == actual_class] == predicted_class)[0]) for predicted_class in range(nb_class)]
+            )
+        metrics["risk"].append(risk)
+        metrics["confusion_matrix"].append(confusion_matrix)
     return metrics

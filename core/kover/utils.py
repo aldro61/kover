@@ -27,23 +27,27 @@ from math import ceil
 def _class_to_string(instance):
     """
     Returns a string representation of the public attributes of a class.
-    
+
     Parameters:
     -----------
     instance: object
         An instance of any class.
-        
+
     Returns:
     --------
     string_rep: string
         A string representation of the class and its public attributes.
-        
+
     Notes:
     -----
     Private attributes must be marked with a leading underscore.
     """
-    return instance.__class__.__name__ + "(" + ",".join(
-        [str(k) + "=" + str(v) for k, v in instance.__dict__.items() if str(k[0]) != "_"]) + ")"
+    return (
+        instance.__class__.__name__
+        + "("
+        + ",".join([str(k) + "=" + str(v) for k, v in instance.__dict__.items() if str(k[0]) != "_"])
+        + ")"
+    )
 
 
 def _duplicate_last_element(l, length):
@@ -52,7 +56,7 @@ def _duplicate_last_element(l, length):
     """
     l += [l[-1]] * (length - len(l))
     return l
-    
+
 
 def _fasta_to_sequences(path):
     """
@@ -73,8 +77,8 @@ def _fasta_to_sequences(path):
     if buffer is not None and buffer != "":
         contigs.append(buffer.upper())
     return contigs
-    
-    
+
+
 def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     fid = h.h5f.open(bytes(filename, encoding="utf-8"), access_type)
     access_property_list = fid.get_access_plist()
@@ -87,7 +91,7 @@ def _hdf5_open_no_chunk_cache(filename, access_type=h.h5f.ACC_RDONLY):
     return h.File(file_id)
 
 
-def _init_callback_functions(warning_callback = None, error_callback = None, progress_callback = None):
+def _init_callback_functions(warning_callback=None, error_callback=None, progress_callback=None):
     """
     Initialize the execution callback functions. If a function is provided, it is returned unchanged. Otherwise, a
     default function is returned.
@@ -106,8 +110,10 @@ def _init_callback_functions(warning_callback = None, error_callback = None, pro
     if warning_callback is None:
         warning_callback = lambda w: logging.warning(w)
     if error_callback is None:
+
         def normal_raise(exception):
             raise exception
+
         error_callback = normal_raise
     if progress_callback is None:
         progress_callback = lambda t, p: None
@@ -179,35 +185,37 @@ def _unpack_binary_bytes_from_ints(a):
         if packed_rows == pack_size:
             packed_rows = 0
             packing_row += 1
-        tmp = np.left_shift(np.ones(unpacked_n_columns, dtype=type), pack_size - (i - pack_size * packing_row)-1)
+        tmp = np.left_shift(np.ones(unpacked_n_columns, dtype=type), pack_size - (i - pack_size * packing_row) - 1)
         np.bitwise_and(a[packing_row], tmp, tmp)
         b[i] = tmp > 0
         packed_rows += 1
 
     return b
 
+
 def _parse_kmer_blacklist(blacklist_path, expected_kmer_len):
     data = []
-    
+
     # Fasta file format
     fasta_extensions = [".fasta", ".fa", ".fas", ".fna"]
     if any(blacklist_path.endswith(extension) for extension in fasta_extensions):
         data = _fasta_to_sequences(blacklist_path)
-            
+
     # Other file format (one kmer per line)
     else:
         # Loading data and splitting on every line
-        data = [l.rstrip('\n') for l in open(blacklist_path, "r")]
-        
+        data = [l.rstrip("\n") for l in open(blacklist_path, "r")]
+
         # Filtering for empty strings (text file with one kmer per line)
         data = [x for x in data if x]
-        
+
     def is_valid_kmer(k):
         return len(set(k).difference(["A", "C", "G", "T", "a", "c", "g", "t"])) == 0
+
     for kmer in data:
         if not is_valid_kmer(kmer):
             raise ValueError("{} is not a valid DNA sequence".format(kmer))
-        
-    if not(all(len(kmer) == expected_kmer_len for kmer in data)):
+
+    if not (all(len(kmer) == expected_kmer_len for kmer in data)):
         raise ValueError("Extracted k-mers to blacklist do not have all the same length as the dataset k-mers")
     return data

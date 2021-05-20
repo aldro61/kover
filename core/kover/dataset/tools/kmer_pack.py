@@ -20,20 +20,35 @@
 from subprocess import call
 from os.path import abspath, dirname, join
 
-def contigs_pack_kmers(file_path, out_path, filter_singleton, kmer_length, compression, chunk_size, nb_genomes, progress):
 
-	dir_path = dirname(abspath(__file__))
+def contigs_pack_kmers(
+    file_path, out_path, filter_singleton, kmer_length, compression, chunk_size, nb_genomes, progress
+):
 
-	# Calling DSK2Kover tool
-	call([str(join(dir_path, "kmer_tools", "dsk2kover")),
-					"-file", str(file_path),
-					"-out", str(out_path),
-					"-filter", str(filter_singleton),
-					"-kmer-length", str(kmer_length),
-					"-compression", str(compression),
-					"-chunk-size", str(chunk_size),
-					"-nb-genomes", str(nb_genomes),
-					"-verbose", str(progress)])
+    dir_path = dirname(abspath(__file__))
+
+    # Calling DSK2Kover tool
+    call(
+        [
+            str(join(dir_path, "kmer_tools", "dsk2kover")),
+            "-file",
+            str(file_path),
+            "-out",
+            str(out_path),
+            "-filter",
+            str(filter_singleton),
+            "-kmer-length",
+            str(kmer_length),
+            "-compression",
+            str(compression),
+            "-chunk-size",
+            str(chunk_size),
+            "-nb-genomes",
+            str(nb_genomes),
+            "-verbose",
+            str(progress),
+        ]
+    )
 
 
 reads_pack_kmers = contigs_pack_kmers

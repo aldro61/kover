@@ -25,6 +25,7 @@ disjunction = "disjunction"
 scm = "scm"
 cart = "cart"
 
+
 class BaseModel(object):
     def __init__(self):
         super(BaseModel, self).__init__()
@@ -64,7 +65,7 @@ class CARTModel(BaseModel):
     def learner(self):
         return cart
 
-    def _to_string(self, node=None,depth=0):
+    def _to_string(self, node=None, depth=0):
         if node is None:
             if self.decision_tree is None:
                 print("No tree has been added to the model")
@@ -171,7 +172,7 @@ class DisjunctionModel(SCMModel):
     def predict_proba(self, X):
         predictions = np.ones(X.shape[0], dtype=np.float32)
         for a in self.rules:
-            predictions *= 1.0 - a.classify(X) # Proportion of the voters that predict False in a
+            predictions *= 1.0 - a.classify(X)  # Proportion of the voters that predict False in a
         return 1.0 - predictions
 
     @property
