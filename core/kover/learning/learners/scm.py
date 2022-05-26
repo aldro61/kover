@@ -210,7 +210,7 @@ class BaseSetCoveringMachine(object):
 class SetCoveringMachine(BaseSetCoveringMachine):
     """
     The Set Covering Machine (SCM).
-    Marchand, M., & Taylor, J. S. (2003). The set covering machine. Journal of Machine Learning Research, 3, 723–746.
+    Marchand, M., & Taylor, J. S. (2003). The set covering machine. Journal of Machine Learning Research, 3, 723-746.
     Parameters:
     -----------
     model_type: pyscm.model.conjunction or pyscm.model.disjunction, default=pyscm.model.conjunction
