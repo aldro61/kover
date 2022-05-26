@@ -150,7 +150,7 @@ class KmerRuleClassifications(BaseRuleClassifications):
 
         # Detect where an inversion is needed (columns corresponding to absence rules)
         columns, invert_result = zip(* (((column if column < self.dataset.shape[1] else column % self.dataset.shape[1]),
-                                         (True if column > self.dataset.shape[1] else False)) for column in columns))
+                                         (True if column >= self.dataset.shape[1] else False)) for column in columns))
         columns = list(columns)
         invert_result = np.array(invert_result)
 
