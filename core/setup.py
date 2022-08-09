@@ -13,7 +13,7 @@ class build_ext(_build_ext):
 
 setup(
     name="kover",
-    version="2.0.6",
+    version="2.0.7",
     packages=find_packages(),
 
     cmdclass={'build_ext': build_ext},
