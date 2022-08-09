@@ -32,7 +32,7 @@ echo '* Compiling gatb-core'
 cmake .. -Wno-dev
 
 # Run the makefile to build dsk, multidsk and dsk2kover tools:
-make -j8
+make -j1
 
 # Clean up gatb-core source files
 echo '* Cleaning up gatb-core source files'
