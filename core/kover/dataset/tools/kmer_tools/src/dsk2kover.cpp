@@ -45,6 +45,7 @@ public:
         getParser()->push_front(new OptionOneParam (STR_COMPRESSION, "compression", false, "4"));
         getParser()->push_front(new OptionOneParam (STR_CHUNK_SIZE, "chunk size", false, "100000"));
         getParser()->push_front(new OptionOneParam (STR_NB_GENOMES,   "Number of genomes", true));
+	getParser()->push_front(new OptionOneParam (STR_VERBOSE,   "Verbosity", false, "False"));
     }
 
     /** */
